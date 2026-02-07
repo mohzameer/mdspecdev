@@ -8,7 +8,7 @@ interface Props {
 }
 
 export default async function RevisionsPage({ params }: Props) {
-    const { orgId, projectId, slug } = await params;
+    const { orgId: orgSlug, projectId: projectSlug, slug } = await params;
     const supabase = await createClient();
     const {
         data: { user },
@@ -16,6 +16,56 @@ export default async function RevisionsPage({ params }: Props) {
 
     if (!user) {
         redirect('/login');
+    }
+
+    // Resolve org by slug
+    let org = null;
+    const { data: orgBySlug } = await supabase
+        .from('organizations')
+        .select('id, name, slug')
+        .eq('slug', orgSlug)
+        .single();
+
+    if (orgBySlug) {
+        org = orgBySlug;
+    } else {
+        const { data: orgById } = await supabase
+            .from('organizations')
+            .select('id, name, slug')
+            .eq('id', orgSlug)
+            .single();
+
+        if (orgById) {
+            redirect(`/orgs/${orgById.slug}/projects/${projectSlug}/specs/${slug}/revisions`);
+        } else {
+            redirect('/orgs');
+        }
+    }
+
+    // Resolve project by slug
+    let project = null;
+    const { data: projectBySlug } = await supabase
+        .from('projects')
+        .select('id, name, slug')
+        .eq('slug', projectSlug)
+        .eq('org_id', org.id)
+        .single();
+
+    if (projectBySlug) {
+        project = projectBySlug;
+    } else {
+        const { data: projectById } = await supabase
+            .from('projects')
+            .select('id, name, slug')
+            .eq('id', projectSlug)
+            .eq('org_id', org.id)
+            .single();
+
+        if (projectById) {
+            redirect(`/orgs/${org.slug}/projects/${projectById.slug}/specs/${slug}/revisions`);
+        } else {
+            redirect(`/orgs/${org.slug}`);
+        }
     }
 
     const { data: spec } = await supabase
@@ -34,13 +84,13 @@ export default async function RevisionsPage({ params }: Props) {
       )
     `
         )
-        .eq('project_id', projectId)
+        .eq('project_id', project.id)
         .eq('slug', slug)
         .is('archived_at', null)
         .single();
 
     if (!spec) {
-        redirect(`/orgs/${orgId}/projects/${projectId}`);
+        redirect(`/orgs/${org.slug}/projects/${project.slug}`);
     }
 
     const revisions = (spec.revisions as any[])?.sort(
@@ -52,7 +102,7 @@ export default async function RevisionsPage({ params }: Props) {
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-4">
                     <Link
-                        href={`/orgs/${orgId}/projects/${projectId}/specs/${slug}`}
+                        href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
                         ← Back to {spec.name}
@@ -109,14 +159,14 @@ export default async function RevisionsPage({ params }: Props) {
                                     </div>
                                     <div className="flex gap-2">
                                         <Link
-                                            href={`/orgs/${orgId}/projects/${projectId}/specs/${slug}/revisions/${revision.revision_number}`}
+                                            href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/revisions/${revision.revision_number}`}
                                             className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white rounded-lg transition-colors"
                                         >
                                             View
                                         </Link>
                                         {index > 0 && (
                                             <Link
-                                                href={`/orgs/${orgId}/projects/${projectId}/specs/${slug}/revisions/${revision.revision_number}/diff`}
+                                                href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/revisions/${revision.revision_number}/diff`}
                                                 className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white rounded-lg transition-colors"
                                             >
                                                 Diff

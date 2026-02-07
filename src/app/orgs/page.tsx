@@ -18,7 +18,7 @@ export default async function OrgsPage() {
             `
       id,
       role,
-      organization:organizations(id, name, created_at)
+      organization:organizations(id, name, slug, created_at)
     `
         )
         .eq('user_id', user.id);
@@ -66,7 +66,7 @@ export default async function OrgsPage() {
                         {memberships.map((membership: any) => (
                             <Link
                                 key={membership.id}
-                                href={`/orgs/${membership.organization.id}`}
+                                href={`/orgs/${membership.organization.slug}`}
                                 className="block p-6 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl border border-slate-200 dark:border-white/10 transition-all duration-200 group shadow-sm"
                             >
                                 <div className="flex items-center gap-3 mb-3">

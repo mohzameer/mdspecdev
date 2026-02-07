@@ -15,7 +15,7 @@ interface Props {
 }
 
 export default async function SpecDetailPage({ params }: Props) {
-    const { orgId, projectId, slug } = await params;
+    const { orgId: orgSlug, projectId: projectSlug, slug } = await params;
     const supabase = await createClient();
     const {
         data: { user },
@@ -25,6 +25,57 @@ export default async function SpecDetailPage({ params }: Props) {
         redirect('/login');
     }
 
+    // Resolve org by slug
+    let org = null;
+    const { data: orgBySlug } = await supabase
+        .from('organizations')
+        .select('id, name, slug')
+        .eq('slug', orgSlug)
+        .single();
+
+    if (orgBySlug) {
+        org = orgBySlug;
+    } else {
+        const { data: orgById } = await supabase
+            .from('organizations')
+            .select('id, name, slug')
+            .eq('id', orgSlug)
+            .single();
+
+        if (orgById) {
+            redirect(`/orgs/${orgById.slug}/projects/${projectSlug}/specs/${slug}`);
+        } else {
+            redirect('/orgs');
+        }
+    }
+
+    // Resolve project by slug
+    let project = null;
+    const { data: projectBySlug } = await supabase
+        .from('projects')
+        .select('id, name, slug')
+        .eq('slug', projectSlug)
+        .eq('org_id', org.id)
+        .single();
+
+    if (projectBySlug) {
+        project = projectBySlug;
+    } else {
+        const { data: projectById } = await supabase
+            .from('projects')
+            .select('id, name, slug')
+            .eq('id', projectSlug)
+            .eq('org_id', org.id)
+            .single();
+
+        if (projectById) {
+            redirect(`/orgs/${org.slug}/projects/${projectById.slug}/specs/${slug}`);
+        } else {
+            redirect(`/orgs/${org.slug}`);
+        }
+    }
+
+    // Now fetch spec using actual project ID
     const { data: spec } = await supabase
         .from('specs')
         .select(
@@ -39,22 +90,17 @@ export default async function SpecDetailPage({ params }: Props) {
       created_at,
       updated_at,
       owner:profiles!specs_owner_id_fkey(id, full_name, avatar_url, email),
-      project:projects(
-        id,
-        name,
-        organization:organizations(id, name)
-      ),
       revisions(id, revision_number, created_at, content_key, summary, author:profiles(full_name)),
       comment_threads(id, resolved)
     `
         )
-        .eq('project_id', projectId)
+        .eq('project_id', project.id)
         .eq('slug', slug)
         .is('archived_at', null)
         .single();
 
     if (!spec) {
-        redirect(`/orgs/${orgId}/projects/${projectId}`);
+        redirect(`/orgs/${org.slug}/projects/${project.slug}`);
     }
 
     const latestRevision = (spec.revisions as any[])?.sort(
@@ -89,17 +135,17 @@ export default async function SpecDetailPage({ params }: Props) {
                     </Link>
                     <span className="mx-2 text-slate-300 dark:text-slate-600">/</span>
                     <Link
-                        href={`/orgs/${orgId}`}
+                        href={`/orgs/${org.slug}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
                     >
-                        {(spec.project as any)?.organization?.name}
+                        {org.name}
                     </Link>
                     <span className="mx-2 text-slate-300 dark:text-slate-600">/</span>
                     <Link
-                        href={`/orgs/${orgId}/projects/${projectId}`}
+                        href={`/orgs/${org.slug}/projects/${project.slug}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
                     >
-                        {(spec.project as any)?.name}
+                        {project.name}
                     </Link>
                 </div>
 
@@ -118,50 +164,43 @@ export default async function SpecDetailPage({ params }: Props) {
                         </div>
                         <div className="flex gap-2">
                             <Link
-                                href={`/orgs/${orgId}/projects/${projectId}/specs/${slug}/edit`}
-                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+                                href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/revisions`}
+                                className="px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white font-medium rounded-lg transition-colors text-sm"
                             >
-                                <svg
-                                    className="w-4 h-4"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M12 4v16m8-8H4"
-                                    />
-                                </svg>
-                                New Revision
+                                History ({revisionCount})
                             </Link>
                             <Link
-                                href={`/orgs/${orgId}/projects/${projectId}/specs/${slug}/revisions`}
-                                className="px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white font-medium rounded-lg transition-colors border border-slate-200 dark:border-white/10"
+                                href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/edit`}
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors text-sm"
                             >
-                                Revisions ({revisionCount})
+                                Edit
                             </Link>
                         </div>
                     </div>
 
                     {spec.progress !== null && (
-                        <div className="mb-4 max-w-md">
-                            <ProgressBar progress={spec.progress} />
+                        <div className="mb-4">
+                            <ProgressBar progress={spec.progress} showLabel={true} />
                         </div>
                     )}
 
                     <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
-                        <span>Owner: @{(spec.owner as any)?.full_name || 'Unknown'}</span>
+                        <span>
+                            By @{(spec.owner as any)?.full_name || 'Unknown'}
+                        </span>
                         <span>·</span>
-                        <span>Created {formatDate(spec.created_at)}</span>
+                        <span>
+                            Updated {formatRelativeTime(spec.updated_at)}
+                        </span>
                         <span>·</span>
-                        <span>Updated {formatRelativeTime(spec.updated_at)}</span>
+                        <span>
+                            Created {formatDate(spec.created_at)}
+                        </span>
                         {unresolvedCount > 0 && (
                             <>
                                 <span>·</span>
                                 <span className="text-orange-500 dark:text-orange-400">
-                                    💬 {unresolvedCount} unresolved comments
+                                    💬 {unresolvedCount} unresolved
                                 </span>
                             </>
                         )}

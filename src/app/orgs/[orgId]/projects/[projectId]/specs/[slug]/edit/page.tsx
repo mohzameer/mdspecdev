@@ -7,14 +7,15 @@ import Link from 'next/link';
 
 export default function EditSpecPage() {
     const params = useParams();
-    const orgId = params.orgId as string;
-    const projectId = params.projectId as string;
-    const slug = params.slug as string;
+    const orgSlug = params.orgId as string;
+    const projectSlug = params.projectId as string;
+    const specSlug = params.slug as string;
 
     const [name, setName] = useState('');
     const [content, setContent] = useState('');
     const [summary, setSummary] = useState('');
     const [specId, setSpecId] = useState('');
+    const [projectId, setProjectId] = useState<string | null>(null);
     const [revisionNumber, setRevisionNumber] = useState(0);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -26,6 +27,66 @@ export default function EditSpecPage() {
     useEffect(() => {
         async function loadSpec() {
             try {
+                // Resolve org by slug
+                let orgId = null;
+                const { data: orgBySlug } = await supabase
+                    .from('organizations')
+                    .select('id, slug')
+                    .eq('slug', orgSlug)
+                    .single();
+
+                if (orgBySlug) {
+                    orgId = orgBySlug.id;
+                } else {
+                    const { data: orgById } = await supabase
+                        .from('organizations')
+                        .select('id, slug')
+                        .eq('id', orgSlug)
+                        .single();
+
+                    if (orgById) {
+                        router.replace(
+                            `/orgs/${orgById.slug}/projects/${projectSlug}/specs/${specSlug}/edit`
+                        );
+                        return;
+                    } else {
+                        router.push('/orgs');
+                        return;
+                    }
+                }
+
+                // Resolve project by slug
+                let resolvedProjectId = null;
+                const { data: projectBySlug } = await supabase
+                    .from('projects')
+                    .select('id, slug')
+                    .eq('slug', projectSlug)
+                    .eq('org_id', orgId)
+                    .single();
+
+                if (projectBySlug) {
+                    resolvedProjectId = projectBySlug.id;
+                } else {
+                    const { data: projectById } = await supabase
+                        .from('projects')
+                        .select('id, slug')
+                        .eq('id', projectSlug)
+                        .eq('org_id', orgId)
+                        .single();
+
+                    if (projectById) {
+                        router.replace(
+                            `/orgs/${orgSlug}/projects/${projectById.slug}/specs/${specSlug}/edit`
+                        );
+                        return;
+                    } else {
+                        router.push(`/orgs/${orgSlug}`);
+                        return;
+                    }
+                }
+
+                setProjectId(resolvedProjectId);
+
                 // Get spec
                 const { data: spec } = await supabase
                     .from('specs')
@@ -36,13 +97,13 @@ export default function EditSpecPage() {
             revisions(revision_number, content_key)
           `
                     )
-                    .eq('project_id', projectId)
-                    .eq('slug', slug)
+                    .eq('project_id', resolvedProjectId)
+                    .eq('slug', specSlug)
                     .is('archived_at', null)
                     .single();
 
                 if (!spec) {
-                    router.push(`/orgs/${orgId}/projects/${projectId}`);
+                    router.push(`/orgs/${orgSlug}/projects/${projectSlug}`);
                     return;
                 }
 
@@ -76,7 +137,7 @@ export default function EditSpecPage() {
         }
 
         loadSpec();
-    }, [supabase, projectId, slug, orgId, router]);
+    }, [supabase, orgSlug, projectSlug, specSlug, router]);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -200,7 +261,7 @@ export default function EditSpecPage() {
                 return;
             }
 
-            router.push(`/orgs/${orgId}/projects/${projectId}/specs/${slug}`);
+            router.push(`/orgs/${orgSlug}/projects/${projectSlug}/specs/${specSlug}`);
             router.refresh();
         } catch (err: any) {
             setError(err.message || 'An error occurred');
@@ -221,14 +282,16 @@ export default function EditSpecPage() {
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-4">
                     <Link
-                        href={`/orgs/${orgId}/projects/${projectId}/specs/${slug}`}
+                        href={`/orgs/${orgSlug}/projects/${projectSlug}/specs/${specSlug}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
                         ← Back to spec
                     </Link>
                 </div>
 
-                <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">Edit Specification</h1>
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                    Edit Specification
+                </h1>
                 <p className="text-slate-500 dark:text-slate-400 mb-8">
                     Changes will create a new revision (v{revisionNumber + 1}).
                 </p>
@@ -312,4 +375,3 @@ export default function EditSpecPage() {
         </div>
     );
 }
-

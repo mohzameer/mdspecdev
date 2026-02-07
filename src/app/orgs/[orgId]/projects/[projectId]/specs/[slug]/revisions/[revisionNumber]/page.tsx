@@ -14,7 +14,12 @@ interface Props {
 }
 
 export default async function RevisionDetailPage({ params }: Props) {
-    const { orgId, projectId, slug, revisionNumber } = await params;
+    const {
+        orgId: orgSlug,
+        projectId: projectSlug,
+        slug,
+        revisionNumber,
+    } = await params;
     const supabase = await createClient();
     const {
         data: { user },
@@ -22,6 +27,60 @@ export default async function RevisionDetailPage({ params }: Props) {
 
     if (!user) {
         redirect('/login');
+    }
+
+    // Resolve org by slug
+    let org = null;
+    const { data: orgBySlug } = await supabase
+        .from('organizations')
+        .select('id, name, slug')
+        .eq('slug', orgSlug)
+        .single();
+
+    if (orgBySlug) {
+        org = orgBySlug;
+    } else {
+        const { data: orgById } = await supabase
+            .from('organizations')
+            .select('id, name, slug')
+            .eq('id', orgSlug)
+            .single();
+
+        if (orgById) {
+            redirect(
+                `/orgs/${orgById.slug}/projects/${projectSlug}/specs/${slug}/revisions/${revisionNumber}`
+            );
+        } else {
+            redirect('/orgs');
+        }
+    }
+
+    // Resolve project by slug
+    let project = null;
+    const { data: projectBySlug } = await supabase
+        .from('projects')
+        .select('id, name, slug')
+        .eq('slug', projectSlug)
+        .eq('org_id', org.id)
+        .single();
+
+    if (projectBySlug) {
+        project = projectBySlug;
+    } else {
+        const { data: projectById } = await supabase
+            .from('projects')
+            .select('id, name, slug')
+            .eq('id', projectSlug)
+            .eq('org_id', org.id)
+            .single();
+
+        if (projectById) {
+            redirect(
+                `/orgs/${org.slug}/projects/${projectById.slug}/specs/${slug}/revisions/${revisionNumber}`
+            );
+        } else {
+            redirect(`/orgs/${org.slug}`);
+        }
     }
 
     const { data: spec } = await supabase
@@ -41,13 +100,13 @@ export default async function RevisionDetailPage({ params }: Props) {
       )
     `
         )
-        .eq('project_id', projectId)
+        .eq('project_id', project.id)
         .eq('slug', slug)
         .is('archived_at', null)
         .single();
 
     if (!spec) {
-        redirect(`/orgs/${orgId}/projects/${projectId}`);
+        redirect(`/orgs/${org.slug}/projects/${project.slug}`);
     }
 
     const revisionNum = parseInt(revisionNumber);
@@ -56,7 +115,9 @@ export default async function RevisionDetailPage({ params }: Props) {
     );
 
     if (!revision) {
-        redirect(`/orgs/${orgId}/projects/${projectId}/specs/${slug}/revisions`);
+        redirect(
+            `/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/revisions`
+        );
     }
 
     let content = '';
@@ -81,7 +142,7 @@ export default async function RevisionDetailPage({ params }: Props) {
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-4">
                     <Link
-                        href={`/orgs/${orgId}/projects/${projectId}/specs/${slug}/revisions`}
+                        href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/revisions`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
                         ← Back to revisions
@@ -116,7 +177,7 @@ export default async function RevisionDetailPage({ params }: Props) {
                         <div className="flex gap-2">
                             {!isLatest && (
                                 <Link
-                                    href={`/orgs/${orgId}/projects/${projectId}/specs/${slug}/revisions/${revisionNum}/restore`}
+                                    href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/revisions/${revisionNum}/restore`}
                                     className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-medium rounded-lg transition-colors"
                                 >
                                     Restore This Version
@@ -124,7 +185,7 @@ export default async function RevisionDetailPage({ params }: Props) {
                             )}
                             {revisionNum > 1 && (
                                 <Link
-                                    href={`/orgs/${orgId}/projects/${projectId}/specs/${slug}/revisions/${revisionNum}/diff`}
+                                    href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/revisions/${revisionNum}/diff`}
                                     className="px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white font-medium rounded-lg transition-colors border border-slate-200 dark:border-white/10"
                                 >
                                     Compare with v{revisionNum - 1}

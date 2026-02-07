@@ -14,7 +14,7 @@ type SpecWithRelations = {
     maturity: string | null;
     tags: string[] | null;
     updated_at: string;
-    project: { id: string; name: string; organization: { id: string; name: string } };
+    project: { id: string; name: string; slug: string; organization: { id: string; name: string; slug: string } };
     owner: { full_name: string | null; avatar_url: string | null } | null;
     comment_threads: { id: string; resolved: boolean }[];
     revisions: { id: string }[];
@@ -59,7 +59,8 @@ export default async function DashboardPage() {
       project:projects(
         id,
         name,
-        organization:organizations(id, name)
+        slug,
+        organization:organizations(id, name, slug)
       ),
       comment_threads(id, resolved),
       revisions(id)
@@ -140,7 +141,7 @@ export default async function DashboardPage() {
                             return (
                                 <Link
                                     key={spec.id}
-                                    href={`/orgs/${spec.project.organization.id}/projects/${spec.project.id}/specs/${spec.slug}`}
+                                    href={`/orgs/${spec.project.organization.slug}/projects/${spec.project.slug}/specs/${spec.slug}`}
                                     className="block p-6 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl border border-slate-200 dark:border-white/10 transition-all duration-200 group shadow-sm"
                                 >
                                     <div className="flex items-start justify-between mb-3">

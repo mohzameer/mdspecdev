@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default async function ProjectDetailPage({ params }: Props) {
-    const { orgId, projectId } = await params;
+    const { orgId: orgSlug, projectId } = await params;
     const supabase = await createClient();
     const {
         data: { user },
@@ -20,21 +20,56 @@ export default async function ProjectDetailPage({ params }: Props) {
         redirect('/login');
     }
 
-    const { data: project } = await supabase
-        .from('projects')
-        .select(
-            `
-      id,
-      name,
-      description,
-      organization:organizations(id, name)
-    `
-        )
-        .eq('id', projectId)
+    // Resolve org by slug
+    let org = null;
+    const { data: orgBySlug } = await supabase
+        .from('organizations')
+        .select('id, name, slug')
+        .eq('slug', orgSlug)
         .single();
 
-    if (!project) {
-        redirect(`/orgs/${orgId}`);
+    if (orgBySlug) {
+        org = orgBySlug;
+    } else {
+        // Fallback to ID lookup
+        const { data: orgById } = await supabase
+            .from('organizations')
+            .select('id, name, slug')
+            .eq('id', orgSlug)
+            .single();
+
+        if (orgById) {
+            redirect(`/orgs/${orgById.slug}/projects/${projectId}`);
+        } else {
+            redirect('/orgs');
+        }
+    }
+
+    // Resolve project by slug
+    let project = null;
+    const { data: projectBySlug } = await supabase
+        .from('projects')
+        .select('id, name, slug, description')
+        .eq('slug', projectId)
+        .eq('org_id', org.id)
+        .single();
+
+    if (projectBySlug) {
+        project = projectBySlug;
+    } else {
+        // Fallback to ID lookup
+        const { data: projectById } = await supabase
+            .from('projects')
+            .select('id, name, slug, description')
+            .eq('id', projectId)
+            .eq('org_id', org.id)
+            .single();
+
+        if (projectById) {
+            redirect(`/orgs/${org.slug}/projects/${projectById.slug}`);
+        } else {
+            redirect(`/orgs/${org.slug}`);
+        }
     }
 
     const { data: specs } = await supabase
@@ -54,7 +89,7 @@ export default async function ProjectDetailPage({ params }: Props) {
       revisions(id)
     `
         )
-        .eq('project_id', projectId)
+        .eq('project_id', project.id)
         .is('archived_at', null)
         .order('updated_at', { ascending: false });
 
@@ -63,10 +98,10 @@ export default async function ProjectDetailPage({ params }: Props) {
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-4">
                     <Link
-                        href={`/orgs/${orgId}`}
+                        href={`/orgs/${org.slug}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
-                        ← Back to {(project as any).organization?.name}
+                        ← Back to {org.name}
                     </Link>
                 </div>
 
@@ -82,7 +117,7 @@ export default async function ProjectDetailPage({ params }: Props) {
                         )}
                     </div>
                     <Link
-                        href={`/orgs/${orgId}/projects/${projectId}/specs/new`}
+                        href={`/orgs/${org.slug}/projects/${project.slug}/specs/new`}
                         className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
                     >
                         New Spec
@@ -101,7 +136,7 @@ export default async function ProjectDetailPage({ params }: Props) {
                             Create your first specification in this project.
                         </p>
                         <Link
-                            href={`/orgs/${orgId}/projects/${projectId}/specs/new`}
+                            href={`/orgs/${org.slug}/projects/${project.slug}/specs/new`}
                             className="inline-flex px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
                         >
                             Create Specification
@@ -118,7 +153,7 @@ export default async function ProjectDetailPage({ params }: Props) {
                             return (
                                 <Link
                                     key={spec.id}
-                                    href={`/orgs/${orgId}/projects/${projectId}/specs/${spec.slug}`}
+                                    href={`/orgs/${org.slug}/projects/${project.slug}/specs/${spec.slug}`}
                                     className="block p-6 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl border border-slate-200 dark:border-white/10 transition-all duration-200 group shadow-sm"
                                 >
                                     <div className="flex items-start justify-between mb-3">

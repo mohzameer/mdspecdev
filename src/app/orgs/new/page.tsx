@@ -1,22 +1,30 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import { slugify } from '@/lib/utils';
 
 export default function NewOrgPage() {
     const [name, setName] = useState('');
+    const [slug, setSlug] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
     const supabase = createClient();
+
+    // Auto-generate slug from name
+    useEffect(() => {
+        if (name) {
+            setSlug(slugify(name));
+        }
+    }, [name]);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
         setLoading(true);
         setError(null);
 
-        // First ensure profile exists
         const {
             data: { user },
         } = await supabase.auth.getUser();
@@ -48,10 +56,23 @@ export default function NewOrgPage() {
             }
         }
 
-        // Create organization
+        // Check if slug is taken
+        const { data: existingOrg } = await supabase
+            .from('organizations')
+            .select('id')
+            .eq('slug', slug)
+            .single();
+
+        if (existingOrg) {
+            setError('An organization with this URL slug already exists');
+            setLoading(false);
+            return;
+        }
+
+        // Create organization with slug
         const { data: org, error: createError } = await supabase
             .from('organizations')
-            .insert({ name })
+            .insert({ name, slug })
             .select()
             .single();
 
@@ -61,14 +82,14 @@ export default function NewOrgPage() {
             return;
         }
 
-        // Create owner membership manually (since trigger may not work)
+        // Create owner membership manually
         await supabase.from('org_memberships').insert({
             org_id: org.id,
             user_id: user.id,
             role: 'owner',
         });
 
-        router.push(`/orgs/${org.id}`);
+        router.push(`/orgs/${org.slug}`);
         router.refresh();
     }
 
@@ -79,7 +100,7 @@ export default function NewOrgPage() {
                     Create Organization
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 mb-8">
-                    Organizations contain projects and team members.
+                    Organizations help you group projects and manage team access.
                 </p>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
@@ -103,24 +124,50 @@ export default function NewOrgPage() {
                             onChange={(e) => setName(e.target.value)}
                             required
                             className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                            placeholder="Acme Inc."
+                            placeholder="My Company"
                         />
+                    </div>
+
+                    <div>
+                        <label
+                            htmlFor="slug"
+                            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                        >
+                            URL slug
+                        </label>
+                        <div className="flex items-center">
+                            <span className="text-slate-400 dark:text-slate-500 mr-2">
+                                /orgs/
+                            </span>
+                            <input
+                                id="slug"
+                                type="text"
+                                value={slug}
+                                onChange={(e) => setSlug(e.target.value)}
+                                required
+                                className="flex-1 px-4 py-3 bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                placeholder="my-company"
+                            />
+                        </div>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                            This will be used in URLs for your organization
+                        </p>
                     </div>
 
                     <div className="flex gap-3">
                         <button
                             type="button"
                             onClick={() => router.back()}
-                            className="flex-1 py-3 px-4 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white font-medium rounded-lg transition-all"
+                            className="px-6 py-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white font-medium rounded-lg transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-all disabled:opacity-50"
+                            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-all disabled:opacity-50"
                         >
-                            {loading ? 'Creating...' : 'Create'}
+                            {loading ? 'Creating...' : 'Create Organization'}
                         </button>
                     </div>
                 </form>

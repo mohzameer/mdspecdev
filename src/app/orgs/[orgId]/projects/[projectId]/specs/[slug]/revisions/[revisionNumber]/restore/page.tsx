@@ -7,9 +7,9 @@ import Link from 'next/link';
 
 export default function RestoreRevisionPage() {
     const params = useParams();
-    const orgId = params.orgId as string;
-    const projectId = params.projectId as string;
-    const slug = params.slug as string;
+    const orgSlug = params.orgId as string;
+    const projectSlug = params.projectId as string;
+    const specSlug = params.slug as string;
     const revisionNumber = parseInt(params.revisionNumber as string);
 
     const [spec, setSpec] = useState<any>(null);
@@ -25,6 +25,64 @@ export default function RestoreRevisionPage() {
     useEffect(() => {
         async function loadData() {
             try {
+                // Resolve org by slug
+                let orgId = null;
+                const { data: orgBySlug } = await supabase
+                    .from('organizations')
+                    .select('id, slug')
+                    .eq('slug', orgSlug)
+                    .single();
+
+                if (orgBySlug) {
+                    orgId = orgBySlug.id;
+                } else {
+                    const { data: orgById } = await supabase
+                        .from('organizations')
+                        .select('id, slug')
+                        .eq('id', orgSlug)
+                        .single();
+
+                    if (orgById) {
+                        router.replace(
+                            `/orgs/${orgById.slug}/projects/${projectSlug}/specs/${specSlug}/revisions/${revisionNumber}/restore`
+                        );
+                        return;
+                    } else {
+                        router.push('/orgs');
+                        return;
+                    }
+                }
+
+                // Resolve project by slug
+                let projectId = null;
+                const { data: projectBySlug } = await supabase
+                    .from('projects')
+                    .select('id, slug')
+                    .eq('slug', projectSlug)
+                    .eq('org_id', orgId)
+                    .single();
+
+                if (projectBySlug) {
+                    projectId = projectBySlug.id;
+                } else {
+                    const { data: projectById } = await supabase
+                        .from('projects')
+                        .select('id, slug')
+                        .eq('id', projectSlug)
+                        .eq('org_id', orgId)
+                        .single();
+
+                    if (projectById) {
+                        router.replace(
+                            `/orgs/${orgSlug}/projects/${projectById.slug}/specs/${specSlug}/revisions/${revisionNumber}/restore`
+                        );
+                        return;
+                    } else {
+                        router.push(`/orgs/${orgSlug}`);
+                        return;
+                    }
+                }
+
                 const { data: specData } = await supabase
                     .from('specs')
                     .select(
@@ -35,12 +93,12 @@ export default function RestoreRevisionPage() {
           `
                     )
                     .eq('project_id', projectId)
-                    .eq('slug', slug)
+                    .eq('slug', specSlug)
                     .is('archived_at', null)
                     .single();
 
                 if (!specData) {
-                    router.push(`/orgs/${orgId}/projects/${projectId}`);
+                    router.push(`/orgs/${orgSlug}/projects/${projectSlug}`);
                     return;
                 }
 
@@ -52,7 +110,7 @@ export default function RestoreRevisionPage() {
 
                 if (!rev) {
                     router.push(
-                        `/orgs/${orgId}/projects/${projectId}/specs/${slug}/revisions`
+                        `/orgs/${orgSlug}/projects/${projectSlug}/specs/${specSlug}/revisions`
                     );
                     return;
                 }
@@ -76,7 +134,7 @@ export default function RestoreRevisionPage() {
         }
 
         loadData();
-    }, [supabase, projectId, slug, revisionNumber, orgId, router]);
+    }, [supabase, projectSlug, specSlug, revisionNumber, orgSlug, router]);
 
     async function handleRestore() {
         setRestoring(true);
@@ -136,8 +194,8 @@ export default function RestoreRevisionPage() {
             const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
             if (frontmatterMatch) {
                 const yaml = frontmatterMatch[1];
-                const metadata: Record<string, any> = {};
                 const lines = yaml.split('\n');
+                const metadata: Record<string, any> = {};
 
                 for (const line of lines) {
                     const match = line.match(/^(\w+):\s*(.*)$/);
@@ -189,7 +247,7 @@ export default function RestoreRevisionPage() {
                     .eq('id', spec.id);
             }
 
-            router.push(`/orgs/${orgId}/projects/${projectId}/specs/${slug}`);
+            router.push(`/orgs/${orgSlug}/projects/${projectSlug}/specs/${specSlug}`);
             router.refresh();
         } catch (err: any) {
             setError(err.message || 'An error occurred');
@@ -210,7 +268,7 @@ export default function RestoreRevisionPage() {
             <div className="container mx-auto px-4 py-8 max-w-2xl">
                 <div className="mb-4">
                     <Link
-                        href={`/orgs/${orgId}/projects/${projectId}/specs/${slug}/revisions/${revisionNumber}`}
+                        href={`/orgs/${orgSlug}/projects/${projectSlug}/specs/${specSlug}/revisions/${revisionNumber}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
                         ← Back to revision

@@ -1,30 +1,86 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import { slugify } from '@/lib/utils';
 
 export default function NewProjectPage() {
     const params = useParams();
-    const orgId = params.orgId as string;
+    const orgSlug = params.orgId as string;
     const [name, setName] = useState('');
+    const [slug, setSlug] = useState('');
     const [description, setDescription] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [orgId, setOrgId] = useState<string | null>(null);
     const router = useRouter();
     const supabase = createClient();
 
+    // Auto-generate slug from name
+    useEffect(() => {
+        if (name) {
+            setSlug(slugify(name));
+        }
+    }, [name]);
+
+    // Resolve org by slug on mount
+    useEffect(() => {
+        async function resolveOrg() {
+            const { data: org } = await supabase
+                .from('organizations')
+                .select('id')
+                .eq('slug', orgSlug)
+                .single();
+
+            if (org) {
+                setOrgId(org.id);
+            } else {
+                const { data: orgById } = await supabase
+                    .from('organizations')
+                    .select('id, slug')
+                    .eq('id', orgSlug)
+                    .single();
+
+                if (orgById) {
+                    setOrgId(orgById.id);
+                    router.replace(`/orgs/${orgById.slug}/projects/new`);
+                } else {
+                    router.push('/orgs');
+                }
+            }
+        }
+        resolveOrg();
+    }, [supabase, orgSlug, router]);
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
+        if (!orgId) return;
+
         setLoading(true);
         setError(null);
+
+        // Check if slug is taken within this org
+        const { data: existingProject } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('org_id', orgId)
+            .eq('slug', slug)
+            .single();
+
+        if (existingProject) {
+            setError('A project with this URL slug already exists in this organization');
+            setLoading(false);
+            return;
+        }
 
         const { data: project, error: createError } = await supabase
             .from('projects')
             .insert({
                 org_id: orgId,
                 name,
+                slug,
                 description: description || null,
             })
             .select()
@@ -36,8 +92,16 @@ export default function NewProjectPage() {
             return;
         }
 
-        router.push(`/orgs/${orgId}/projects/${project.id}`);
+        router.push(`/orgs/${orgSlug}/projects/${project.slug}`);
         router.refresh();
+    }
+
+    if (!orgId) {
+        return (
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+                <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+            </div>
+        );
     }
 
     return (
@@ -45,7 +109,7 @@ export default function NewProjectPage() {
             <div className="container mx-auto px-4 py-8 max-w-lg">
                 <div className="mb-4">
                     <Link
-                        href={`/orgs/${orgId}`}
+                        href={`/orgs/${orgSlug}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
                         ← Back to organization
@@ -82,6 +146,27 @@ export default function NewProjectPage() {
                             className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                             placeholder="API Platform"
                         />
+                    </div>
+
+                    <div>
+                        <label
+                            htmlFor="slug"
+                            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                        >
+                            URL slug
+                        </label>
+                        <input
+                            id="slug"
+                            type="text"
+                            value={slug}
+                            onChange={(e) => setSlug(e.target.value)}
+                            required
+                            className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            placeholder="api-platform"
+                        />
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                            This will be used in URLs for this project
+                        </p>
                     </div>
 
                     <div>

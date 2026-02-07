@@ -39,24 +39,89 @@ Describe the detailed design here.
 
 export default function NewSpecPage() {
     const params = useParams();
-    const orgId = params.orgId as string;
-    const projectId = params.projectId as string;
+    const orgSlug = params.orgId as string;
+    const projectSlug = params.projectId as string;
     const [name, setName] = useState('');
-    const [slug, setSlug] = useState('');
+    const [specSlug, setSpecSlug] = useState('');
     const [content, setContent] = useState(DEFAULT_CONTENT);
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [projectId, setProjectId] = useState<string | null>(null);
+    const [resolving, setResolving] = useState(true);
     const router = useRouter();
     const supabase = createClient();
 
     useEffect(() => {
         if (name) {
-            setSlug(slugify(name));
+            setSpecSlug(slugify(name));
         }
     }, [name]);
 
+    // Resolve org and project by slug
+    useEffect(() => {
+        async function resolveProject() {
+            // Resolve org
+            let orgId = null;
+            const { data: orgBySlug } = await supabase
+                .from('organizations')
+                .select('id, slug')
+                .eq('slug', orgSlug)
+                .single();
+
+            if (orgBySlug) {
+                orgId = orgBySlug.id;
+            } else {
+                const { data: orgById } = await supabase
+                    .from('organizations')
+                    .select('id, slug')
+                    .eq('id', orgSlug)
+                    .single();
+
+                if (orgById) {
+                    router.replace(`/orgs/${orgById.slug}/projects/${projectSlug}/specs/new`);
+                    return;
+                } else {
+                    router.push('/orgs');
+                    return;
+                }
+            }
+
+            // Resolve project
+            const { data: projectBySlug } = await supabase
+                .from('projects')
+                .select('id, slug')
+                .eq('slug', projectSlug)
+                .eq('org_id', orgId)
+                .single();
+
+            if (projectBySlug) {
+                setProjectId(projectBySlug.id);
+            } else {
+                const { data: projectById } = await supabase
+                    .from('projects')
+                    .select('id, slug')
+                    .eq('id', projectSlug)
+                    .eq('org_id', orgId)
+                    .single();
+
+                if (projectById) {
+                    router.replace(`/orgs/${orgSlug}/projects/${projectById.slug}/specs/new`);
+                    return;
+                } else {
+                    router.push(`/orgs/${orgSlug}`);
+                    return;
+                }
+            }
+
+            setResolving(false);
+        }
+        resolveProject();
+    }, [supabase, orgSlug, projectSlug, router]);
+
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
+        if (!projectId) return;
+
         setLoading(true);
         setError(null);
 
@@ -125,7 +190,7 @@ export default function NewSpecPage() {
                 .insert({
                     project_id: projectId,
                     name,
-                    slug,
+                    slug: specSlug,
                     owner_id: user.id,
                     progress,
                     status: metadata.status || null,
@@ -176,7 +241,7 @@ export default function NewSpecPage() {
                 return;
             }
 
-            router.push(`/orgs/${orgId}/projects/${projectId}/specs/${slug}`);
+            router.push(`/orgs/${orgSlug}/projects/${projectSlug}/specs/${specSlug}`);
             router.refresh();
         } catch (err: any) {
             setError(err.message || 'An error occurred');
@@ -184,12 +249,20 @@ export default function NewSpecPage() {
         }
     }
 
+    if (resolving) {
+        return (
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+                <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-4">
                     <Link
-                        href={`/orgs/${orgId}/projects/${projectId}`}
+                        href={`/orgs/${orgSlug}/projects/${projectSlug}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
                         ← Back to project
@@ -239,8 +312,8 @@ export default function NewSpecPage() {
                             <input
                                 id="slug"
                                 type="text"
-                                value={slug}
-                                onChange={(e) => setSlug(e.target.value)}
+                                value={specSlug}
+                                onChange={(e) => setSpecSlug(e.target.value)}
                                 required
                                 className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                                 placeholder="api-authentication"
