@@ -39,8 +39,8 @@ Describe the detailed design here.
 
 export default function NewSpecPage() {
     const params = useParams();
-    const orgSlug = params.orgId as string;
-    const projectSlug = params.projectId as string;
+    const orgSlug = params.orgSlug as string;
+    const projectSlug = params.projectSlug as string;
     const [name, setName] = useState('');
     const [specSlug, setSpecSlug] = useState('');
     const [content, setContent] = useState(DEFAULT_CONTENT);
@@ -78,10 +78,10 @@ export default function NewSpecPage() {
                     .single();
 
                 if (orgById) {
-                    router.replace(`/orgs/${orgById.slug}/projects/${projectSlug}/specs/new`);
+                    router.replace(`/${orgById.slug}/${projectSlug}/new`);
                     return;
                 } else {
-                    router.push('/orgs');
+                    router.push('/dashboard');
                     return;
                 }
             }
@@ -105,10 +105,10 @@ export default function NewSpecPage() {
                     .single();
 
                 if (projectById) {
-                    router.replace(`/orgs/${orgSlug}/projects/${projectById.slug}/specs/new`);
+                    router.replace(`/${orgSlug}/${projectById.slug}/new`);
                     return;
                 } else {
-                    router.push(`/orgs/${orgSlug}`);
+                    router.push(`/${orgSlug}`);
                     return;
                 }
             }
@@ -241,7 +241,7 @@ export default function NewSpecPage() {
                 return;
             }
 
-            router.push(`/orgs/${orgSlug}/projects/${projectSlug}/specs/${specSlug}`);
+            router.push(`/${orgSlug}/${projectSlug}/${specSlug}`);
             router.refresh();
         } catch (err: any) {
             setError(err.message || 'An error occurred');
@@ -262,7 +262,7 @@ export default function NewSpecPage() {
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-4">
                     <Link
-                        href={`/orgs/${orgSlug}/projects/${projectSlug}`}
+                        href={`/${orgSlug}/${projectSlug}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
                         ← Back to project

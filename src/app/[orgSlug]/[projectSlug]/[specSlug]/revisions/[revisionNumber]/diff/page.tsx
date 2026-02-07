@@ -6,18 +6,18 @@ import { formatDate } from '@/lib/utils';
 
 interface Props {
     params: Promise<{
-        orgId: string;
-        projectId: string;
-        slug: string;
+        orgSlug: string;
+        projectSlug: string;
+        specSlug: string;
         revisionNumber: string;
     }>;
 }
 
 export default async function DiffPage({ params }: Props) {
     const {
-        orgId: orgSlug,
-        projectId: projectSlug,
-        slug,
+        orgSlug,
+        projectSlug,
+        specSlug,
         revisionNumber,
     } = await params;
     const supabase = await createClient();
@@ -48,7 +48,7 @@ export default async function DiffPage({ params }: Props) {
 
         if (orgById) {
             redirect(
-                `/orgs/${orgById.slug}/projects/${projectSlug}/specs/${slug}/revisions/${revisionNumber}/diff`
+                `/orgs/${orgById.slug}/projects/${projectSlug}/specs/${specSlug}/revisions/${revisionNumber}/diff`
             );
         } else {
             redirect('/orgs');
@@ -76,7 +76,7 @@ export default async function DiffPage({ params }: Props) {
 
         if (projectById) {
             redirect(
-                `/orgs/${org.slug}/projects/${projectById.slug}/specs/${slug}/revisions/${revisionNumber}/diff`
+                `/orgs/${org.slug}/projects/${projectById.slug}/specs/${specSlug}/revisions/${revisionNumber}/diff`
             );
         } else {
             redirect(`/orgs/${org.slug}`);
@@ -103,7 +103,7 @@ export default async function DiffPage({ params }: Props) {
     `
         )
         .eq('project_id', project.id)
-        .eq('slug', slug)
+        .eq('slug', specSlug)
         .is('archived_at', null)
         .single();
 
@@ -120,7 +120,7 @@ export default async function DiffPage({ params }: Props) {
 
     if (!currentRevision || !previousRevision) {
         redirect(
-            `/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/revisions`
+            `/orgs/${org.slug}/projects/${project.slug}/specs/${specSlug}/revisions`
         );
     }
 
@@ -145,7 +145,7 @@ export default async function DiffPage({ params }: Props) {
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-4">
                     <Link
-                        href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/revisions`}
+                        href={`/orgs/${org.slug}/projects/${project.slug}/specs/${specSlug}/revisions`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
                         ← Back to revisions

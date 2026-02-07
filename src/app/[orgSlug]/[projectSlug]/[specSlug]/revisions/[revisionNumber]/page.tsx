@@ -6,18 +6,18 @@ import { formatDate } from '@/lib/utils';
 
 interface Props {
     params: Promise<{
-        orgId: string;
-        projectId: string;
-        slug: string;
+        orgSlug: string;
+        projectSlug: string;
+        specSlug: string;
         revisionNumber: string;
     }>;
 }
 
 export default async function RevisionDetailPage({ params }: Props) {
     const {
-        orgId: orgSlug,
-        projectId: projectSlug,
-        slug,
+        orgSlug,
+        projectSlug,
+        specSlug,
         revisionNumber,
     } = await params;
     const supabase = await createClient();
@@ -48,10 +48,10 @@ export default async function RevisionDetailPage({ params }: Props) {
 
         if (orgById) {
             redirect(
-                `/orgs/${orgById.slug}/projects/${projectSlug}/specs/${slug}/revisions/${revisionNumber}`
+                `/${orgById.slug}/${projectSlug}/${specSlug}/revisions/${revisionNumber}`
             );
         } else {
-            redirect('/orgs');
+            redirect('/dashboard');
         }
     }
 
@@ -76,10 +76,10 @@ export default async function RevisionDetailPage({ params }: Props) {
 
         if (projectById) {
             redirect(
-                `/orgs/${org.slug}/projects/${projectById.slug}/specs/${slug}/revisions/${revisionNumber}`
+                `/${org.slug}/${projectById.slug}/${specSlug}/revisions/${revisionNumber}`
             );
         } else {
-            redirect(`/orgs/${org.slug}`);
+            redirect(`/${org.slug}`);
         }
     }
 
@@ -101,12 +101,12 @@ export default async function RevisionDetailPage({ params }: Props) {
     `
         )
         .eq('project_id', project.id)
-        .eq('slug', slug)
+        .eq('slug', specSlug)
         .is('archived_at', null)
         .single();
 
     if (!spec) {
-        redirect(`/orgs/${org.slug}/projects/${project.slug}`);
+        redirect(`/${org.slug}/${project.slug}`);
     }
 
     const revisionNum = parseInt(revisionNumber);
@@ -116,7 +116,7 @@ export default async function RevisionDetailPage({ params }: Props) {
 
     if (!revision) {
         redirect(
-            `/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/revisions`
+            `/${org.slug}/${project.slug}/${specSlug}/revisions`
         );
     }
 
@@ -142,7 +142,7 @@ export default async function RevisionDetailPage({ params }: Props) {
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-4">
                     <Link
-                        href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/revisions`}
+                        href={`/${org.slug}/${project.slug}/${specSlug}/revisions`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
                         ← Back to revisions
@@ -177,7 +177,7 @@ export default async function RevisionDetailPage({ params }: Props) {
                         <div className="flex gap-2">
                             {!isLatest && (
                                 <Link
-                                    href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/revisions/${revisionNum}/restore`}
+                                    href={`/${org.slug}/${project.slug}/${specSlug}/revisions/${revisionNum}/restore`}
                                     className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-medium rounded-lg transition-colors"
                                 >
                                     Restore This Version
@@ -185,7 +185,7 @@ export default async function RevisionDetailPage({ params }: Props) {
                             )}
                             {revisionNum > 1 && (
                                 <Link
-                                    href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/revisions/${revisionNum}/diff`}
+                                    href={`/${org.slug}/${project.slug}/${specSlug}/revisions/${revisionNum}/diff`}
                                     className="px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white font-medium rounded-lg transition-colors border border-slate-200 dark:border-white/10"
                                 >
                                     Compare with v{revisionNum - 1}

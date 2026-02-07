@@ -6,11 +6,11 @@ import { StatusBadge, TagsList } from '@/components/spec/StatusBadge';
 import { formatRelativeTime } from '@/lib/utils';
 
 interface Props {
-    params: Promise<{ orgId: string; projectId: string }>;
+    params: Promise<{ orgSlug: string; projectSlug: string }>;
 }
 
 export default async function ProjectDetailPage({ params }: Props) {
-    const { orgId: orgSlug, projectId } = await params;
+    const { orgSlug, projectSlug } = await params;
     const supabase = await createClient();
     const {
         data: { user },
@@ -39,9 +39,9 @@ export default async function ProjectDetailPage({ params }: Props) {
             .single();
 
         if (orgById) {
-            redirect(`/orgs/${orgById.slug}/projects/${projectId}`);
+            redirect(`/${orgById.slug}/${projectSlug}`);
         } else {
-            redirect('/orgs');
+            redirect('/dashboard');
         }
     }
 
@@ -50,7 +50,7 @@ export default async function ProjectDetailPage({ params }: Props) {
     const { data: projectBySlug } = await supabase
         .from('projects')
         .select('id, name, slug, description')
-        .eq('slug', projectId)
+        .eq('slug', projectSlug)
         .eq('org_id', org.id)
         .single();
 
@@ -61,14 +61,14 @@ export default async function ProjectDetailPage({ params }: Props) {
         const { data: projectById } = await supabase
             .from('projects')
             .select('id, name, slug, description')
-            .eq('id', projectId)
+            .eq('id', projectSlug)
             .eq('org_id', org.id)
             .single();
 
         if (projectById) {
-            redirect(`/orgs/${org.slug}/projects/${projectById.slug}`);
+            redirect(`/${org.slug}/${projectById.slug}`);
         } else {
-            redirect(`/orgs/${org.slug}`);
+            redirect(`/${org.slug}`);
         }
     }
 
@@ -98,7 +98,7 @@ export default async function ProjectDetailPage({ params }: Props) {
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-4">
                     <Link
-                        href={`/orgs/${org.slug}`}
+                        href={`/${org.slug}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
                         ← Back to {org.name}
@@ -117,7 +117,7 @@ export default async function ProjectDetailPage({ params }: Props) {
                         )}
                     </div>
                     <Link
-                        href={`/orgs/${org.slug}/projects/${project.slug}/specs/new`}
+                        href={`/${org.slug}/${project.slug}/new`}
                         className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
                     >
                         New Spec
@@ -136,7 +136,7 @@ export default async function ProjectDetailPage({ params }: Props) {
                             Create your first specification in this project.
                         </p>
                         <Link
-                            href={`/orgs/${org.slug}/projects/${project.slug}/specs/new`}
+                            href={`/${org.slug}/${project.slug}/new`}
                             className="inline-flex px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
                         >
                             Create Specification
@@ -153,7 +153,7 @@ export default async function ProjectDetailPage({ params }: Props) {
                             return (
                                 <Link
                                     key={spec.id}
-                                    href={`/orgs/${org.slug}/projects/${project.slug}/specs/${spec.slug}`}
+                                    href={`/${org.slug}/${project.slug}/${spec.slug}`}
                                     className="block p-6 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl border border-slate-200 dark:border-white/10 transition-all duration-200 group shadow-sm"
                                 >
                                     <div className="flex items-start justify-between mb-3">

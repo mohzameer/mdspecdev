@@ -3,11 +3,11 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 
 interface Props {
-    params: Promise<{ orgId: string }>;
+    params: Promise<{ orgSlug: string }>;
 }
 
 export default async function OrgDetailPage({ params }: Props) {
-    const { orgId } = await params;
+    const { orgSlug } = await params;
     const supabase = await createClient();
     const {
         data: { user },
@@ -22,7 +22,7 @@ export default async function OrgDetailPage({ params }: Props) {
     const { data: orgBySlug } = await supabase
         .from('organizations')
         .select('*')
-        .eq('slug', orgId)
+        .eq('slug', orgSlug)
         .single();
 
     if (orgBySlug) {
@@ -32,17 +32,17 @@ export default async function OrgDetailPage({ params }: Props) {
         const { data: orgById } = await supabase
             .from('organizations')
             .select('*')
-            .eq('id', orgId)
+            .eq('id', orgSlug)
             .single();
 
         if (orgById) {
             // Redirect to slug-based URL
-            redirect(`/orgs/${orgById.slug}`);
+            redirect(`/${orgById.slug}`);
         }
     }
 
     if (!org) {
-        redirect('/orgs');
+        redirect('/dashboard');
     }
 
     const { data: projects } = await supabase
@@ -56,10 +56,10 @@ export default async function OrgDetailPage({ params }: Props) {
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-4">
                     <Link
-                        href="/orgs"
+                        href="/dashboard"
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
-                        ← Back to organizations
+                        ← Back to dashboard
                     </Link>
                 </div>
 
@@ -78,7 +78,7 @@ export default async function OrgDetailPage({ params }: Props) {
                         </div>
                     </div>
                     <Link
-                        href={`/orgs/${org.slug}/projects/new`}
+                        href={`/${org.slug}/new`}
                         className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
                     >
                         New Project
@@ -101,7 +101,7 @@ export default async function OrgDetailPage({ params }: Props) {
                             Create a project to organize your specifications.
                         </p>
                         <Link
-                            href={`/orgs/${org.slug}/projects/new`}
+                            href={`/${org.slug}/new`}
                             className="inline-flex px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
                         >
                             Create Project
@@ -112,7 +112,7 @@ export default async function OrgDetailPage({ params }: Props) {
                         {projects.map((project) => (
                             <Link
                                 key={project.id}
-                                href={`/orgs/${org.slug}/projects/${project.slug}`}
+                                href={`/${org.slug}/${project.slug}`}
                                 className="block p-6 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl border border-slate-200 dark:border-white/10 transition-all duration-200 group shadow-sm"
                             >
                                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-2">

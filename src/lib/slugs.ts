@@ -1,0 +1,35 @@
+export const RESERVED_SLUGS = [
+    'api',
+    'auth',
+    'dashboard',
+    'login',
+    'logout',
+    'signup',
+    'settings',
+    'admin',
+    'profile',
+    'new',
+    'create',
+    'edit',
+    'delete',
+    'update',
+    'orgs',
+    'projects',
+    'specs',
+    'revisions',
+    'diff',
+    'restore',
+    'static',
+    'public',
+    'assets',
+    'images',
+    'favicons',
+    'robots.txt',
+    'sitemap.xml',
+    '404',
+    '500',
+];
+
+export function isReservedSlug(slug: string): boolean {
+    return RESERVED_SLUGS.includes(slug.toLowerCase());
+}

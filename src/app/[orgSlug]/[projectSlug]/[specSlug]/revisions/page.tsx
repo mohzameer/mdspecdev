@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { formatRelativeTime, formatDate } from '@/lib/utils';
 
 interface Props {
-    params: Promise<{ orgId: string; projectId: string; slug: string }>;
+    params: Promise<{ orgSlug: string; projectSlug: string; specSlug: string }>;
 }
 
 export default async function RevisionsPage({ params }: Props) {
-    const { orgId: orgSlug, projectId: projectSlug, slug } = await params;
+    const { orgSlug, projectSlug, specSlug } = await params;
     const supabase = await createClient();
     const {
         data: { user },
@@ -36,9 +36,9 @@ export default async function RevisionsPage({ params }: Props) {
             .single();
 
         if (orgById) {
-            redirect(`/orgs/${orgById.slug}/projects/${projectSlug}/specs/${slug}/revisions`);
+            redirect(`/${orgById.slug}/${projectSlug}/${specSlug}/revisions`);
         } else {
-            redirect('/orgs');
+            redirect('/dashboard');
         }
     }
 
@@ -62,9 +62,9 @@ export default async function RevisionsPage({ params }: Props) {
             .single();
 
         if (projectById) {
-            redirect(`/orgs/${org.slug}/projects/${projectById.slug}/specs/${slug}/revisions`);
+            redirect(`/${org.slug}/${projectById.slug}/${specSlug}/revisions`);
         } else {
-            redirect(`/orgs/${org.slug}`);
+            redirect(`/${org.slug}`);
         }
     }
 
@@ -85,12 +85,12 @@ export default async function RevisionsPage({ params }: Props) {
     `
         )
         .eq('project_id', project.id)
-        .eq('slug', slug)
+        .eq('slug', specSlug)
         .is('archived_at', null)
         .single();
 
     if (!spec) {
-        redirect(`/orgs/${org.slug}/projects/${project.slug}`);
+        redirect(`/${org.slug}/${project.slug}`);
     }
 
     const revisions = (spec.revisions as any[])?.sort(
@@ -102,7 +102,7 @@ export default async function RevisionsPage({ params }: Props) {
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-4">
                     <Link
-                        href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}`}
+                        href={`/${org.slug}/${project.slug}/${specSlug}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
                         ← Back to {spec.name}
@@ -159,14 +159,14 @@ export default async function RevisionsPage({ params }: Props) {
                                     </div>
                                     <div className="flex gap-2">
                                         <Link
-                                            href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/revisions/${revision.revision_number}`}
+                                            href={`/${org.slug}/${project.slug}/${specSlug}/revisions/${revision.revision_number}`}
                                             className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white rounded-lg transition-colors"
                                         >
                                             View
                                         </Link>
                                         {index > 0 && (
                                             <Link
-                                                href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/revisions/${revision.revision_number}/diff`}
+                                                href={`/${org.slug}/${project.slug}/${specSlug}/revisions/${revision.revision_number}/diff`}
                                                 className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white rounded-lg transition-colors"
                                             >
                                                 Diff

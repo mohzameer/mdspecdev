@@ -86,7 +86,7 @@ export default async function DashboardPage() {
                     </div>
                     {hasOrgs && (
                         <Link
-                            href="/orgs"
+                            href="/new-org"
                             className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
                         >
                             New Spec
@@ -107,7 +107,7 @@ export default async function DashboardPage() {
                             Organizations help you group projects and collaborate with your team.
                         </p>
                         <Link
-                            href="/orgs/new"
+                            href="/new-org"
                             className="inline-flex px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
                         >
                             Create Organization
@@ -125,7 +125,7 @@ export default async function DashboardPage() {
                             Create your first specification to get started.
                         </p>
                         <Link
-                            href="/orgs"
+                            href="/new-org"
                             className="inline-flex px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
                         >
                             Create Specification
@@ -141,7 +141,7 @@ export default async function DashboardPage() {
                             return (
                                 <Link
                                     key={spec.id}
-                                    href={`/orgs/${spec.project.organization.slug}/projects/${spec.project.slug}/specs/${spec.slug}`}
+                                    href={`/${spec.project.organization.slug}/${spec.project.slug}/${spec.slug}`}
                                     className="block p-6 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl border border-slate-200 dark:border-white/10 transition-all duration-200 group shadow-sm"
                                 >
                                     <div className="flex items-start justify-between mb-3">

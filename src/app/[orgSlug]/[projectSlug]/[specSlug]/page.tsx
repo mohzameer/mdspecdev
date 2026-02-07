@@ -11,11 +11,11 @@ import { MarkdownRenderer } from '@/components/spec/MarkdownRenderer';
 import { formatRelativeTime, formatDate } from '@/lib/utils';
 
 interface Props {
-    params: Promise<{ orgId: string; projectId: string; slug: string }>;
+    params: Promise<{ orgSlug: string; projectSlug: string; specSlug: string }>;
 }
 
 export default async function SpecDetailPage({ params }: Props) {
-    const { orgId: orgSlug, projectId: projectSlug, slug } = await params;
+    const { orgSlug, projectSlug, specSlug } = await params;
     const supabase = await createClient();
     const {
         data: { user },
@@ -43,9 +43,9 @@ export default async function SpecDetailPage({ params }: Props) {
             .single();
 
         if (orgById) {
-            redirect(`/orgs/${orgById.slug}/projects/${projectSlug}/specs/${slug}`);
+            redirect(`/${orgById.slug}/${projectSlug}/${specSlug}`);
         } else {
-            redirect('/orgs');
+            redirect('/dashboard');
         }
     }
 
@@ -69,9 +69,9 @@ export default async function SpecDetailPage({ params }: Props) {
             .single();
 
         if (projectById) {
-            redirect(`/orgs/${org.slug}/projects/${projectById.slug}/specs/${slug}`);
+            redirect(`/${org.slug}/${projectById.slug}/${specSlug}`);
         } else {
-            redirect(`/orgs/${org.slug}`);
+            redirect(`/${org.slug}`);
         }
     }
 
@@ -95,12 +95,12 @@ export default async function SpecDetailPage({ params }: Props) {
     `
         )
         .eq('project_id', project.id)
-        .eq('slug', slug)
+        .eq('slug', specSlug)
         .is('archived_at', null)
         .single();
 
     if (!spec) {
-        redirect(`/orgs/${org.slug}/projects/${project.slug}`);
+        redirect(`/${org.slug}/${project.slug}`);
     }
 
     const latestRevision = (spec.revisions as any[])?.sort(
@@ -135,14 +135,14 @@ export default async function SpecDetailPage({ params }: Props) {
                     </Link>
                     <span className="mx-2 text-slate-300 dark:text-slate-600">/</span>
                     <Link
-                        href={`/orgs/${org.slug}`}
+                        href={`/${org.slug}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
                     >
                         {org.name}
                     </Link>
                     <span className="mx-2 text-slate-300 dark:text-slate-600">/</span>
                     <Link
-                        href={`/orgs/${org.slug}/projects/${project.slug}`}
+                        href={`/${org.slug}/${project.slug}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
                     >
                         {project.name}
@@ -164,13 +164,13 @@ export default async function SpecDetailPage({ params }: Props) {
                         </div>
                         <div className="flex gap-2">
                             <Link
-                                href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/revisions`}
+                                href={`/${org.slug}/${project.slug}/${specSlug}/revisions`}
                                 className="px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white font-medium rounded-lg transition-colors text-sm"
                             >
                                 History ({revisionCount})
                             </Link>
                             <Link
-                                href={`/orgs/${org.slug}/projects/${project.slug}/specs/${slug}/edit`}
+                                href={`/${org.slug}/${project.slug}/${specSlug}/edit`}
                                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors text-sm"
                             >
                                 Edit

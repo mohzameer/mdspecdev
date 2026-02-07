@@ -7,9 +7,9 @@ import Link from 'next/link';
 
 export default function RestoreRevisionPage() {
     const params = useParams();
-    const orgSlug = params.orgId as string;
-    const projectSlug = params.projectId as string;
-    const specSlug = params.slug as string;
+    const orgSlug = params.orgSlug as string;
+    const projectSlug = params.projectSlug as string;
+    const specSlug = params.specSlug as string;
     const revisionNumber = parseInt(params.revisionNumber as string);
 
     const [spec, setSpec] = useState<any>(null);
@@ -44,11 +44,11 @@ export default function RestoreRevisionPage() {
 
                     if (orgById) {
                         router.replace(
-                            `/orgs/${orgById.slug}/projects/${projectSlug}/specs/${specSlug}/revisions/${revisionNumber}/restore`
+                            `/${orgById.slug}/${projectSlug}/${specSlug}/revisions/${revisionNumber}/restore`
                         );
                         return;
                     } else {
-                        router.push('/orgs');
+                        router.push('/dashboard');
                         return;
                     }
                 }
@@ -74,11 +74,11 @@ export default function RestoreRevisionPage() {
 
                     if (projectById) {
                         router.replace(
-                            `/orgs/${orgSlug}/projects/${projectById.slug}/specs/${specSlug}/revisions/${revisionNumber}/restore`
+                            `/${orgSlug}/${projectById.slug}/${specSlug}/revisions/${revisionNumber}/restore`
                         );
                         return;
                     } else {
-                        router.push(`/orgs/${orgSlug}`);
+                        router.push(`/${orgSlug}`);
                         return;
                     }
                 }
@@ -98,7 +98,7 @@ export default function RestoreRevisionPage() {
                     .single();
 
                 if (!specData) {
-                    router.push(`/orgs/${orgSlug}/projects/${projectSlug}`);
+                    router.push(`/${orgSlug}/${projectSlug}`);
                     return;
                 }
 
@@ -110,7 +110,7 @@ export default function RestoreRevisionPage() {
 
                 if (!rev) {
                     router.push(
-                        `/orgs/${orgSlug}/projects/${projectSlug}/specs/${specSlug}/revisions`
+                        `/${orgSlug}/${projectSlug}/${specSlug}/revisions`
                     );
                     return;
                 }
@@ -247,7 +247,7 @@ export default function RestoreRevisionPage() {
                     .eq('id', spec.id);
             }
 
-            router.push(`/orgs/${orgSlug}/projects/${projectSlug}/specs/${specSlug}`);
+            router.push(`/${orgSlug}/${projectSlug}/${specSlug}`);
             router.refresh();
         } catch (err: any) {
             setError(err.message || 'An error occurred');
@@ -268,7 +268,7 @@ export default function RestoreRevisionPage() {
             <div className="container mx-auto px-4 py-8 max-w-2xl">
                 <div className="mb-4">
                     <Link
-                        href={`/orgs/${orgSlug}/projects/${projectSlug}/specs/${specSlug}/revisions/${revisionNumber}`}
+                        href={`/${orgSlug}/${projectSlug}/${specSlug}/revisions/${revisionNumber}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
                         ← Back to revision

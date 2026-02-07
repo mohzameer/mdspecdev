@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { slugify } from '@/lib/utils';
+import { isReservedSlug } from '@/lib/slugs';
 
 export default function NewOrgPage() {
     const [name, setName] = useState('');
@@ -54,6 +55,13 @@ export default function NewOrgPage() {
                 setLoading(false);
                 return;
             }
+        }
+
+        // Check if slug is reserved
+        if (isReservedSlug(slug)) {
+            setError('This URL slug is reserved for system use');
+            setLoading(false);
+            return;
         }
 
         // Check if slug is taken
@@ -137,7 +145,7 @@ export default function NewOrgPage() {
                         </label>
                         <div className="flex items-center">
                             <span className="text-slate-400 dark:text-slate-500 mr-2">
-                                /orgs/
+                                /
                             </span>
                             <input
                                 id="slug"

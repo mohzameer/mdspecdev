@@ -7,9 +7,9 @@ import Link from 'next/link';
 
 export default function EditSpecPage() {
     const params = useParams();
-    const orgSlug = params.orgId as string;
-    const projectSlug = params.projectId as string;
-    const specSlug = params.slug as string;
+    const orgSlug = params.orgSlug as string;
+    const projectSlug = params.projectSlug as string;
+    const specSlug = params.specSlug as string;
 
     const [name, setName] = useState('');
     const [content, setContent] = useState('');
@@ -46,11 +46,11 @@ export default function EditSpecPage() {
 
                     if (orgById) {
                         router.replace(
-                            `/orgs/${orgById.slug}/projects/${projectSlug}/specs/${specSlug}/edit`
+                            `/${orgById.slug}/${projectSlug}/${specSlug}/edit`
                         );
                         return;
                     } else {
-                        router.push('/orgs');
+                        router.push('/dashboard');
                         return;
                     }
                 }
@@ -76,11 +76,11 @@ export default function EditSpecPage() {
 
                     if (projectById) {
                         router.replace(
-                            `/orgs/${orgSlug}/projects/${projectById.slug}/specs/${specSlug}/edit`
+                            `/${orgSlug}/${projectById.slug}/${specSlug}/edit`
                         );
                         return;
                     } else {
-                        router.push(`/orgs/${orgSlug}`);
+                        router.push(`/${orgSlug}`);
                         return;
                     }
                 }
@@ -103,7 +103,7 @@ export default function EditSpecPage() {
                     .single();
 
                 if (!spec) {
-                    router.push(`/orgs/${orgSlug}/projects/${projectSlug}`);
+                    router.push(`/${orgSlug}/${projectSlug}`);
                     return;
                 }
 
@@ -261,7 +261,7 @@ export default function EditSpecPage() {
                 return;
             }
 
-            router.push(`/orgs/${orgSlug}/projects/${projectSlug}/specs/${specSlug}`);
+            router.push(`/${orgSlug}/${projectSlug}/${specSlug}`);
             router.refresh();
         } catch (err: any) {
             setError(err.message || 'An error occurred');
@@ -282,7 +282,7 @@ export default function EditSpecPage() {
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-4">
                     <Link
-                        href={`/orgs/${orgSlug}/projects/${projectSlug}/specs/${specSlug}`}
+                        href={`/${orgSlug}/${projectSlug}/${specSlug}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
                         ← Back to spec

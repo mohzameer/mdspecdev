@@ -8,7 +8,7 @@ import { slugify } from '@/lib/utils';
 
 export default function NewProjectPage() {
     const params = useParams();
-    const orgSlug = params.orgId as string;
+    const orgSlug = params.orgSlug as string;
     const [name, setName] = useState('');
     const [slug, setSlug] = useState('');
     const [description, setDescription] = useState('');
@@ -45,9 +45,9 @@ export default function NewProjectPage() {
 
                 if (orgById) {
                     setOrgId(orgById.id);
-                    router.replace(`/orgs/${orgById.slug}/projects/new`);
+                    router.replace(`/${orgById.slug}/new`);
                 } else {
-                    router.push('/orgs');
+                    router.push('/dashboard');
                 }
             }
         }
@@ -92,7 +92,7 @@ export default function NewProjectPage() {
             return;
         }
 
-        router.push(`/orgs/${orgSlug}/projects/${project.slug}`);
+        router.push(`/${orgSlug}/${project.slug}`);
         router.refresh();
     }
 
@@ -109,7 +109,7 @@ export default function NewProjectPage() {
             <div className="container mx-auto px-4 py-8 max-w-lg">
                 <div className="mb-4">
                     <Link
-                        href={`/orgs/${orgSlug}`}
+                        href={`/${orgSlug}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
                         ← Back to organization
