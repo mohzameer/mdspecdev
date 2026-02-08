@@ -7,11 +7,15 @@ import DOMPurify from 'dompurify';
 interface MarkdownRendererProps {
   content: string;
   className?: string;
+  onCommentClick?: (headingId: string) => void;
+  disableHeadingIds?: boolean;
 }
 
 export function MarkdownRenderer({
   content,
   className = '',
+  onCommentClick,
+  disableHeadingIds = false,
 }: MarkdownRendererProps) {
   const [html, setHtml] = useState('');
   const containerRef = useRef<HTMLDivElement>(null);
@@ -27,15 +31,25 @@ export function MarkdownRenderer({
       text: string;
       depth: number;
     }) {
+      if (disableHeadingIds) {
+        return `<h${depth} class="font-bold my-2">${text}</h${depth}>\n`;
+      }
+
       const id = text
         .toLowerCase()
         .replace(/[^\w\s-]/g, '')
         .replace(/[\s_-]+/g, '-')
         .replace(/^-+|-+$/g, '');
 
-      return `<h${depth} id="${id}" class="heading-anchor group">
-        <a href="#${id}" class="anchor-link opacity-0 group-hover:opacity-100 mr-2 text-blue-400">#</a>
-        ${text}
+      const commentBtn = onCommentClick ?
+        `<button class="comment-trigger opacity-0 group-hover:opacity-100 ml-2 text-slate-400 hover:text-blue-500 transition-opacity" data-heading-id="${id}" title="Add comment">
+           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
+         </button>` : '';
+
+      return `<h${depth} id="${id}" class="heading-anchor group flex items-center">
+        <a href="#${id}" class="anchor-link opacity-0 group-hover:opacity-100 mr-2 text-blue-400 no-underline">#</a>
+        <span>${text}</span>
+        ${commentBtn}
       </h${depth}>\n`;
     };
 
@@ -141,6 +155,7 @@ export function MarkdownRenderer({
     }
 
     if (visualiseBtn) {
+      // ... existing visualise logic ...
       e.preventDefault();
       const code = visualiseBtn.dataset.code || '';
       let decodedCode = '';
@@ -176,7 +191,18 @@ export function MarkdownRenderer({
         alert('Failed to open diagram: storage write failed. ' + err);
       }
     }
-  }, []);
+
+    // Handle Comment Trigger
+    const commentBtn = target.closest('.comment-trigger') as HTMLButtonElement;
+    if (commentBtn && onCommentClick) {
+      e.preventDefault();
+      e.stopPropagation();
+      const headingId = commentBtn.dataset.headingId;
+      if (headingId) {
+        onCommentClick(headingId);
+      }
+    }
+  }, [onCommentClick]);
 
   useEffect(() => {
     document.addEventListener('click', handleClick);
