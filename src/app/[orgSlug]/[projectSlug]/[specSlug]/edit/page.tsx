@@ -278,12 +278,20 @@ export default function EditSpecPage() {
                     </div>
 
                     <div>
-                        <label
-                            htmlFor="summary"
-                            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-                        >
-                            Summary of changes (optional)
-                        </label>
+                        <div className="flex justify-between items-center mb-2">
+                            <label
+                                htmlFor="summary"
+                                className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                            >
+                                Summary of changes (optional)
+                            </label>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 italic flex items-center gap-1">
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                                </svg>
+                                AI summary will also be generated
+                            </span>
+                        </div>
                         <input
                             id="summary"
                             type="text"

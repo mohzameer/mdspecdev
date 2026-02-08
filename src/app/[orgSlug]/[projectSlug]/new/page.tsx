@@ -1,19 +1,13 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { slugify } from '@/lib/utils';
+import { Status, Maturity } from '@/lib/types';
 
-const DEFAULT_CONTENT = `---
-progress: 0
-status: planned
-maturity: draft
-tags: []
----
-
-# Specification Title
+const INITIAL_CONTENT = `# Specification Title
 
 ## Overview
 
@@ -41,15 +35,37 @@ export default function NewSpecPage() {
     const params = useParams();
     const orgSlug = params.orgSlug as string;
     const projectSlug = params.projectSlug as string;
+
+    // Core Spec Data
     const [name, setName] = useState('');
     const [specSlug, setSpecSlug] = useState('');
-    const [content, setContent] = useState(DEFAULT_CONTENT);
+    const [content, setContent] = useState(INITIAL_CONTENT);
+
+    // Metadata State
+    const [status, setStatus] = useState<Status>('planned');
+    const [maturity, setMaturity] = useState<Maturity>('draft');
+    const [progress, setProgress] = useState(0);
+    const [tagsInput, setTagsInput] = useState('');
+
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [projectId, setProjectId] = useState<string | null>(null);
     const [resolving, setResolving] = useState(true);
     const router = useRouter();
     const supabase = createClient();
+
+    // Generate Frontmatter for Preview and Submission
+    const frontmatter = useMemo(() => {
+        const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
+        const tagsStr = tags.length > 0 ? `[${tags.map(t => `"${t}"`).join(', ')}]` : '[]';
+
+        return `---
+progress: ${progress}
+status: ${status}
+maturity: ${maturity}
+tags: ${tagsStr}
+---`;
+    }, [progress, status, maturity, tagsInput]);
 
     useEffect(() => {
         if (name) {
@@ -136,54 +152,7 @@ export default function NewSpecPage() {
                 return;
             }
 
-            const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-            let metadata: Record<string, any> = {};
-
-            if (frontmatterMatch) {
-                const yaml = frontmatterMatch[1];
-                const lines = yaml.split('\n');
-                for (const line of lines) {
-                    const match = line.match(/^(\w+):\s*(.*)$/);
-                    if (match) {
-                        const key = match[1];
-                        let value: any = match[2].trim();
-
-                        if (value.startsWith('[') && value.endsWith(']')) {
-                            value = value
-                                .slice(1, -1)
-                                .split(',')
-                                .map((v: string) => v.trim())
-                                .filter(Boolean);
-                        }
-
-                        if (!isNaN(Number(value)) && value !== '') {
-                            value = Number(value);
-                        }
-
-                        metadata[key] = value;
-                    }
-                }
-            }
-
-            // Ensure tags is an array
-            let tags: string[] | null = null;
-            if (metadata.tags) {
-                if (Array.isArray(metadata.tags)) {
-                    tags = metadata.tags.filter((t: string) => t && t.trim());
-                } else if (typeof metadata.tags === 'string') {
-                    tags = [metadata.tags.trim()].filter(Boolean);
-                }
-                if (tags && tags.length === 0) tags = null;
-            }
-
-            // Validate progress
-            let progress: number | null = null;
-            if (metadata.progress !== undefined && metadata.progress !== null) {
-                const p = Number(metadata.progress);
-                if (!isNaN(p)) {
-                    progress = Math.max(0, Math.min(100, p));
-                }
-            }
+            const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
 
             const { data: spec, error: specError } = await supabase
                 .from('specs')
@@ -193,9 +162,9 @@ export default function NewSpecPage() {
                     slug: specSlug,
                     owner_id: user.id,
                     progress,
-                    status: metadata.status || null,
-                    maturity: metadata.maturity || null,
-                    tags,
+                    status,
+                    maturity,
+                    tags: tags.length > 0 ? tags : null,
                 })
                 .select()
                 .single();
@@ -206,10 +175,13 @@ export default function NewSpecPage() {
                 return;
             }
 
+            // Combine frontmatter and content
+            const fullContent = `${frontmatter}\n\n${content}`;
             const contentPath = `specs/${spec.id}/1.md`;
+
             const { error: uploadError } = await supabase.storage
                 .from('spec-content')
-                .upload(contentPath, content, { contentType: 'text/markdown' });
+                .upload(contentPath, fullContent, { contentType: 'text/markdown' });
 
             if (uploadError) {
                 await supabase.from('specs').delete().eq('id', spec.id);
@@ -219,7 +191,7 @@ export default function NewSpecPage() {
             }
 
             const encoder = new TextEncoder();
-            const data = encoder.encode(content);
+            const data = encoder.encode(fullContent);
             const hashBuffer = await crypto.subtle.digest('SHA-256', data);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
             const contentHash = hashArray
@@ -259,8 +231,8 @@ export default function NewSpecPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-            <div className="container mx-auto px-4 py-8">
-                <div className="mb-4">
+            <div className="container mx-auto px-4 py-8 max-w-7xl">
+                <div className="mb-6">
                     <Link
                         href={`/${orgSlug}/${projectSlug}`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
@@ -273,83 +245,173 @@ export default function NewSpecPage() {
                     Create Specification
                 </h1>
                 <p className="text-slate-500 dark:text-slate-400 mb-8">
-                    Write your spec in markdown with YAML frontmatter for metadata.
+                    Define the metadata and content for your new specification.
                 </p>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-8">
                     {error && (
                         <div className="p-4 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm">
                             {error}
                         </div>
                     )}
 
-                    <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                            <label
-                                htmlFor="name"
-                                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-                            >
-                                Specification name
-                            </label>
-                            <input
-                                id="name"
-                                type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                required
-                                className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                placeholder="API Authentication"
-                            />
-                        </div>
+                    {/* Basic Info Section */}
+                    <div className="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm space-y-6">
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white border-b border-slate-100 dark:border-white/5 pb-4">
+                            Basic Information
+                        </h2>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    Specification Name
+                                </label>
+                                <input
+                                    id="name"
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    required
+                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    placeholder="e.g. API Authentication"
+                                />
+                            </div>
 
-                        <div>
-                            <label
-                                htmlFor="slug"
-                                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-                            >
-                                URL slug
-                            </label>
-                            <input
-                                id="slug"
-                                type="text"
-                                value={specSlug}
-                                onChange={(e) => setSpecSlug(e.target.value)}
-                                required
-                                className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                placeholder="api-authentication"
-                            />
+                            <div>
+                                <label htmlFor="slug" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    URL Slug
+                                </label>
+                                <input
+                                    id="slug"
+                                    type="text"
+                                    value={specSlug}
+                                    onChange={(e) => setSpecSlug(e.target.value)}
+                                    required
+                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    placeholder="e.g. api-authentication"
+                                />
+                            </div>
                         </div>
                     </div>
 
-                    <div>
-                        <label
-                            htmlFor="content"
-                            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-                        >
-                            Content (Markdown with YAML frontmatter)
+                    {/* Metadata Section */}
+                    <div className="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm space-y-6">
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-white border-b border-slate-100 dark:border-white/5 pb-4">
+                            Metadata
+                        </h2>
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label htmlFor="status" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    Status
+                                </label>
+                                <select
+                                    id="status"
+                                    value={status}
+                                    onChange={(e) => setStatus(e.target.value as Status)}
+                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="planned">Planned</option>
+                                    <option value="in-progress">In Progress</option>
+                                    <option value="completed">Completed</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label htmlFor="maturity" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    Maturity
+                                </label>
+                                <select
+                                    id="maturity"
+                                    value={maturity}
+                                    onChange={(e) => setMaturity(e.target.value as Maturity)}
+                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                >
+                                    <option value="draft">Draft</option>
+                                    <option value="review">In Review</option>
+                                    <option value="stable">Stable</option>
+                                    <option value="deprecated">Deprecated</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label htmlFor="tags" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    Tags (comma separated)
+                                </label>
+                                <input
+                                    id="tags"
+                                    type="text"
+                                    value={tagsInput}
+                                    onChange={(e) => setTagsInput(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    placeholder="api, security, v1"
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="progress" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    Progress: {progress}%
+                                </label>
+                                <input
+                                    id="progress"
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    step="5"
+                                    value={progress}
+                                    onChange={(e) => setProgress(Number(e.target.value))}
+                                    className="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                                />
+                                <div className="flex justify-between text-xs text-slate-400 mt-1">
+                                    <span>0%</span>
+                                    <span>50%</span>
+                                    <span>100%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Content Section with Merged Preview */}
+                    <div className="space-y-2">
+                        <label htmlFor="content" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Spec Content
                         </label>
-                        <textarea
-                            id="content"
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            required
-                            rows={20}
-                            className="w-full px-4 py-3 bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono text-sm resize-none"
-                        />
+                        <div className="border border-slate-300 dark:border-white/10 rounded-lg overflow-hidden bg-white dark:bg-white/5 shadow-sm">
+                            {/* Read-only Frontmatter Preview */}
+                            <div className="bg-slate-50 dark:bg-black/20 border-b border-slate-200 dark:border-white/5 p-4 select-none">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                        Frontmatter (Auto-generated)
+                                    </span>
+                                </div>
+                                <pre className="font-mono text-sm text-slate-500 dark:text-slate-400 whitespace-pre-wrap">
+                                    {frontmatter}
+                                </pre>
+                            </div>
+
+                            {/* Main Editor */}
+                            <textarea
+                                id="content"
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                required
+                                rows={20}
+                                className="w-full px-4 py-4 bg-transparent focus:outline-none resize-y font-mono text-sm text-slate-900 dark:text-slate-200 placeholder-slate-400"
+                                placeholder="Write your markdown content here..."
+                            />
+                        </div>
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex gap-4 pt-4 border-t border-slate-200 dark:border-white/10">
                         <button
                             type="button"
                             onClick={() => router.back()}
-                            className="px-6 py-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white font-medium rounded-lg transition-all"
+                            className="px-6 py-3 bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-white font-medium rounded-lg transition-all"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-all disabled:opacity-50"
+                            className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
                         >
                             {loading ? 'Creating...' : 'Create Specification'}
                         </button>
