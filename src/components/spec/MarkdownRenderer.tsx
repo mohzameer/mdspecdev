@@ -42,12 +42,12 @@ export function MarkdownRenderer({
         .replace(/^-+|-+$/g, '');
 
       const commentBtn = onCommentClick ?
-        `<button class="comment-trigger opacity-0 group-hover:opacity-100 ml-2 text-slate-400 hover:text-blue-500 transition-opacity" data-heading-id="${id}" title="Add comment">
-           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
+        `<button class="comment-trigger opacity-0 group-hover:opacity-100 ml-2 text-slate-400 hover:text-blue-600 transition-all transform hover:scale-110" data-heading-id="${id}" title="Add comment">
+           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
          </button>` : '';
 
-      return `<h${depth} id="${id}" class="heading-anchor group flex items-center">
-        <a href="#${id}" class="anchor-link opacity-0 group-hover:opacity-100 mr-2 text-blue-400 no-underline">#</a>
+      return `<h${depth} id="${id}" class="heading-anchor group flex items-center scroll-mt-20">
+        <a href="#${id}" class="anchor-link opacity-0 group-hover:opacity-100 mr-2 text-slate-300 dark:text-slate-600 hover:text-slate-500 dark:hover:text-slate-400 !no-underline transition-colors font-normal">#</a>
         <span>${text}</span>
         ${commentBtn}
       </h${depth}>\n`;
