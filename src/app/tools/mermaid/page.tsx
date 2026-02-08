@@ -61,6 +61,28 @@ function MermaidViewer() {
                     const id = `mermaid-svg-${Date.now()}`;
                     const { svg } = await mermaid.render(id, code);
                     element.innerHTML = svg;
+                    const svgElement = element.querySelector('svg');
+                    if (svgElement) {
+                        // Extract viewBox dimensions to set natural size
+                        const viewBox = svgElement.getAttribute('viewBox');
+                        if (viewBox) {
+                            const [, , w, h] = viewBox.split(' ').map(Number);
+                            svgElement.style.width = `${w}px`;
+                            svgElement.style.height = `${h}px`;
+                            svgElement.style.maxWidth = 'none';
+                        } else {
+                            // Fallback if no viewBox
+                            svgElement.style.maxWidth = 'none';
+                            svgElement.style.width = 'auto'; // Try to let it expand
+                            svgElement.style.height = 'auto';
+                        }
+
+                        svgElement.removeAttribute('height'); // Remove attribute just in case
+
+                        // Force initial scale to 100%
+                        setZoom(1);
+                        setPan({ x: 0, y: 0 });
+                    }
                 }
             } catch (err: any) {
                 console.error('Mermaid error:', err);
@@ -82,6 +104,13 @@ function MermaidViewer() {
     const [lastMousePos, setLastMousePos] = useState({ x: 0, y: 0 });
     const [showSource, setShowSource] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+
+    // Calculate initial centering on load (optional but helpful)
+    useEffect(() => {
+        if (!containerRef.current) return;
+        // We could calculate center here if we had SVG dimensions, 
+        // but sticking to (0,0) and zoom 1 is the most predictable "100%" view.
+    }, [code]);
 
     const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.25, 5));
     const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.25, 0.1));
