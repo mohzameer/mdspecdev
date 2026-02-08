@@ -7,7 +7,7 @@ import { CommentInput } from './CommentInput';
 interface CommentThreadProps {
     thread: CommentThreadType;
     currentUser: Profile | null;
-    onAddReply: (threadId: string, content: string) => Promise<void>;
+    onAddReply: (threadId: string, content: string, mentions?: string[]) => Promise<void>;
     onResolve: (threadId: string, resolved: boolean) => Promise<void>;
     onEditComment: (commentId: string, content: string) => Promise<void>;
     onDeleteComment: (commentId: string) => Promise<void>;
@@ -60,8 +60,8 @@ export function CommentThread({
                 {isReplying ? (
                     <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
                         <CommentInput
-                            onSubmit={async (content) => {
-                                await onAddReply(thread.id, content);
+                            onSubmit={async (content, mentions) => {
+                                await onAddReply(thread.id, content, mentions);
                                 setIsReplying(false);
                             }}
                             autoFocus

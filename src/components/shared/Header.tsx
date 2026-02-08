@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useState, useEffect } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 interface UserInfo {
     email: string;
@@ -94,8 +95,8 @@ export function Header() {
                         <Link
                             href="/dashboard"
                             className={`text-sm font-medium transition-colors hover:text-slate-900 dark:hover:text-white ${pathname === '/dashboard'
-                                    ? 'text-slate-900 dark:text-white'
-                                    : 'text-slate-500 dark:text-slate-400'
+                                ? 'text-slate-900 dark:text-white'
+                                : 'text-slate-500 dark:text-slate-400'
                                 }`}
                         >
                             Dashboard
@@ -103,8 +104,8 @@ export function Header() {
                         <Link
                             href="/orgs"
                             className={`text-sm font-medium transition-colors hover:text-slate-900 dark:hover:text-white ${pathname?.startsWith('/orgs')
-                                    ? 'text-slate-900 dark:text-white'
-                                    : 'text-slate-500 dark:text-slate-400'
+                                ? 'text-slate-900 dark:text-white'
+                                : 'text-slate-500 dark:text-slate-400'
                                 }`}
                         >
                             Organizations
@@ -114,6 +115,8 @@ export function Header() {
 
                 <div className="flex items-center gap-4">
                     <ThemeToggle />
+
+                    {user && <NotificationBell />}
 
                     {loading ? (
                         <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />

@@ -59,55 +59,80 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const body = await req.json();
-        const { spec_id, anchor_heading_id, body: content, thread_id } = body;
+        const { specId, threadId, body, anchorHeadingId, parentCommentId, content, mentions } = await req.json();
 
-        if (!content) {
-            return NextResponse.json({ error: 'Content is required' }, { status: 400 });
+        // Normalize body vs content (CommentInput might send content)
+        const commentBody = body || content;
+
+        if (!commentBody) {
+            return NextResponse.json({ error: 'Body is required' }, { status: 400 });
         }
 
-        let currentThreadId = thread_id;
-
-        // If no thread_id provided, create a new thread first
-        if (!currentThreadId) {
-            if (!spec_id || !anchor_heading_id) {
-                return NextResponse.json({ error: 'Spec ID and Anchor ID required for new thread' }, { status: 400 });
-            }
-
-            const { data: newThread, error: threadError } = await supabase
-                .from('comment_threads')
+        // If threadID is provided, it's a reply
+        if (threadId) {
+            const { data: comment, error } = await supabase
+                .from('comments')
                 .insert({
-                    spec_id,
-                    anchor_heading_id,
-                    resolved: false
+                    thread_id: threadId,
+                    author_id: user.id,
+                    parent_comment_id: parentCommentId,
+                    body: commentBody,
                 })
-                .select()
+                .select('*, author:profiles(*)')
                 .single();
 
-            if (threadError) throw threadError;
-            currentThreadId = newThread.id;
+            if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+            // Handle mentions
+            if (mentions && Array.isArray(mentions) && mentions.length > 0) {
+                const mentionInserts = mentions.map((userId: string) => ({
+                    comment_id: comment.id,
+                    mentioned_user_id: userId,
+                }));
+                await supabase.from('mentions').insert(mentionInserts);
+            }
+
+            return NextResponse.json(comment);
         }
 
-        // Create the comment
+        // Otherwise create new thread
+        if (!specId || !anchorHeadingId) {
+            return NextResponse.json({ error: 'Spec ID and Anchor Heading ID required for new thread' }, { status: 400 });
+        }
+
+        // Create thread
+        const { data: thread, error: threadError } = await supabase
+            .from('comment_threads')
+            .insert({
+                spec_id: specId,
+                anchor_heading_id: anchorHeadingId,
+            })
+            .select()
+            .single();
+
+        if (threadError) return NextResponse.json({ error: threadError.message }, { status: 500 });
+
+        // Create first comment
         const { data: comment, error: commentError } = await supabase
             .from('comments')
             .insert({
-                thread_id: currentThreadId,
+                thread_id: thread.id,
                 author_id: user.id,
-                body: content,
-                // parent_comment_id can be added here if handling nested replies explicitly
+                body: commentBody,
             })
-            .select(`
-                *,
-                author:author_id (
-                    id,
-                    full_name,
-                    avatar_url
-                )
-            `)
+            .select('*, author:profiles(*)')
             .single();
 
         if (commentError) throw commentError;
+
+        // Handle mentions for new thread
+        if (mentions && Array.isArray(mentions) && mentions.length > 0) {
+            const mentionInserts = mentions.map((userId: string) => ({
+                comment_id: comment.id,
+                mentioned_user_id: userId,
+            }));
+            await supabase.from('mentions').insert(mentionInserts);
+        }
 
         // Fetch the updated thread to return (so UI can update full state)
         const { data: updatedThread, error: fetchError } = await supabase
@@ -128,7 +153,7 @@ export async function POST(req: NextRequest) {
                   )
                 )
               `)
-            .eq('id', currentThreadId)
+            .eq('id', thread.id)
             .single();
 
         if (fetchError) throw fetchError;

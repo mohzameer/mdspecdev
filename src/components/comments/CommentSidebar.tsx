@@ -24,6 +24,7 @@ export function CommentSidebar({
         threads,
         isLoading,
         createComment,
+        addReply,
         resolveThread,
         editComment,
         deleteComment
@@ -72,16 +73,16 @@ export function CommentSidebar({
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {activeHeadingId && !existingThread && (
-                    <div className="bg-blue-50 dark:bg-blue-900/10 p-4 rounded-lg border border-blue-100 dark:border-blue-900/30 mb-4">
-                        <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-2">
-                            Start discussion on <code className="text-xs bg-white dark:bg-slate-800 px-1 py-0.5 rounded">#{activeHeadingId}</code>
-                        </h3>
+                    <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-2">
+                            Start a discussion on "{activeHeadingId}"
+                        </p>
                         <CommentInput
-                            onSubmit={async (content) => {
-                                await createComment({ spec_id: specId, anchor_heading_id: activeHeadingId, body: content });
+                            onSubmit={async (content, mentions) => {
+                                await createComment(activeHeadingId, content, mentions);
                             }}
-                            placeholder="Write your comment..."
                             autoFocus
+                            placeholder="Write a comment..."
                         />
                     </div>
                 )}
@@ -106,14 +107,14 @@ export function CommentSidebar({
                             <CommentThread
                                 thread={thread}
                                 currentUser={currentUser}
-                                onAddReply={async (threadId, content) => {
-                                    await createComment({ spec_id: specId, body: content, thread_id: threadId });
+                                onAddReply={async (threadId, content, mentions) => {
+                                    await addReply(threadId, content, mentions);
                                 }}
                                 onResolve={async (threadId, resolved) => {
-                                    await resolveThread({ thread_id: threadId, resolved });
+                                    await resolveThread(threadId, resolved);
                                 }}
                                 onEditComment={async (commentId, content) => {
-                                    await editComment({ comment_id: commentId, body: content });
+                                    await editComment(commentId, content);
                                 }}
                                 onDeleteComment={async (commentId) => {
                                     await deleteComment(commentId);

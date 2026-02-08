@@ -69,7 +69,7 @@ export function CommentItem({
                 {isEditing ? (
                     <div className="mt-2">
                         <CommentInput
-                            onSubmit={async (content) => {
+                            onSubmit={async (content, _mentions) => {
                                 await onEdit(comment.id, content);
                                 setIsEditing(false);
                             }}
