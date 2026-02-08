@@ -154,18 +154,18 @@ export function CommentInput({
                     disabled={isSubmitting}
                     autoFocus={autoFocus}
                 />
-                <div className="absolute bottom-2 right-2 flex items-center gap-2">
-                    <span className="text-xs text-slate-400 hidden sm:inline">
-                        {navigator.platform.includes('Mac') ? 'Cmd' : 'Ctrl'} + Enter to submit
-                    </span>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={!content.trim() || isSubmitting}
-                        className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                        {isSubmitting ? 'Sending...' : 'Comment'}
-                    </button>
-                </div>
+            </div>
+            <div className="mt-2 flex items-center justify-between">
+                <span className="text-xs text-slate-400 hidden sm:inline">
+                    {navigator.platform.includes('Mac') ? 'Cmd' : 'Ctrl'} + Enter to submit
+                </span>
+                <button
+                    onClick={handleSubmit}
+                    disabled={!content.trim() || isSubmitting}
+                    className="px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors ml-auto"
+                >
+                    {isSubmitting ? 'Sending...' : 'Comment'}
+                </button>
             </div>
         </div>
     );

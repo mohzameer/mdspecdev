@@ -73,8 +73,8 @@ export function CommentSidebar({
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {activeHeadingId && !existingThread && (
-                    <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-2">
+                    <div className="mb-6">
+                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-2 px-1">
                             Start a discussion on "{activeHeadingId}"
                         </p>
                         <CommentInput
