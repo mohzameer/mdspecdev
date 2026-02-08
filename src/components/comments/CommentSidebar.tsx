@@ -11,6 +11,7 @@ interface CommentSidebarProps {
     isOpen: boolean;
     onClose: () => void;
     activeHeadingId?: string | null;
+    orgSlug: string;
 }
 
 export function CommentSidebar({
@@ -19,6 +20,7 @@ export function CommentSidebar({
     isOpen,
     onClose,
     activeHeadingId,
+    orgSlug,
 }: CommentSidebarProps) {
     const {
         threads,
@@ -83,6 +85,7 @@ export function CommentSidebar({
                             }}
                             autoFocus
                             placeholder="Write a comment..."
+                            orgSlug={orgSlug}
                         />
                     </div>
                 )}
@@ -107,6 +110,7 @@ export function CommentSidebar({
                             <CommentThread
                                 thread={thread}
                                 currentUser={currentUser}
+                                orgSlug={orgSlug}
                                 onAddReply={async (threadId, content, mentions) => {
                                     await addReply(threadId, content, mentions);
                                 }}

@@ -11,6 +11,7 @@ interface CommentThreadProps {
     onResolve: (threadId: string, resolved: boolean) => Promise<void>;
     onEditComment: (commentId: string, content: string) => Promise<void>;
     onDeleteComment: (commentId: string) => Promise<void>;
+    orgSlug: string;
 }
 
 export function CommentThread({
@@ -20,6 +21,7 @@ export function CommentThread({
     onResolve,
     onEditComment,
     onDeleteComment,
+    orgSlug,
 }: CommentThreadProps) {
     const [isReplying, setIsReplying] = useState(false);
 
@@ -53,6 +55,7 @@ export function CommentThread({
                             currentUser={currentUser}
                             onEdit={onEditComment}
                             onDelete={onDeleteComment}
+                            orgSlug={orgSlug}
                         />
                     ))
                 )}
@@ -66,6 +69,7 @@ export function CommentThread({
                             }}
                             autoFocus
                             placeholder="Reply to thread..."
+                            orgSlug={orgSlug}
                         />
                         <button
                             onClick={() => setIsReplying(false)}

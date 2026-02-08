@@ -7,7 +7,7 @@ export async function GET(request: Request) {
     const query = searchParams.get('q');
     const orgSlug = searchParams.get('orgSlug');
 
-    if (!query || query.length < 2) {
+    if (!orgSlug && (!query || query.length < 2)) {
         return NextResponse.json([]);
     }
 
@@ -18,9 +18,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    let queryBuilder: any = supabase
-        .from('profiles')
-        .select('id, full_name, avatar_url, email');
+    let queryBuilder;
 
     if (orgSlug) {
         // Find org id first
@@ -31,15 +29,22 @@ export async function GET(request: Request) {
             .single();
 
         if (org) {
-            // Filter by membership in this org
-            // Query: profiles where id IN (select user_id from org_memberships where org_id = org.id)
-            // Supabase approach: inner join?
-            // Actually, simple way:
+            // Filter by membership in this org using inner join
             queryBuilder = supabase
                 .from('profiles')
                 .select('id, full_name, avatar_url, email, org_memberships!inner(org_id)')
                 .eq('org_memberships.org_id', org.id);
+        } else {
+            // If org not found, return empty or fallback (here empty for safety)
+            return NextResponse.json([]);
         }
+    } else {
+        // Global search (or maybe should be disabled/restricted?)
+        // For now, let's keep it but maybe we should restrict it.
+        // Given user request context, let's just default to searching all profiles if no org provided (legacy behavior)
+        queryBuilder = supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url, email');
     }
 
     const { data: profiles, error } = await queryBuilder

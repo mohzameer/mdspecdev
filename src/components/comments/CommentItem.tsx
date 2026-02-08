@@ -9,6 +9,7 @@ interface CommentItemProps {
     currentUser: Profile | null;
     onEdit: (id: string, newBody: string) => Promise<void>;
     onDelete: (id: string) => Promise<void>;
+    orgSlug: string;
 }
 
 export function CommentItem({
@@ -16,6 +17,7 @@ export function CommentItem({
     currentUser,
     onEdit,
     onDelete,
+    orgSlug,
 }: CommentItemProps) {
     const [isEditing, setIsEditing] = useState(false);
 
@@ -75,6 +77,7 @@ export function CommentItem({
                             }}
                             className="mb-2"
                             autoFocus
+                            orgSlug={orgSlug}
                         />
                         <button
                             onClick={() => setIsEditing(false)}

@@ -7,6 +7,7 @@ interface CommentInputProps {
     placeholder?: string;
     className?: string;
     autoFocus?: boolean;
+    orgSlug: string;
 }
 
 interface UserSuggestion {
@@ -21,13 +22,14 @@ export function CommentInput({
     placeholder = 'Write a comment... (use @ to mention)',
     className = '',
     autoFocus = false,
+    orgSlug,
 }: CommentInputProps) {
     const [content, setContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [suggestions, setSuggestions] = useState<UserSuggestion[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [cursorPosition, setCursorPosition] = useState(0);
-    const [mentionQuery, setMentionQuery] = useState('');
+    const [mentionQuery, setMentionQuery] = useState<string | null>(null);
     const [mentionedUserIds, setMentionedUserIds] = useState<Set<string>>(new Set());
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -42,9 +44,10 @@ export function CommentInput({
 
     // Search users when mention query changes
     useEffect(() => {
-        if (mentionQuery.length >= 2) {
+        // Allow search on empty query if we are just starting to type mention
+        if (mentionQuery !== null) {
             const searchUsers = async () => {
-                const res = await fetch(`/api/users/search?q=${mentionQuery}`);
+                const res = await fetch(`/api/users/search?q=${mentionQuery}&orgSlug=${orgSlug}`);
                 if (res.ok) {
                     const data = await res.json();
                     setSuggestions(data);
@@ -57,7 +60,7 @@ export function CommentInput({
             setSuggestions([]);
             setShowSuggestions(false);
         }
-    }, [mentionQuery]);
+    }, [mentionQuery, orgSlug]);
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const val = e.target.value;
@@ -78,6 +81,7 @@ export function CommentInput({
             }
         }
 
+        setMentionQuery(null);
         setShowSuggestions(false);
     };
 
@@ -116,7 +120,7 @@ export function CommentInput({
     return (
         <div className={`relative ${className}`}>
             {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto">
+                <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto">
                     {suggestions.map(user => (
                         <button
                             key={user.id}

@@ -134,6 +134,7 @@ export function SpecViewer({
                     isOpen={isSidebarOpen}
                     onClose={() => setIsSidebarOpen(false)}
                     activeHeadingId={activeHeadingId}
+                    orgSlug={org.slug}
                 />
             </div>
 
