@@ -86,6 +86,7 @@ export function CommentSidebar({
                             autoFocus
                             placeholder="Write a comment..."
                             orgSlug={orgSlug}
+                            currentUser={currentUser}
                         />
                     </div>
                 )}
@@ -100,12 +101,37 @@ export function CommentSidebar({
                         <p className="text-sm mt-2">Select a section to start a discussion.</p>
                     </div>
                 ) : (
-                    threads?.map(thread => (
+                    (() => {
+                        // Sort threads to bring active thread to top
+                        const sortedThreads = threads ? [...threads] : [];
+                        if (activeHeadingId && sortedThreads.length > 0) {
+                            const activeIndex = sortedThreads.findIndex(t => t.anchor_heading_id === activeHeadingId);
+                            if (activeIndex > 0) {
+                                const [activeThread] = sortedThreads.splice(activeIndex, 1);
+                                sortedThreads.unshift(activeThread);
+                            }
+                        }
+                        return sortedThreads;
+                    })()?.map(thread => (
                         <div key={thread.id} id={`thread-${thread.anchor_heading_id}`}>
                             <div className="mb-1">
-                                <span className="text-xs font-mono text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                                <button
+                                    onClick={() => {
+                                        const el = document.getElementById(thread.anchor_heading_id);
+                                        if (el) {
+                                            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                            // Optional: highlight text temporarily
+                                            el.classList.add('bg-yellow-100', 'dark:bg-yellow-900/30');
+                                            setTimeout(() => {
+                                                el.classList.remove('bg-yellow-100', 'dark:bg-yellow-900/30');
+                                            }, 2000);
+                                        }
+                                    }}
+                                    className="text-xs font-mono text-slate-500 hover:text-blue-600 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 px-1.5 py-0.5 rounded cursor-pointer transition-colors"
+                                    title="Scroll to section"
+                                >
                                     #{thread.anchor_heading_id}
-                                </span>
+                                </button>
                             </div>
                             <CommentThread
                                 thread={thread}

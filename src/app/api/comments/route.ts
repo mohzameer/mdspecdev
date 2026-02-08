@@ -1,6 +1,6 @@
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 
 export async function GET(req: NextRequest) {
     const supabase = await createClient();
@@ -35,12 +35,47 @@ export async function GET(req: NextRequest) {
 
         if (error) throw error;
 
-        // Sort comments within threads by creation time
+        // Fetch all mentions for comments in these threads
+        const commentIds = threads?.flatMap(t => t.comments?.map((c: any) => c.id) || []) || [];
+
+        let mentionsMap: Record<string, any[]> = {};
+        if (commentIds.length > 0) {
+            const serviceClient = createServiceRoleClient();
+            const { data: mentions } = await serviceClient
+                .from('mentions')
+                .select(`
+                    id,
+                    comment_id,
+                    mentioned_user_id,
+                    mentioned_user:profiles!mentioned_user_id (
+                        id,
+                        full_name,
+                        email
+                    )
+                `)
+                .in('comment_id', commentIds);
+
+            // Group mentions by comment_id
+            if (mentions) {
+                mentionsMap = mentions.reduce((acc: Record<string, any[]>, mention: any) => {
+                    if (!acc[mention.comment_id]) {
+                        acc[mention.comment_id] = [];
+                    }
+                    acc[mention.comment_id].push(mention);
+                    return acc;
+                }, {});
+            }
+        }
+
+        // Sort comments within threads by creation time and add mentions
         const threadsWithSortedComments = threads?.map((thread: any) => ({
             ...thread,
             comments: thread.comments.sort((a: any, b: any) =>
                 new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-            )
+            ).map((comment: any) => ({
+                ...comment,
+                mentions: mentionsMap[comment.id] || []
+            }))
         })) || [];
 
         return NextResponse.json(threadsWithSortedComments);
@@ -89,7 +124,8 @@ export async function POST(req: NextRequest) {
                     comment_id: comment.id,
                     mentioned_user_id: userId,
                 }));
-                await supabase.from('mentions').insert(mentionInserts);
+                const serviceClient = createServiceRoleClient();
+                await serviceClient.from('mentions').insert(mentionInserts);
             }
 
             return NextResponse.json(comment);
@@ -131,7 +167,8 @@ export async function POST(req: NextRequest) {
                 comment_id: comment.id,
                 mentioned_user_id: userId,
             }));
-            await supabase.from('mentions').insert(mentionInserts);
+            const serviceClient = createServiceRoleClient();
+            await serviceClient.from('mentions').insert(mentionInserts);
         }
 
         // Fetch the updated thread to return (so UI can update full state)
@@ -158,11 +195,45 @@ export async function POST(req: NextRequest) {
 
         if (fetchError) throw fetchError;
 
+        // Fetch mentions for all comments in this thread
+        const commentIds = updatedThread.comments?.map((c: any) => c.id) || [];
+        let mentionsMap: Record<string, any[]> = {};
+
+        if (commentIds.length > 0) {
+            const serviceClient = createServiceRoleClient();
+            const { data: mentions } = await serviceClient
+                .from('mentions')
+                .select(`
+                    id,
+                    comment_id,
+                    mentioned_user_id,
+                    mentioned_user:profiles!mentioned_user_id (
+                        id,
+                        full_name,
+                        email
+                    )
+                `)
+                .in('comment_id', commentIds);
+
+            if (mentions) {
+                mentionsMap = mentions.reduce((acc: Record<string, any[]>, mention: any) => {
+                    if (!acc[mention.comment_id]) {
+                        acc[mention.comment_id] = [];
+                    }
+                    acc[mention.comment_id].push(mention);
+                    return acc;
+                }, {});
+            }
+        }
+
         // Sort comments before returning
         if (updatedThread?.comments) {
-            updatedThread.comments.sort((a: any, b: any) =>
+            updatedThread.comments = updatedThread.comments.sort((a: any, b: any) =>
                 new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-            );
+            ).map((comment: any) => ({
+                ...comment,
+                mentions: mentionsMap[comment.id] || []
+            }));
         }
 
         return NextResponse.json(updatedThread);

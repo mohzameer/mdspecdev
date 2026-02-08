@@ -253,3 +253,14 @@ body {
 .dark .page-bg {
   @apply bg-slate-900;
 }
+
+/* Mention Styling */
+a[href^="mention:"] {
+  @apply text-blue-600 dark:text-blue-400 font-medium bg-blue-50 dark:bg-blue-900/30 px-1 py-0.5 rounded cursor-pointer;
+  text-decoration: none !important;
+}
+
+a[href^="mention:"]:hover {
+  @apply bg-blue-100 dark:bg-blue-900/50;
+  text-decoration: none !important;
+}

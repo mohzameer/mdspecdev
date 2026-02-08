@@ -70,6 +70,7 @@ export function CommentThread({
                             autoFocus
                             placeholder="Reply to thread..."
                             orgSlug={orgSlug}
+                            currentUser={currentUser}
                         />
                         <button
                             onClick={() => setIsReplying(false)}
@@ -83,7 +84,7 @@ export function CommentThread({
                         onClick={() => setIsReplying(true)}
                         className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline font-medium"
                     >
-                        Reply
+                        New comment
                     </button>
                 )}
             </div>

@@ -35,11 +35,7 @@ export function CommentItem({
     };
 
     if (comment.deleted) {
-        return (
-            <div className="py-2 text-sm italic text-slate-500 dark:text-slate-400">
-                This comment has been deleted.
-            </div>
-        );
+        return null;
     }
 
     return (
@@ -78,6 +74,7 @@ export function CommentItem({
                             className="mb-2"
                             autoFocus
                             orgSlug={orgSlug}
+                            currentUser={currentUser}
                         />
                         <button
                             onClick={() => setIsEditing(false)}
@@ -88,7 +85,33 @@ export function CommentItem({
                     </div>
                 ) : (
                     <div className="text-sm text-slate-700 dark:text-slate-300">
-                        <MarkdownRenderer content={comment.body} className="[&>p]:mb-2 [&>p:last-child]:mb-0 text-sm" disableHeadingIds={true} />
+                        <MarkdownRenderer
+                            content={(() => {
+                                let processedBody = comment.body;
+                                if (comment.mentions && comment.mentions.length > 0) {
+                                    // sort by name length desc to avoid partial matches
+                                    const sortedMentions = [...comment.mentions].sort((a, b) => {
+                                        const nameA = a.mentioned_user?.full_name || '';
+                                        const nameB = b.mentioned_user?.full_name || '';
+                                        return nameB.length - nameA.length;
+                                    });
+
+                                    sortedMentions.forEach(mention => {
+                                        const name = mention.mentioned_user?.full_name;
+                                        if (name) {
+                                            // Replace @Name with markdown link
+                                            const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                                            // Match @Name followed by space or end of string
+                                            const regex = new RegExp(`@${escapedName}(?=\\s|$)`, 'g');
+                                            processedBody = processedBody.replace(regex, `[@${name}](mention:${mention.mentioned_user_id})`);
+                                        }
+                                    });
+                                }
+                                return processedBody;
+                            })()}
+                            className="[&>p]:mb-2 [&>p:last-child]:mb-0 text-sm"
+                            disableHeadingIds={true}
+                        />
                     </div>
                 )}
 

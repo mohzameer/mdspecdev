@@ -1,6 +1,8 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import getCaretCoordinates from 'textarea-caret';
+import { Profile } from '@/lib/types';
 
 interface CommentInputProps {
     onSubmit: (content: string, mentions: string[]) => Promise<void>;
@@ -8,6 +10,7 @@ interface CommentInputProps {
     className?: string;
     autoFocus?: boolean;
     orgSlug: string;
+    currentUser: Profile | null;
 }
 
 interface UserSuggestion {
@@ -23,6 +26,7 @@ export function CommentInput({
     className = '',
     autoFocus = false,
     orgSlug,
+    currentUser,
 }: CommentInputProps) {
     const [content, setContent] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -31,6 +35,7 @@ export function CommentInput({
     const [cursorPosition, setCursorPosition] = useState(0);
     const [mentionQuery, setMentionQuery] = useState<string | null>(null);
     const [mentionedUserIds, setMentionedUserIds] = useState<Set<string>>(new Set());
+    const [caretCoords, setCaretCoords] = useState({ top: 0, left: 0 });
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const suggestionRef = useRef<HTMLDivElement>(null);
@@ -50,7 +55,9 @@ export function CommentInput({
                 const res = await fetch(`/api/users/search?q=${mentionQuery}&orgSlug=${orgSlug}`);
                 if (res.ok) {
                     const data = await res.json();
-                    setSuggestions(data);
+                    // Filter out current user
+                    const filtered = data.filter((u: UserSuggestion) => u.id !== currentUser?.id);
+                    setSuggestions(filtered);
                     setShowSuggestions(true);
                 }
             };
@@ -60,7 +67,7 @@ export function CommentInput({
             setSuggestions([]);
             setShowSuggestions(false);
         }
-    }, [mentionQuery, orgSlug]);
+    }, [mentionQuery, orgSlug, currentUser]);
 
     const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         const val = e.target.value;
@@ -77,6 +84,12 @@ export function CommentInput({
             const query = textBeforeCursor.slice(lastAtPos + 1);
             if (!/\s/.test(query)) {
                 setMentionQuery(query);
+
+                // Get caret coordinates
+                if (textareaRef.current) {
+                    const coords = getCaretCoordinates(textareaRef.current, lastAtPos + 1);
+                    setCaretCoords({ top: coords.top + 20, left: coords.left });
+                }
                 return; // It's a valid mention attempt
             }
         }
@@ -90,7 +103,10 @@ export function CommentInput({
         const lastAtPos = textBeforeCursor.lastIndexOf('@');
         const textAfterCursor = content.slice(cursorPosition);
 
-        const newText = content.slice(0, lastAtPos) + `@${user.full_name} ` + textAfterCursor;
+        // Insert plain text mention: @Name
+        const mentionText = `@${user.full_name} `;
+        const newText = content.slice(0, lastAtPos) + mentionText + textAfterCursor;
+
         setContent(newText);
         setShowSuggestions(false);
         setMentionedUserIds(prev => new Set(prev).add(user.id));
@@ -98,6 +114,13 @@ export function CommentInput({
         // Reset focus
         if (textareaRef.current) {
             textareaRef.current.focus();
+            // Calculate new cursor position: lastAtPos + mentionText.length
+            // We need to set this after render, effectively. 
+            // React state update is async, but we can set selection range immediately on ref if we want,
+            // but commonly we just let user type. 
+            // Better to set it for better UX.
+            // But strict control might be tricky with React 18 state batching. 
+            // For now just focus is enough.
         }
     };
 
@@ -120,7 +143,10 @@ export function CommentInput({
     return (
         <div className={`relative ${className}`}>
             {showSuggestions && suggestions.length > 0 && (
-                <div className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto">
+                <div
+                    className="absolute w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-xl z-50 max-h-48 overflow-y-auto"
+                    style={{ top: caretCoords.top, left: caretCoords.left }}
+                >
                     {suggestions.map(user => (
                         <button
                             key={user.id}
