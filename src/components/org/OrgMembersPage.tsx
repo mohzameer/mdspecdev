@@ -25,6 +25,9 @@ export function OrgMembersPage({ orgSlug }: OrgMembersPageProps) {
     const [members, setMembers] = useState<Member[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [inviteEmail, setInviteEmail] = useState('');
+    const [fullName, setFullName] = useState('');
+    const [password, setPassword] = useState('');
+
     const [isInviting, setIsInviting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
@@ -63,7 +66,11 @@ export function OrgMembersPage({ orgSlug }: OrgMembersPageProps) {
             const res = await fetch(`/api/orgs/${orgSlug}/members`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: inviteEmail }),
+                body: JSON.stringify({
+                    email: inviteEmail,
+                    fullName: fullName || undefined,
+                    password: password || undefined
+                }),
             });
 
             const data = await res.json();
@@ -73,6 +80,8 @@ export function OrgMembersPage({ orgSlug }: OrgMembersPageProps) {
             } else {
                 setSuccess('Member added successfully');
                 setInviteEmail('');
+                setFullName('');
+                setPassword('');
                 fetchMembers(); // Refresh list
             }
         } catch (err) {
@@ -87,19 +96,52 @@ export function OrgMembersPage({ orgSlug }: OrgMembersPageProps) {
         <div className="space-y-8">
             <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm p-6">
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Add Member</h2>
-                <form onSubmit={handleInvite} className="flex gap-4">
-                    <input
-                        type="email"
-                        value={inviteEmail}
-                        onChange={(e) => setInviteEmail(e.target.value)}
-                        placeholder="Enter email address"
-                        className="flex-1 px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                    />
+                <form onSubmit={handleInvite} className="flex flex-col gap-4 max-w-lg">
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">Email Address</label>
+                        <input
+                            type="email"
+                            value={inviteEmail}
+                            onChange={(e) => setInviteEmail(e.target.value)}
+                            placeholder="user@example.com"
+                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Full Name <span className="text-slate-400 font-normal">(optional, for new users)</span>
+                        </label>
+                        <input
+                            type="text"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                            placeholder="Jane Doe"
+                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
+                        <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                            Password <span className="text-slate-400 font-normal">(optional, for new users)</span>
+                        </label>
+                        <input
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Set a password for new account"
+                            className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                            If the user does not exist, a new account will be created with this password.
+                        </p>
+                    </div>
+
                     <button
                         type="submit"
                         disabled={isInviting}
-                        className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="self-start px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                     >
                         {isInviting ? 'Adding...' : 'Add Member'}
                     </button>
@@ -110,9 +152,6 @@ export function OrgMembersPage({ orgSlug }: OrgMembersPageProps) {
                 {success && (
                     <p className="mt-3 text-sm text-green-500">{success}</p>
                 )}
-                <p className="mt-4 text-xs text-slate-500 dark:text-slate-400">
-                    Note: The user must already be signed up to mdspec with this email address.
-                </p>
             </div>
 
             <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
