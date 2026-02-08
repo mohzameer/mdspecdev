@@ -108,7 +108,7 @@ export function Header() {
                                 : 'text-slate-500 dark:text-slate-400'
                                 }`}
                         >
-                            Organizations
+                            My Organization
                         </Link>
                     </nav>
                 </div>

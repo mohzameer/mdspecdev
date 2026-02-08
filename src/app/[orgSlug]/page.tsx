@@ -77,12 +77,20 @@ export default async function OrgDetailPage({ params }: Props) {
                             <p className="text-slate-500 dark:text-slate-400">Organization</p>
                         </div>
                     </div>
-                    <Link
-                        href={`/${org.slug}/new`}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
-                    >
-                        New Project
-                    </Link>
+                    <div className="flex gap-3">
+                        <Link
+                            href={`/${org.slug}/members`}
+                            className="px-4 py-2 bg-white dark:bg-white/10 hover:bg-slate-50 dark:hover:bg-white/20 text-slate-700 dark:text-white font-medium rounded-lg border border-slate-200 dark:border-white/10 transition-colors"
+                        >
+                            Manage Members
+                        </Link>
+                        <Link
+                            href={`/${org.slug}/new`}
+                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
+                        >
+                            New Project
+                        </Link>
+                    </div>
                 </div>
 
                 <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
