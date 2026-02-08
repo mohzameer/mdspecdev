@@ -1,13 +1,19 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
+import { ProgressBar } from '@/components/spec/ProgressBar';
+import { StatusBadge, TagsList } from '@/components/spec/StatusBadge';
+import { formatRelativeTime } from '@/lib/utils';
+import { OrgDashboard } from '@/components/org/OrgDashboard';
 
 interface Props {
     params: Promise<{ orgSlug: string }>;
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-export default async function OrgDetailPage({ params }: Props) {
+export default async function OrgDetailPage({ params, searchParams }: Props) {
     const { orgSlug } = await params;
+    const searchParamsResolved = await searchParams;
     const supabase = await createClient();
     const {
         data: { user },
@@ -45,97 +51,89 @@ export default async function OrgDetailPage({ params }: Props) {
         redirect('/dashboard');
     }
 
+    // Fetch all projects with their specs
     const { data: projects } = await supabase
         .from('projects')
-        .select('id, name, slug, description, created_at')
+        .select(`
+            id, 
+            name, 
+            slug, 
+            description, 
+            created_at,
+            specs(
+                id,
+                name,
+                slug,
+                progress,
+                status,
+                maturity,
+                tags,
+                updated_at,
+                owner_id,
+                owner:profiles!specs_owner_id_fkey(id, full_name, avatar_url),
+                comment_threads(id, resolved),
+                revisions(id)
+            )
+        `)
         .eq('org_id', org.id)
         .order('name');
 
+    // Flatten all specs for filtering and metrics
+    const allSpecs = projects?.flatMap(p =>
+        (p.specs as any[] || []).map((s: any) => ({
+            ...s,
+            projectId: p.id,
+            projectName: p.name,
+            projectSlug: p.slug
+        }))
+    ) || [];
+
+    // Calculate metrics
+    const totalSpecs = allSpecs.length;
+    const totalProjects = projects?.length || 0;
+    const unresolvedComments = allSpecs.reduce((sum, s) =>
+        sum + (s.comment_threads?.filter((t: any) => !t.resolved)?.length || 0), 0
+    );
+    const completedSpecs = allSpecs.filter(s => s.status === 'completed').length;
+    const inProgressSpecs = allSpecs.filter(s => s.status === 'in-progress').length;
+    const mySpecs = allSpecs.filter(s => s.owner_id === user.id);
+
+    // Get unique owners for filter dropdown
+    const owners = Array.from(new Map(
+        allSpecs
+            .filter(s => s.owner?.id)
+            .map(s => [s.owner.id, { id: s.owner.id, name: s.owner.full_name }])
+    ).values());
+
+    // Get unique statuses
+    const statuses = Array.from(new Set(allSpecs.map(s => s.status).filter(Boolean)));
+
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
-            <div className="container mx-auto px-4 py-8">
-                <div className="mb-4">
-                    <Link
-                        href="/dashboard"
-                        className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
-                    >
-                        ← Back to dashboard
-                    </Link>
-                </div>
-
-                <div className="flex items-center justify-between mb-8">
-                    <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                            <span className="text-white font-bold text-xl">
-                                {org.name[0].toUpperCase()}
-                            </span>
-                        </div>
-                        <div>
-                            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">
-                                {org.name}
-                            </h1>
-                            <p className="text-slate-500 dark:text-slate-400">Organization</p>
-                        </div>
-                    </div>
-                    <div className="flex gap-3">
-                        <Link
-                            href={`/${org.slug}/members`}
-                            className="px-4 py-2 bg-white dark:bg-white/10 hover:bg-slate-50 dark:hover:bg-white/20 text-slate-700 dark:text-white font-medium rounded-lg border border-slate-200 dark:border-white/10 transition-colors"
-                        >
-                            Manage Members
-                        </Link>
-                        <Link
-                            href={`/${org.slug}/new`}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
-                        >
-                            New Project
-                        </Link>
-                    </div>
-                </div>
-
-                <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-4">
-                    Projects
-                </h2>
-
-                {!projects || projects.length === 0 ? (
-                    <div className="text-center py-16 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
-                        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
-                            <span className="text-2xl">📁</span>
-                        </div>
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                            No projects yet
-                        </h3>
-                        <p className="text-slate-500 dark:text-slate-400 mb-4">
-                            Create a project to organize your specifications.
-                        </p>
-                        <Link
-                            href={`/${org.slug}/new`}
-                            className="inline-flex px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
-                        >
-                            Create Project
-                        </Link>
-                    </div>
-                ) : (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {projects.map((project) => (
-                            <Link
-                                key={project.id}
-                                href={`/${org.slug}/${project.slug}`}
-                                className="block p-6 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl border border-slate-200 dark:border-white/10 transition-all duration-200 group shadow-sm"
-                            >
-                                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors mb-2">
-                                    {project.name}
-                                </h3>
-                                {project.description && (
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 line-clamp-2">
-                                        {project.description}
-                                    </p>
-                                )}
-                            </Link>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </div>
+        <OrgDashboard
+            org={org}
+            projects={projects || []}
+            allSpecs={allSpecs}
+            userId={user.id}
+            metrics={{
+                totalProjects,
+                totalSpecs,
+                unresolvedComments,
+                completedSpecs,
+                inProgressSpecs,
+                mySpecsCount: mySpecs.length
+            }}
+            filterOptions={{
+                projects: projects?.map(p => ({ id: p.id, name: p.name })) || [],
+                owners,
+                statuses
+            }}
+            initialFilters={{
+                projectId: searchParamsResolved.project as string || '',
+                status: searchParamsResolved.status as string || '',
+                ownerId: searchParamsResolved.owner as string || '',
+                search: searchParamsResolved.q as string || '',
+                mySpecs: searchParamsResolved.my === 'true'
+            }}
+        />
     );
 }
