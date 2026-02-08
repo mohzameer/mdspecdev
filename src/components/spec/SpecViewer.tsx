@@ -35,6 +35,8 @@ interface SpecViewerProps {
     currentUser: Profile | null;
     unresolvedCount: number;
     revisionCount: number;
+    aiSummary?: string;
+    latestRevisionNumber: number;
 }
 
 export function SpecViewer({
@@ -45,8 +47,11 @@ export function SpecViewer({
     currentUser,
     unresolvedCount,
     revisionCount,
+    aiSummary,
+    latestRevisionNumber,
 }: SpecViewerProps) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isSummaryOpen, setIsSummaryOpen] = useState(false);
     const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
 
     const handleCommentClick = (headingId: string) => {
@@ -116,6 +121,45 @@ export function SpecViewer({
                     )}
                 </div>
             </div>
+
+            {aiSummary && (
+                <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 mb-6 shadow-sm overflow-hidden">
+                    <div
+                        className="flex items-center justify-between p-6 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                        onClick={() => setIsSummaryOpen(!isSummaryOpen)}
+                    >
+                        <div className="flex items-center gap-2">
+                            <svg
+                                className={`w-5 h-5 text-slate-400 transition-transform ${isSummaryOpen ? 'rotate-90' : ''}`}
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                            </svg>
+                            <h3 className="font-semibold text-slate-900 dark:text-white">Summary of Changes</h3>
+                        </div>
+                        {latestRevisionNumber > 1 && (
+                            <Link
+                                href={`/${org.slug}/${project.slug}/${spec.slug}/revisions/${latestRevisionNumber}/diff`}
+                                className="px-3 py-1.5 text-xs font-medium bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white rounded-md transition-colors flex items-center gap-1.5"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                                </svg>
+                                Show Difference
+                            </Link>
+                        )}
+                    </div>
+
+                    {isSummaryOpen && (
+                        <div className="px-6 pb-6 text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
+                            <MarkdownRenderer content={aiSummary} disableHeadingIds={true} />
+                        </div>
+                    )}
+                </div>
+            )}
 
             <div className="flex items-start gap-4">
                 <div className={`flex-1 min-w-0`}>

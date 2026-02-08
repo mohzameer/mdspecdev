@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { DiffViewer } from '@/components/diff/DiffViewer';
+import { SummaryCard } from '@/components/diff/AISummaryCard';
 import { formatDate } from '@/lib/utils';
 
 interface Props {
@@ -193,6 +194,11 @@ export default async function DiffPage({ params }: Props) {
                             </p>
                         </div>
                     </div>
+                </div>
+
+                {/* AI Summary Card */}
+                <div className="mb-6">
+                    <SummaryCard revisionId={currentRevision.id} />
                 </div>
 
                 {/* Diff View */}

@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
+import { createRevision } from '@/app/actions/spec';
 
 export default function EditSpecPage() {
     const params = useParams();
@@ -145,16 +146,6 @@ export default function EditSpecPage() {
         setError(null);
 
         try {
-            const {
-                data: { user },
-            } = await supabase.auth.getUser();
-
-            if (!user) {
-                setError('You must be logged in');
-                setSaving(false);
-                return;
-            }
-
             // Parse frontmatter
             const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
             let metadata: Record<string, any> = {};
@@ -205,64 +196,30 @@ export default function EditSpecPage() {
                 }
             }
 
-            // Update spec metadata
-            const { error: updateError } = await supabase
-                .from('specs')
-                .update({
-                    name,
-                    progress,
-                    status: metadata.status ?? null,
-                    maturity: metadata.maturity ?? null,
-                    tags,
-                })
-                .eq('id', specId);
+            const formData = new FormData();
+            formData.append('specId', specId);
+            formData.append('content', content);
+            formData.append('orgSlug', orgSlug);
+            formData.append('projectSlug', projectSlug);
+            formData.append('specSlug', specSlug);
+            formData.append('revisionNumber', revisionNumber.toString());
 
-            if (updateError) {
-                setError(updateError.message);
+            formData.append('name', name);
+            if (progress !== null) formData.append('progress', progress.toString());
+            if (metadata.status) formData.append('status', metadata.status);
+            if (metadata.maturity) formData.append('maturity', metadata.maturity);
+            if (tags) formData.append('tags', JSON.stringify(tags));
+
+            const result: any = await createRevision(formData);
+
+            if (result?.error) {
+                setError(result.error);
                 setSaving(false);
-                return;
+            } else if (result?.success && result?.path) {
+                // Manual redirect on success to avoid NEXT_REDIRECT error
+                router.push(result.path);
+                router.refresh();
             }
-
-            // Upload new content
-            const newRevisionNumber = revisionNumber + 1;
-            const contentPath = `specs/${specId}/${newRevisionNumber}.md`;
-
-            const { error: uploadError } = await supabase.storage
-                .from('spec-content')
-                .upload(contentPath, content, { contentType: 'text/markdown' });
-
-            if (uploadError) {
-                setError(`Failed to upload content: ${uploadError.message}`);
-                setSaving(false);
-                return;
-            }
-
-            // Create new revision
-            const encoder = new TextEncoder();
-            const data = encoder.encode(content);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const contentHash = hashArray
-                .map((b) => b.toString(16).padStart(2, '0'))
-                .join('');
-
-            const { error: revisionError } = await supabase.from('revisions').insert({
-                spec_id: specId,
-                revision_number: newRevisionNumber,
-                content_key: contentPath,
-                content_hash: contentHash,
-                summary: summary || null,
-                author_id: user.id,
-            });
-
-            if (revisionError) {
-                setError(revisionError.message);
-                setSaving(false);
-                return;
-            }
-
-            router.push(`/${orgSlug}/${projectSlug}/${specSlug}`);
-            router.refresh();
         } catch (err: any) {
             setError(err.message || 'An error occurred');
             setSaving(false);

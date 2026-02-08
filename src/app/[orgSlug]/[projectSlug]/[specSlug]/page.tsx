@@ -83,7 +83,7 @@ export default async function SpecDetailPage({ params }: Props) {
       created_at,
       updated_at,
       owner:profiles!specs_owner_id_fkey(id, full_name, avatar_url, email),
-      revisions(id, revision_number, created_at, content_key, summary, author:profiles(full_name)),
+      revisions(id, revision_number, created_at, content_key, summary, ai_summary, author:profiles(full_name)),
       comment_threads(id, resolved)
     `
         )
@@ -158,6 +158,8 @@ export default async function SpecDetailPage({ params }: Props) {
                     currentUser={currentUserProfile}
                     unresolvedCount={unresolvedCount}
                     revisionCount={revisionCount}
+                    aiSummary={latestRevision?.ai_summary}
+                    latestRevisionNumber={latestRevision?.revision_number || 1}
                 />
             </div>
         </div>
