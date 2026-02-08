@@ -48,10 +48,10 @@ export default async function DiffPage({ params }: Props) {
 
         if (orgById) {
             redirect(
-                `/orgs/${orgById.slug}/projects/${projectSlug}/specs/${specSlug}/revisions/${revisionNumber}/diff`
+                `/${orgById.slug}/${projectSlug}/${specSlug}/revisions/${revisionNumber}/diff`
             );
         } else {
-            redirect('/orgs');
+            redirect('/dashboard');
         }
     }
 
@@ -76,10 +76,10 @@ export default async function DiffPage({ params }: Props) {
 
         if (projectById) {
             redirect(
-                `/orgs/${org.slug}/projects/${projectById.slug}/specs/${specSlug}/revisions/${revisionNumber}/diff`
+                `/${org.slug}/${projectById.slug}/${specSlug}/revisions/${revisionNumber}/diff`
             );
         } else {
-            redirect(`/orgs/${org.slug}`);
+            redirect(`/${org.slug}`);
         }
     }
 
@@ -108,7 +108,7 @@ export default async function DiffPage({ params }: Props) {
         .single();
 
     if (!spec) {
-        redirect(`/orgs/${org.slug}/projects/${project.slug}`);
+        redirect(`/${org.slug}/${project.slug}`);
     }
 
     const currentRevision = (spec.revisions as any[])?.find(
@@ -120,7 +120,7 @@ export default async function DiffPage({ params }: Props) {
 
     if (!currentRevision || !previousRevision) {
         redirect(
-            `/orgs/${org.slug}/projects/${project.slug}/specs/${specSlug}/revisions`
+            `/${org.slug}/${project.slug}/${specSlug}/revisions`
         );
     }
 
@@ -145,7 +145,7 @@ export default async function DiffPage({ params }: Props) {
             <div className="container mx-auto px-4 py-8">
                 <div className="mb-4">
                     <Link
-                        href={`/orgs/${org.slug}/projects/${project.slug}/specs/${specSlug}/revisions`}
+                        href={`/${org.slug}/${project.slug}/${specSlug}/revisions`}
                         className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
                     >
                         ← Back to revisions
