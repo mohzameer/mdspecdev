@@ -99,11 +99,11 @@ export function CommentItem({
                                     sortedMentions.forEach(mention => {
                                         const name = mention.mentioned_user?.full_name;
                                         if (name) {
-                                            // Replace @Name with markdown link
+                                            // Replace @Name with markdown link with mention-link class
                                             const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
                                             // Match @Name followed by space or end of string
                                             const regex = new RegExp(`@${escapedName}(?=\\s|$)`, 'g');
-                                            processedBody = processedBody.replace(regex, `[@${name}](mention:${mention.mentioned_user_id})`);
+                                            processedBody = processedBody.replace(regex, `<a href="mention:${mention.mentioned_user_id}" class="mention-link">@${name}</a>`);
                                         }
                                     });
                                 }
