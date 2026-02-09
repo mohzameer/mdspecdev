@@ -99,7 +99,19 @@ export default async function DiffPage({ params }: Props) {
         created_at,
         content_key,
         summary,
+        revision_number,
+        created_at,
+        content_key,
+        summary,
         author:profiles(full_name)
+      ),
+      comments(
+        id,
+        content,
+        heading_id,
+        status,
+        created_at,
+        user:profiles(full_name)
       )
     `
         )
@@ -202,7 +214,11 @@ export default async function DiffPage({ params }: Props) {
                 </div>
 
                 {/* Diff View */}
-                <DiffViewer oldContent={oldContent} newContent={newContent} />
+                <DiffViewer
+                    oldContent={oldContent}
+                    newContent={newContent}
+                    comments={spec.comments || []}
+                />
             </div>
         </div>
     );

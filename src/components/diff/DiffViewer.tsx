@@ -3,10 +3,19 @@
 import { useMemo, useState, useRef, useCallback } from 'react';
 import { diff_match_patch, Diff } from 'diff-match-patch';
 import { MarkdownRenderer } from '../spec/MarkdownRenderer';
+import { slugify } from '@/lib/utils';
+
+interface Comment {
+    id: string;
+    content: string;
+    heading_id: string;
+    status: 'open' | 'resolved';
+}
 
 interface DiffViewerProps {
     oldContent: string;
     newContent: string;
+    comments?: Comment[];
 }
 
 type ViewMode = 'unified' | 'split' | 'rendered';
@@ -16,9 +25,10 @@ interface Change {
     lineNumber: number;
     section: string;
     content: string;
+    commentCount?: number;
 }
 
-export function DiffViewer({ oldContent, newContent }: DiffViewerProps) {
+export function DiffViewer({ oldContent, newContent, comments = [] }: DiffViewerProps) {
     const [viewMode, setViewMode] = useState<ViewMode>('unified');
     const [showSummary, setShowSummary] = useState(true);
     const [currentChangeIndex, setCurrentChangeIndex] = useState(0);
@@ -50,18 +60,55 @@ export function DiffViewer({ oldContent, newContent }: DiffViewerProps) {
         return { additions, deletions, addedLines, removedLines };
     }, [diffs]);
 
-    // Extract section-level changes
+    // Extract section-level changes with comments
     const sectionChanges = useMemo(() => {
         const changes: Change[] = [];
         const oldLines = oldContent.split('\n');
         const newLines = newContent.split('\n');
 
-        let currentSection = 'Introduction';
-        let lineNumber = 0;
+        // Helper to normalize heading for ID matching
+        const toHeadingId = slugify;
 
-        // Find heading changes
+        // ... (existing logic for finding headings) ...
         const oldHeadings = oldLines.filter(l => l.startsWith('#')).map(l => l.replace(/^#+\s*/, ''));
         const newHeadings = newLines.filter(l => l.startsWith('#')).map(l => l.replace(/^#+\s*/, ''));
+
+        // Identify significant content changes by section
+        let oldSectionContent: Record<string, string[]> = {};
+        let newSectionContent: Record<string, string[]> = {};
+
+        // Map Heading Text -> Heading ID for comment matching
+        let sectionIds: Record<string, string> = {};
+
+        let currentSec = 'Top';
+        oldLines.forEach(line => {
+            if (line.startsWith('#')) {
+                const headingText = line.replace(/^#+\s*/, '');
+                currentSec = headingText;
+                sectionIds[headingText] = toHeadingId(headingText);
+            }
+            if (!oldSectionContent[currentSec]) oldSectionContent[currentSec] = [];
+            oldSectionContent[currentSec].push(line);
+        });
+
+        currentSec = 'Top';
+        newLines.forEach(line => {
+            if (line.startsWith('#')) {
+                const headingText = line.replace(/^#+\s*/, '');
+                currentSec = headingText;
+                sectionIds[headingText] = toHeadingId(headingText);
+            }
+            if (!newSectionContent[currentSec]) newSectionContent[currentSec] = [];
+            newSectionContent[currentSec].push(line);
+        });
+
+        // Function to count comments for a section
+        const getCommentCount = (sectionName: string) => {
+            if (!comments) return 0;
+            const headingId = sectionIds[sectionName];
+            if (!headingId) return 0;
+            return comments.filter(c => c.heading_id === headingId && c.status === 'open').length;
+        };
 
         // Added headings
         newHeadings.forEach((h, i) => {
@@ -70,7 +117,8 @@ export function DiffViewer({ oldContent, newContent }: DiffViewerProps) {
                     type: 'added',
                     lineNumber: newLines.findIndex(l => l.includes(h)) + 1,
                     section: 'Sections',
-                    content: `Added section: "${h}"`
+                    content: `Added section: "${h}"`,
+                    commentCount: getCommentCount(h)
                 });
             }
         });
@@ -82,31 +130,12 @@ export function DiffViewer({ oldContent, newContent }: DiffViewerProps) {
                     type: 'removed',
                     lineNumber: oldLines.findIndex(l => l.includes(h)) + 1,
                     section: 'Sections',
-                    content: `Removed section: "${h}"`
+                    content: `Removed section: "${h}"`,
+                    // Removed sections might still have comments in DB if not cleaned up, 
+                    // but usually we care about comments on active sections.
+                    // We'll skip showing comments for removed sections for now as context is lost.
                 });
             }
-        });
-
-        // Identify significant content changes by section
-        let oldSectionContent: Record<string, string[]> = {};
-        let newSectionContent: Record<string, string[]> = {};
-        let currentSec = 'Top';
-
-        oldLines.forEach(line => {
-            if (line.startsWith('#')) {
-                currentSec = line.replace(/^#+\s*/, '');
-            }
-            if (!oldSectionContent[currentSec]) oldSectionContent[currentSec] = [];
-            oldSectionContent[currentSec].push(line);
-        });
-
-        currentSec = 'Top';
-        newLines.forEach(line => {
-            if (line.startsWith('#')) {
-                currentSec = line.replace(/^#+\s*/, '');
-            }
-            if (!newSectionContent[currentSec]) newSectionContent[currentSec] = [];
-            newSectionContent[currentSec].push(line);
         });
 
         // Find modified sections
@@ -125,14 +154,15 @@ export function DiffViewer({ oldContent, newContent }: DiffViewerProps) {
                         section: section,
                         content: diff > 0
                             ? `Content expanded (+${diff} chars)`
-                            : `Content reduced (${diff} chars)`
+                            : `Content reduced (${diff} chars)`,
+                        commentCount: getCommentCount(section)
                     });
                 }
             }
         });
 
         return changes;
-    }, [oldContent, newContent]);
+    }, [oldContent, newContent, comments]);
 
     // Navigate to next/previous change
     const navigateChange = useCallback((direction: 'next' | 'prev') => {
@@ -179,14 +209,22 @@ export function DiffViewer({ oldContent, newContent }: DiffViewerProps) {
                             <div
                                 key={i}
                                 className={`flex items-start gap-2 text-sm ${change.type === 'added' ? 'text-green-600 dark:text-green-400' :
-                                        change.type === 'removed' ? 'text-red-600 dark:text-red-400' :
-                                            'text-blue-600 dark:text-blue-400'
+                                    change.type === 'removed' ? 'text-red-600 dark:text-red-400' :
+                                        'text-blue-600 dark:text-blue-400'
                                     }`}
                             >
                                 <span className="font-mono text-xs mt-0.5">
                                     {change.type === 'added' ? '+' : change.type === 'removed' ? '−' : '~'}
                                 </span>
                                 <span>{change.content}</span>
+                                {change.commentCount ? (
+                                    <span className="ml-auto flex items-center gap-1 text-xs px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400">
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                                        </svg>
+                                        {change.commentCount}
+                                    </span>
+                                ) : null}
                             </div>
                         ))}
                         {sectionChanges.length > 5 && (
