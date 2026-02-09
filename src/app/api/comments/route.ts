@@ -1,6 +1,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
+import { sendEmail } from '@/lib/email';
 
 export async function GET(req: NextRequest) {
     const supabase = await createClient();
@@ -128,6 +129,11 @@ export async function POST(req: NextRequest) {
                 await serviceClient.from('mentions').insert(mentionInserts);
             }
 
+            // Send notifications (Fire and forget, or await?)
+            // We await to ensure errors are logged, but maybe we shouldn't block response too long?
+            // For now, let's await to be safe and ensure it works.
+            await sendCommentNotifications(specId, threadId, commentBody, mentions, user);
+
             return NextResponse.json(comment);
         }
 
@@ -171,29 +177,162 @@ export async function POST(req: NextRequest) {
             await serviceClient.from('mentions').insert(mentionInserts);
         }
 
+        // ... (existing code) ...
+
         // Fetch the updated thread to return (so UI can update full state)
         const { data: updatedThread, error: fetchError } = await supabase
             .from('comment_threads')
             .select(`
                 *,
-                resolver:resolved_by (
-                  id,
-                  full_name,
-                  avatar_url
+                spec:specs (
+                    id,
+                    name,
+                    slug,
+                    project:projects (
+                        slug,
+                        organization:organizations (
+                            slug
+                        )
+                    )
                 ),
-                comments (
-                  *,
-                  author:author_id (
+                resolver:resolved_by (
                     id,
                     full_name,
                     avatar_url
-                  )
+                ),
+                comments (
+                    *,
+                    author:author_id (
+                        id,
+                        full_name,
+                        avatar_url,
+                        email
+                    )
                 )
-              `)
+            `)
             .eq('id', thread.id)
             .single();
 
         if (fetchError) throw fetchError;
+
+        // --- Email Notifications ---
+        try {
+            console.log('--- Email Debugging Start (Restored) ---');
+            console.log('Mentions received:', mentions);
+
+            // 1. Send Mention Emails
+            if (mentions && Array.isArray(mentions) && mentions.length > 0) {
+                const serviceClient = createServiceRoleClient();
+                // Fetch mentioned users with their preferences
+                const { data: mentionedUsers } = await serviceClient
+                    .from('profiles')
+                    .select('id, email, full_name, notification_preferences')
+                    .in('id', mentions);
+
+                if (mentionedUsers) {
+                    const specName = updatedThread.spec?.name || 'Specification';
+                    const authorName = user.user_metadata?.full_name || 'Someone';
+                    // Construct URL: /org/project/spec
+                    const orgSlug = updatedThread.spec?.project?.organization?.slug;
+                    const projectSlug = updatedThread.spec?.project?.slug;
+                    const specSlug = updatedThread.spec?.slug;
+                    const actionUrl = orgSlug && projectSlug && specSlug
+                        ? `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/${orgSlug}/${projectSlug}/${specSlug}`
+                        : 'http://localhost:3000';
+
+                    await Promise.all(mentionedUsers.map(async (mentionedUser) => {
+                        // Check preferences (default to true if missing)
+                        const prefs = mentionedUser.notification_preferences as any;
+                        const shouldSend = prefs?.email_mentions !== false; // Default true
+
+                        if (shouldSend && mentionedUser.email) {
+                            try {
+                                const { render } = await import('@react-email/render');
+                                const MentionEmail = (await import('@/components/email/MentionEmail')).default;
+
+                                const html = await render(
+                                    MentionEmail({
+                                        authorName,
+                                        specName,
+                                        commentBody,
+                                        actionUrl,
+                                    })
+                                );
+
+                                await sendEmail({
+                                    to: mentionedUser.email,
+                                    subject: `${authorName} mentioned you in ${specName}`,
+                                    html,
+                                });
+                            } catch (renderError) {
+                                console.error('Error rendering/sending email:', renderError);
+                            }
+                        }
+                    }));
+                }
+            }
+
+            // 2. Send New Comment Notifications to Thread Participants
+            // Find all unique authors in this thread, excluding current user and mentioned users (to avoid double email)
+            const participants = updatedThread.comments
+                ?.map((c: any) => c.author)
+                .filter((a: any) => a.id !== user.id && (!mentions || !mentions.includes(a.id)))
+                .filter((a: any, index: number, self: any[]) => self.findIndex((t: any) => t.id === a.id) === index); // Unique
+
+            if (participants && participants.length > 0) {
+                const serviceClient = createServiceRoleClient();
+                // Re-fetch to get preferences (if not in comment author relation) or just use what we have if we included it
+                // We need preferences. author relation in comment might not have it unless we select it.
+                // Let's fetch preferences for these IDs.
+                const participantIds = participants.map((p: any) => p.id);
+                const { data: participantProfiles } = await serviceClient
+                    .from('profiles')
+                    .select('id, email, notification_preferences')
+                    .in('id', participantIds);
+
+                if (participantProfiles) {
+                    const specName = updatedThread.spec?.name || 'Specification';
+                    const authorName = user.user_metadata?.full_name || 'Someone';
+                    const orgSlug = updatedThread.spec?.project?.organization?.slug;
+                    const projectSlug = updatedThread.spec?.project?.slug;
+                    const specSlug = updatedThread.spec?.slug;
+                    const actionUrl = orgSlug && projectSlug && specSlug
+                        ? `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/${orgSlug}/${projectSlug}/${specSlug}`
+                        : 'http://localhost:3000';
+
+                    await Promise.all(participantProfiles.map(async (profile) => {
+                        const prefs = profile.notification_preferences as any;
+                        const shouldSend = prefs?.email_comments !== false; // Default true
+
+                        if (shouldSend && profile.email) {
+                            const { render } = await import('@react-email/render');
+                            const NewCommentEmail = (await import('@/components/email/NewCommentEmail')).default;
+
+                            const html = await render(
+                                NewCommentEmail({
+                                    authorName,
+                                    specName,
+                                    commentBody,
+                                    actionUrl,
+                                })
+                            );
+
+                            await sendEmail({
+                                to: profile.email,
+                                subject: `New comment on ${specName}`,
+                                html,
+                            });
+                        }
+                    }));
+                }
+            }
+
+        } catch (error) {
+            console.error('Failed to send email notifications:', error);
+        }
+
+        // ... (existing mentions/sort logic) ...
+
 
         // Fetch mentions for all comments in this thread
         const commentIds = updatedThread.comments?.map((c: any) => c.id) || [];
@@ -329,10 +468,6 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
         }
 
-        // Soft delete or Hard delete? Schema says 'deleted' boolean column exists.
-        // Let's check schema/types again. Yes, 'deleted' boolean in schema (from implementation plan description).
-        // Let's use soft delete.
-
         const { error } = await supabase
             .from('comments')
             .update({ deleted: true })
@@ -345,5 +480,151 @@ export async function DELETE(req: NextRequest) {
     } catch (error: any) {
         console.error('Error deleting comment:', error);
         return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+}
+
+// Helper function to handle email notifications
+async function sendCommentNotifications(
+    specId: string,
+    threadId: string,
+    commentBody: string,
+    mentions: string[],
+    author: any
+) {
+    try {
+        console.log('--- Email Notification Process Start ---');
+        console.log('Mentions:', mentions);
+
+        const supabase = createServiceRoleClient();
+
+        // Fetch thread details to get Context (Spec Name, Project, Org) and Participants
+        const { data: thread, error: threadError } = await supabase
+            .from('comment_threads')
+            .select(`
+                *,
+                spec:specs (
+                    id,
+                    name,
+                    slug,
+                    project:projects (
+                        slug,
+                        organization:organizations (
+                            slug
+                        )
+                    )
+                ),
+                comments (
+                    author:author_id (
+                        id,
+                        full_name,
+                        email
+                    )
+                )
+            `)
+            .eq('id', threadId)
+            .single();
+
+        if (threadError || !thread) {
+            console.error('Error fetching thread for notifications:', threadError);
+            return;
+        }
+
+        const specName = thread.spec?.name || 'Specification';
+        const authorName = author.user_metadata?.full_name || 'Someone';
+        // Construct URL: /org/project/spec
+        const orgSlug = thread.spec?.project?.organization?.slug;
+        const projectSlug = thread.spec?.project?.slug;
+        const specSlug = thread.spec?.slug;
+        const actionUrl = orgSlug && projectSlug && specSlug
+            ? `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/${orgSlug}/${projectSlug}/${specSlug}`
+            : 'http://localhost:3000';
+
+        // 1. Send Mention Emails
+        if (mentions && Array.isArray(mentions) && mentions.length > 0) {
+            // Fetch mentioned users with their preferences
+            const { data: mentionedUsers } = await supabase
+                .from('profiles')
+                .select('id, email, full_name, notification_preferences')
+                .in('id', mentions);
+
+            if (mentionedUsers) {
+                await Promise.all(mentionedUsers.map(async (mentionedUser) => {
+                    // Check preferences (default to true if missing)
+                    const prefs = mentionedUser.notification_preferences as any;
+                    const shouldSend = prefs?.email_mentions !== false;
+
+                    if (shouldSend && mentionedUser.email) {
+                        try {
+                            const { render } = await import('@react-email/render');
+                            const MentionEmail = (await import('@/components/email/MentionEmail')).default;
+
+                            const html = await render(
+                                MentionEmail({
+                                    authorName,
+                                    specName,
+                                    commentBody,
+                                    actionUrl,
+                                })
+                            );
+
+                            await sendEmail({
+                                to: mentionedUser.email,
+                                subject: `${authorName} mentioned you in ${specName}`,
+                                html,
+                            });
+                        } catch (renderError) {
+                            console.error('Error rendering/sending mention email:', renderError);
+                        }
+                    }
+                }));
+            }
+        }
+
+        // 2. Send New Comment Notifications to Thread Participants
+        // Find all unique authors in this thread, excluding current user and mentioned users
+        const participants = thread.comments
+            ?.map((c: any) => c.author)
+            .filter((a: any) => a.id !== author.id && (!mentions || !mentions.includes(a.id)))
+            .filter((a: any, index: number, self: any[]) => self.findIndex((t: any) => t.id === a.id) === index); // Unique
+
+        if (participants && participants.length > 0) {
+            const participantIds = participants.map((p: any) => p.id);
+            const { data: participantProfiles } = await supabase
+                .from('profiles')
+                .select('id, email, notification_preferences')
+                .in('id', participantIds);
+
+            if (participantProfiles) {
+                await Promise.all(participantProfiles.map(async (profile) => {
+                    const prefs = profile.notification_preferences as any;
+                    const shouldSend = prefs?.email_comments !== false;
+
+                    if (shouldSend && profile.email) {
+                        const { render } = await import('@react-email/render');
+                        const NewCommentEmail = (await import('@/components/email/NewCommentEmail')).default;
+
+                        const html = await render(
+                            NewCommentEmail({
+                                authorName,
+                                specName,
+                                commentBody,
+                                actionUrl,
+                            })
+                        );
+
+                        await sendEmail({
+                            to: profile.email,
+                            subject: `New comment on ${specName}`,
+                            html,
+                        });
+                    }
+                }));
+            }
+        }
+
+    } catch (error) {
+        console.error('Failed to process/send email notifications:', error);
+    } finally {
+        console.log('--- Email Notification Process End ---');
     }
 }

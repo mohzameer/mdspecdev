@@ -4,6 +4,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { MarkdownRenderer } from '@/components/spec/MarkdownRenderer';
+import { TableOfContents } from '@/components/spec/TableOfContents';
 import { CommentSidebar } from '@/components/comments/CommentSidebar';
 import { ProgressBar } from '@/components/spec/ProgressBar';
 import {
@@ -161,8 +162,10 @@ export function SpecViewer({
                 </div>
             )}
 
-            <div className="flex items-start gap-4">
-                <div className={`flex-1 min-w-0`}>
+
+
+            <div className="flex items-start gap-6">
+                <div className="flex-1 min-w-0">
                     {/* Content Section */}
                     <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-8 shadow-sm">
                         <MarkdownRenderer
@@ -170,6 +173,11 @@ export function SpecViewer({
                             onCommentClick={handleCommentClick}
                         />
                     </div>
+                </div>
+
+                {/* Table of Contents - Hidden on smaller screens, always visible on xl */}
+                <div className="hidden xl:block w-64 flex-shrink-0 sticky top-24 self-start">
+                    <TableOfContents content={content} />
                 </div>
 
                 <CommentSidebar

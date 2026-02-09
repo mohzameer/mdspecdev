@@ -125,6 +125,12 @@ export function Header() {
                             <span className="text-sm text-slate-600 dark:text-slate-300 hidden sm:block">
                                 {user.fullName || user.email}
                             </span>
+                            <Link
+                                href="/settings"
+                                className="px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
+                            >
+                                Settings
+                            </Link>
                             <button
                                 onClick={handleSignOut}
                                 className="px-4 py-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
