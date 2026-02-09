@@ -97,13 +97,13 @@ export function TableOfContents({ content, className = '' }: TableOfContentsProp
                 On this page
             </h3>
             <ul className="space-y-2 border-l border-slate-200 dark:border-slate-800">
-                {headings.map((heading) => (
-                    <li key={heading.id} className={`pl-4 ${heading.level > 2 ? 'pl-8' : ''}`}>
+                {headings.map((heading, idx) => (
+                    <li key={`${heading.id}-${idx}`} className={`pl-4 ${heading.level > 2 ? 'pl-8' : ''}`}>
                         <button
                             onClick={() => scrollToHeading(heading.id)}
                             className={`text-sm text-left transition-colors duration-200 hover:text-blue-600 dark:hover:text-blue-400 ${activeId === heading.id
-                                    ? 'text-blue-600 dark:text-blue-400 font-medium -ml-[1px] border-l-2 border-blue-600'
-                                    : 'text-slate-500 dark:text-slate-400'
+                                ? 'text-blue-600 dark:text-blue-400 font-medium -ml-[1px] border-l-2 border-blue-600'
+                                : 'text-slate-500 dark:text-slate-400'
                                 }`}
                         >
                             {heading.text}
