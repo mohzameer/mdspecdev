@@ -116,8 +116,13 @@ export function CommentSidebar({
                     </div>
                 ) : (
                     (() => {
+                        // Filter out threads with no visible (non-deleted) comments
+                        const visibleThreads = threads?.filter(t =>
+                            t.comments && t.comments.some(c => !c.deleted)
+                        ) || [];
+
                         // Sort threads to bring active thread to top
-                        const sortedThreads = threads ? [...threads] : [];
+                        const sortedThreads = [...visibleThreads];
                         if (activeHeadingId && sortedThreads.length > 0) {
                             const activeIndex = sortedThreads.findIndex(t => t.anchor_heading_id === activeHeadingId);
                             if (activeIndex > 0) {
@@ -146,15 +151,11 @@ export function CommentSidebar({
                                     #{thread.anchor_heading_id}
                                 </button>
                             </div>
-                            {thread.quoted_text && (
-                                <blockquote className="text-xs text-slate-600 dark:text-slate-400 border-l-2 border-amber-400 pl-2 py-0.5 mb-2 italic line-clamp-2">
-                                    &ldquo;{thread.quoted_text}&rdquo;
-                                </blockquote>
-                            )}
                             <CommentThread
                                 thread={thread}
                                 currentUser={currentUser}
                                 orgSlug={orgSlug}
+                                quotedText={thread.quoted_text}
                                 onAddReply={async (threadId, content, mentions) => {
                                     await addReply(threadId, content, mentions);
                                 }}

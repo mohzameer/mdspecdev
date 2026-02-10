@@ -12,6 +12,7 @@ interface CommentThreadProps {
     onEditComment: (commentId: string, content: string) => Promise<void>;
     onDeleteComment: (commentId: string) => Promise<void>;
     orgSlug: string;
+    quotedText?: string | null;
 }
 
 export function CommentThread({
@@ -22,6 +23,7 @@ export function CommentThread({
     onEditComment,
     onDeleteComment,
     orgSlug,
+    quotedText,
 }: CommentThreadProps) {
     const [isReplying, setIsReplying] = useState(false);
 
@@ -30,18 +32,27 @@ export function CommentThread({
 
     return (
         <div className={`border rounded-lg mb-4 bg-white dark:bg-slate-900 shadow-sm ${isResolved ? 'border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/10' : 'border-slate-200 dark:border-slate-700'}`}>
-            <div className="flex items-center justify-between px-4 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 rounded-t-lg">
-                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {isResolved ? 'Resolved' : 'Active Thread'}
-                </span>
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => onResolve(thread.id, !isResolved)}
-                        className={`text-xs px-2 py-1 rounded transition-colors ${isResolved ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400' : 'bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300'}`}
-                    >
-                        {isResolved ? 'Reopen' : 'Resolve'}
-                    </button>
+            <div className="flex flex-col border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 rounded-t-lg">
+                <div className="flex items-center justify-between px-4 py-2">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        {isResolved ? 'Resolved' : 'Active Thread'}
+                    </span>
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={() => onResolve(thread.id, !isResolved)}
+                            className={`text-xs px-2 py-1 rounded transition-colors ${isResolved ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400' : 'bg-slate-200 text-slate-600 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-300'}`}
+                        >
+                            {isResolved ? 'Reopen' : 'Resolve'}
+                        </button>
+                    </div>
                 </div>
+                {quotedText && (
+                    <div className="px-4 pb-2">
+                        <blockquote className="text-xs text-slate-600 dark:text-slate-400 border-l-2 border-amber-400 pl-2 py-0.5 italic line-clamp-3 bg-white dark:bg-slate-900/50 rounded-r">
+                            &ldquo;{quotedText}&rdquo;
+                        </blockquote>
+                    </div>
+                )}
             </div>
 
             <div className="p-4 space-y-4">

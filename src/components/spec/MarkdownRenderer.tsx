@@ -42,98 +42,145 @@ export function MarkdownRenderer({
     if (containerRefCallback) containerRefCallback(containerRef);
   }, [containerRefCallback]);
 
-  // Highlight quoted text from threads in the rendered content
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container || !threads) return;
+  // Inject highlight marks into HTML strings for quoted text threads
+  const highlightedSections = useMemo(() => {
+    if (!threads || sections.length === 0) return sections;
 
-    // Remove existing highlights
-    container.querySelectorAll('mark.quoted-highlight').forEach(mark => {
-      const parent = mark.parentNode;
-      if (parent) {
-        parent.replaceChild(document.createTextNode(mark.textContent || ''), mark);
-        parent.normalize();
-      }
-    });
+    const quotedThreads = threads.filter(t =>
+      t.quoted_text &&
+      !t.resolved &&
+      t.comments?.some(c => !c.deleted)
+    );
+    if (quotedThreads.length === 0) return sections;
 
-    // Add highlights for threads with quoted_text
-    const quotedThreads = threads.filter(t => t.quoted_text && !t.resolved);
-    if (quotedThreads.length === 0) return;
+    // HTML-encode text
+    const htmlEncode = (text: string) =>
+      text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
 
-    const walker = document.createTreeWalker(
-      container,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode: (node) => {
-          // Skip text inside headings, code blocks, and existing marks
-          const parent = node.parentElement;
-          if (!parent) return NodeFilter.FILTER_REJECT;
-          if (parent.closest('pre, code, mark, .sticky')) return NodeFilter.FILTER_REJECT;
-          return NodeFilter.FILTER_ACCEPT;
+    const markTag = (threadId: string, content: string) =>
+      `<mark class="quoted-highlight bg-amber-100 dark:bg-amber-900/40 rounded-sm cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors px-0.5" data-thread-id="${threadId}" title="Click to view comment">${content}</mark>`;
+
+    // Helper to highlight a single HTML string
+    const highlightHtml = (html: string | undefined): string | undefined => {
+      if (!html) return html;
+
+      let processedHtml = html;
+
+      for (const thread of quotedThreads) {
+        const searchText = thread.quoted_text!;
+        const encodedSearch = htmlEncode(searchText);
+        const threadId = thread.id;
+
+        if (searchText.includes('format')) {
+          const codeIdx = processedHtml.indexOf('language-json');
+          if (codeIdx !== -1) {
+            console.log('[HIGHLIGHT DEBUG FOUND JSON]', {
+              searchText,
+              encodedSearch,
+              indexInHtml: processedHtml.indexOf(encodedSearch),
+              htmlSnippet: processedHtml.substring(codeIdx, codeIdx + 300)
+            });
+          }
+        }
+
+        // 1. Direct search on the full HTML string (fastest, covers code blocks & inline text)
+        const idx = processedHtml.indexOf(encodedSearch);
+        if (idx !== -1) {
+          const matched = processedHtml.substring(idx, idx + encodedSearch.length);
+          processedHtml = processedHtml.substring(0, idx) + markTag(threadId, matched) + processedHtml.substring(idx + encodedSearch.length);
+          continue;
+        }
+
+        // 2. Fallback: whitespace-normalized search (covers text with newlines/spaces)
+        // Build a mapping from positions in a "text-only" version to the original HTML
+        let textOnly = '';
+        const posMap: number[] = []; // textOnly index -> html index
+
+        let inTag = false;
+        for (let i = 0; i < processedHtml.length; i++) {
+          if (processedHtml[i] === '<') { inTag = true; continue; }
+          if (processedHtml[i] === '>') { inTag = false; continue; }
+          if (!inTag) {
+            posMap.push(i);
+            textOnly += processedHtml[i];
+          }
+        }
+
+        const normalizedText = textOnly.replace(/\s+/g, ' ');
+        const normalizedSearch = encodedSearch.replace(/\s+/g, ' ');
+        const normIdx = normalizedText.indexOf(normalizedSearch);
+        if (normIdx === -1) continue;
+
+        // Map from normalized position back to textOnly position
+        let textIdx = 0;
+        let normPos = 0;
+
+        // Advance to start of match
+        while (normPos < normIdx && textIdx < textOnly.length) {
+          if (/\s/.test(textOnly[textIdx])) {
+            textIdx++;
+            // Skip all consecutive whitespace in textOnly to match one space in normalized
+            while (textIdx < textOnly.length && /\s/.test(textOnly[textIdx])) textIdx++;
+            normPos++;
+          } else {
+            textIdx++;
+            normPos++;
+          }
+        }
+        const startTextIdx = textIdx;
+
+        // Find end of match
+        let endNormPos = normPos;
+        while (endNormPos < normIdx + normalizedSearch.length && textIdx < textOnly.length) {
+          if (/\s/.test(textOnly[textIdx])) {
+            textIdx++;
+            while (textIdx < textOnly.length && /\s/.test(textOnly[textIdx])) textIdx++;
+            endNormPos++;
+          } else {
+            textIdx++;
+            endNormPos++;
+          }
+        }
+
+        // Map textOnly range to HTML range
+        if (startTextIdx < posMap.length && textIdx - 1 < posMap.length) {
+          const htmlStart = posMap[startTextIdx];
+          const htmlEnd = posMap[textIdx - 1] + 1; // +1 to include the last char
+
+          // Verify and replace
+          const matched = processedHtml.substring(htmlStart, htmlEnd);
+          processedHtml = processedHtml.substring(0, htmlStart) + markTag(threadId, matched) + processedHtml.substring(htmlEnd);
         }
       }
-    );
+      return processedHtml;
+    };
 
-    const textNodes: Text[] = [];
-    let node;
-    while (node = walker.nextNode()) {
-      textNodes.push(node as Text);
-    }
+    return sections.map(section => ({
+      ...section,
+      contentHtml: highlightHtml(section.contentHtml),
+      titleHtml: highlightHtml(section.titleHtml) || '',
+    }));
+  }, [sections, threads]);
 
-    // For each quoted thread, find and highlight matching text
-    for (const thread of quotedThreads) {
-      const searchText = thread.quoted_text!;
-      // Build a combined text from consecutive text nodes to find cross-node matches
-      let fullText = '';
-      const nodeMap: { node: Text; start: number; end: number }[] = [];
+  // Handle clicks on highlighted marks
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !onHighlightClick) return;
 
-      for (const tn of textNodes) {
-        const start = fullText.length;
-        fullText += tn.textContent || '';
-        nodeMap.push({ node: tn, start, end: fullText.length });
+    const handleHighlightClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.classList.contains('quoted-highlight') && target.dataset.threadId) {
+        onHighlightClick(target.dataset.threadId);
       }
+    };
 
-      const matchIndex = fullText.indexOf(searchText);
-      if (matchIndex === -1) continue;
-
-      const matchEnd = matchIndex + searchText.length;
-
-      // Find which text nodes the match spans
-      for (const { node: tn, start, end } of nodeMap) {
-        if (end <= matchIndex || start >= matchEnd) continue;
-
-        const text = tn.textContent || '';
-        const highlightStart = Math.max(0, matchIndex - start);
-        const highlightEnd = Math.min(text.length, matchEnd - start);
-
-        if (highlightStart >= highlightEnd) continue;
-
-        const before = text.substring(0, highlightStart);
-        const highlighted = text.substring(highlightStart, highlightEnd);
-        const after = text.substring(highlightEnd);
-
-        const mark = document.createElement('mark');
-        mark.className = 'quoted-highlight bg-amber-100 dark:bg-amber-900/40 rounded-sm cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors px-0.5';
-        mark.dataset.threadId = thread.id;
-        mark.textContent = highlighted;
-        mark.title = 'Click to view comment';
-        mark.addEventListener('click', () => {
-          if (onHighlightClick) onHighlightClick(thread.id);
-        });
-
-        const parent = tn.parentNode;
-        if (!parent) continue;
-
-        const fragment = document.createDocumentFragment();
-        if (before) fragment.appendChild(document.createTextNode(before));
-        fragment.appendChild(mark);
-        if (after) fragment.appendChild(document.createTextNode(after));
-
-        parent.replaceChild(fragment, tn);
-        break; // Only highlight first occurrence
-      }
-    }
-  }, [threads, sections, onHighlightClick]);
+    container.addEventListener('click', handleHighlightClick);
+    return () => container.removeEventListener('click', handleHighlightClick);
+  }, [onHighlightClick, highlightedSections]);
 
   // 1. Configure Marked Renderer (Same as before for consistency)
   const renderer = useMemo(() => {
@@ -342,7 +389,7 @@ export function MarkdownRenderer({
 
   return (
     <div ref={containerRef} className={`prose prose-slate dark:prose-invert max-w-none ${className}`}>
-      {sections.map((section, index) => {
+      {highlightedSections.map((section, index) => {
         const HeadingTag = (`h${section.level || 1}`) as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 
         // If it's the intro section (level 0), just render content without header
