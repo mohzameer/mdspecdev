@@ -7,7 +7,7 @@ interface UseCommentsResult {
     threads: CommentThread[] | undefined;
     isLoading: boolean;
     error: Error | null;
-    createComment: (anchorHeadingId: string, content: string, mentions?: string[]) => Promise<void>;
+    createComment: (anchorHeadingId: string, content: string, mentions?: string[], quotedText?: string) => Promise<void>;
     addReply: (threadId: string, content: string, mentions?: string[]) => Promise<void>;
     resolveThread: (threadId: string, resolved: boolean) => Promise<void>;
     editComment: (commentId: string, content: string) => Promise<void>;
@@ -34,7 +34,7 @@ export function useComments(specId: string): UseCommentsResult {
 
     // Mutation: Create a new thread
     const createCommentMutation = useMutation({
-        mutationFn: async ({ anchorHeadingId, content, mentions }: { anchorHeadingId: string, content: string, mentions?: string[] }) => {
+        mutationFn: async ({ anchorHeadingId, content, mentions, quotedText }: { anchorHeadingId: string, content: string, mentions?: string[], quotedText?: string }) => {
             const res = await fetch('/api/comments', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -43,6 +43,7 @@ export function useComments(specId: string): UseCommentsResult {
                     anchorHeadingId,
                     body: content,
                     mentions,
+                    quotedText,
                 }),
             });
             if (!res.ok) {
@@ -138,8 +139,8 @@ export function useComments(specId: string): UseCommentsResult {
         threads,
         isLoading,
         error,
-        createComment: async (anchorHeadingId: string, content: string, mentions?: string[]) => {
-            await createCommentMutation.mutateAsync({ anchorHeadingId, content, mentions });
+        createComment: async (anchorHeadingId: string, content: string, mentions?: string[], quotedText?: string) => {
+            await createCommentMutation.mutateAsync({ anchorHeadingId, content, mentions, quotedText });
         },
         addReply: async (threadId: string, content: string, mentions?: string[]) => {
             await replyMutation.mutateAsync({ threadId, content, mentions });

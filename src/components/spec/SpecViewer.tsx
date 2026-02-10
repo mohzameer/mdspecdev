@@ -1,11 +1,12 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { MarkdownRenderer } from '@/components/spec/MarkdownRenderer';
 import { TableOfContents } from '@/components/spec/TableOfContents';
 import { CommentSidebar } from '@/components/comments/CommentSidebar';
+import { SelectionPopover } from '@/components/comments/SelectionPopover';
 import { ProgressBar } from '@/components/spec/ProgressBar';
 import {
     StatusBadge,
@@ -13,6 +14,7 @@ import {
     TagsList,
 } from '@/components/spec/StatusBadge';
 import { formatRelativeTime, formatDate } from '@/lib/utils';
+import { useComments } from '@/hooks/useComments';
 import { Profile, Spec, Project, Organization } from '@/lib/types';
 
 interface SpecInfo {
@@ -54,11 +56,37 @@ export function SpecViewer({
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isSummaryOpen, setIsSummaryOpen] = useState(false);
     const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
+    const [activeQuotedText, setActiveQuotedText] = useState<string | null>(null);
+    const markdownContainerRef = useRef<React.RefObject<HTMLElement | null> | null>(null);
+
+    // Fetch threads for highlight rendering
+    const { threads } = useComments(spec.id);
 
     const handleCommentClick = (headingId: string) => {
         setActiveHeadingId(headingId);
+        setActiveQuotedText(null);
         setIsSidebarOpen(true);
     };
+
+    const handleTextSelect = useCallback((selectedText: string, nearestHeadingId: string) => {
+        setActiveQuotedText(selectedText);
+        setActiveHeadingId(nearestHeadingId || 'general');
+        setIsSidebarOpen(true);
+    }, []);
+
+    const handleHighlightClick = useCallback((threadId: string) => {
+        // Find the thread and set it as active
+        const thread = threads?.find(t => t.id === threadId);
+        if (thread) {
+            setActiveHeadingId(thread.anchor_heading_id);
+            setActiveQuotedText(thread.quoted_text || null);
+            setIsSidebarOpen(true);
+        }
+    }, [threads]);
+
+    const handleContainerRef = useCallback((ref: React.RefObject<HTMLDivElement | null>) => {
+        markdownContainerRef.current = ref;
+    }, []);
 
     return (
         <div className="relative">
@@ -165,14 +193,25 @@ export function SpecViewer({
 
 
             <div className="flex items-start gap-6">
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 relative">
                     {/* Content Section */}
                     <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-8 shadow-sm">
                         <MarkdownRenderer
                             content={content}
                             onCommentClick={handleCommentClick}
+                            onHighlightClick={handleHighlightClick}
+                            threads={threads}
+                            containerRefCallback={handleContainerRef}
                         />
                     </div>
+
+                    {/* Selection Popover - rendered relative to the content area */}
+                    {markdownContainerRef.current && (
+                        <SelectionPopover
+                            containerRef={markdownContainerRef.current as React.RefObject<HTMLElement | null>}
+                            onComment={handleTextSelect}
+                        />
+                    )}
                 </div>
 
                 {/* Table of Contents - Hidden on smaller screens, always visible on xl */}
@@ -186,6 +225,7 @@ export function SpecViewer({
                     isOpen={isSidebarOpen}
                     onClose={() => setIsSidebarOpen(false)}
                     activeHeadingId={activeHeadingId}
+                    activeQuotedText={activeQuotedText}
                     orgSlug={org.slug}
                 />
             </div>

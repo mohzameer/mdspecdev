@@ -3,12 +3,17 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { marked } from 'marked';
 import DOMPurify from 'dompurify';
+import { CommentThread } from '@/lib/types';
 
 interface MarkdownRendererProps {
   content: string;
   className?: string;
   onCommentClick?: (headingId: string) => void;
+  onTextSelect?: (selectedText: string, nearestHeadingId: string) => void;
+  onHighlightClick?: (threadId: string) => void;
+  threads?: CommentThread[];
   disableHeadingIds?: boolean;
+  containerRefCallback?: (ref: React.RefObject<HTMLDivElement | null>) => void;
 }
 
 interface Section {
@@ -23,10 +28,112 @@ export function MarkdownRenderer({
   content,
   className = '',
   onCommentClick,
+  onTextSelect,
+  onHighlightClick,
+  threads,
   disableHeadingIds = false,
+  containerRefCallback,
 }: MarkdownRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [sections, setSections] = useState<Section[]>([]);
+
+  // Expose containerRef to parent
+  useEffect(() => {
+    if (containerRefCallback) containerRefCallback(containerRef);
+  }, [containerRefCallback]);
+
+  // Highlight quoted text from threads in the rendered content
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !threads) return;
+
+    // Remove existing highlights
+    container.querySelectorAll('mark.quoted-highlight').forEach(mark => {
+      const parent = mark.parentNode;
+      if (parent) {
+        parent.replaceChild(document.createTextNode(mark.textContent || ''), mark);
+        parent.normalize();
+      }
+    });
+
+    // Add highlights for threads with quoted_text
+    const quotedThreads = threads.filter(t => t.quoted_text && !t.resolved);
+    if (quotedThreads.length === 0) return;
+
+    const walker = document.createTreeWalker(
+      container,
+      NodeFilter.SHOW_TEXT,
+      {
+        acceptNode: (node) => {
+          // Skip text inside headings, code blocks, and existing marks
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+          if (parent.closest('pre, code, mark, .sticky')) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      }
+    );
+
+    const textNodes: Text[] = [];
+    let node;
+    while (node = walker.nextNode()) {
+      textNodes.push(node as Text);
+    }
+
+    // For each quoted thread, find and highlight matching text
+    for (const thread of quotedThreads) {
+      const searchText = thread.quoted_text!;
+      // Build a combined text from consecutive text nodes to find cross-node matches
+      let fullText = '';
+      const nodeMap: { node: Text; start: number; end: number }[] = [];
+
+      for (const tn of textNodes) {
+        const start = fullText.length;
+        fullText += tn.textContent || '';
+        nodeMap.push({ node: tn, start, end: fullText.length });
+      }
+
+      const matchIndex = fullText.indexOf(searchText);
+      if (matchIndex === -1) continue;
+
+      const matchEnd = matchIndex + searchText.length;
+
+      // Find which text nodes the match spans
+      for (const { node: tn, start, end } of nodeMap) {
+        if (end <= matchIndex || start >= matchEnd) continue;
+
+        const text = tn.textContent || '';
+        const highlightStart = Math.max(0, matchIndex - start);
+        const highlightEnd = Math.min(text.length, matchEnd - start);
+
+        if (highlightStart >= highlightEnd) continue;
+
+        const before = text.substring(0, highlightStart);
+        const highlighted = text.substring(highlightStart, highlightEnd);
+        const after = text.substring(highlightEnd);
+
+        const mark = document.createElement('mark');
+        mark.className = 'quoted-highlight bg-amber-100 dark:bg-amber-900/40 rounded-sm cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors px-0.5';
+        mark.dataset.threadId = thread.id;
+        mark.textContent = highlighted;
+        mark.title = 'Click to view comment';
+        mark.addEventListener('click', () => {
+          if (onHighlightClick) onHighlightClick(thread.id);
+        });
+
+        const parent = tn.parentNode;
+        if (!parent) continue;
+
+        const fragment = document.createDocumentFragment();
+        if (before) fragment.appendChild(document.createTextNode(before));
+        fragment.appendChild(mark);
+        if (after) fragment.appendChild(document.createTextNode(after));
+
+        parent.replaceChild(fragment, tn);
+        break; // Only highlight first occurrence
+      }
+    }
+  }, [threads, sections, onHighlightClick]);
 
   // 1. Configure Marked Renderer (Same as before for consistency)
   const renderer = useMemo(() => {

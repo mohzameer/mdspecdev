@@ -86,6 +86,7 @@ export interface CommentThread {
   id: string;
   spec_id: string;
   anchor_heading_id: string;
+  quoted_text?: string | null;
   resolved: boolean;
   resolved_by: string | null;
   resolved_at: string | null;

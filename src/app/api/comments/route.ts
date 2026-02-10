@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { specId, threadId, body, anchorHeadingId, parentCommentId, content, mentions } = await req.json();
+        const { specId, threadId, body, anchorHeadingId, parentCommentId, content, mentions, quotedText } = await req.json();
 
         // Normalize body vs content (CommentInput might send content)
         const commentBody = body || content;
@@ -143,12 +143,16 @@ export async function POST(req: NextRequest) {
         }
 
         // Create thread
+        const threadInsert: any = {
+            spec_id: specId,
+            anchor_heading_id: anchorHeadingId,
+        };
+        if (quotedText) {
+            threadInsert.quoted_text = quotedText;
+        }
         const { data: thread, error: threadError } = await supabase
             .from('comment_threads')
-            .insert({
-                spec_id: specId,
-                anchor_heading_id: anchorHeadingId,
-            })
+            .insert(threadInsert)
             .select()
             .single();
 

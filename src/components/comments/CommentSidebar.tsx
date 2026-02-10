@@ -11,6 +11,7 @@ interface CommentSidebarProps {
     isOpen: boolean;
     onClose: () => void;
     activeHeadingId?: string | null;
+    activeQuotedText?: string | null;
     orgSlug: string;
 }
 
@@ -20,6 +21,7 @@ export function CommentSidebar({
     isOpen,
     onClose,
     activeHeadingId,
+    activeQuotedText,
     orgSlug,
 }: CommentSidebarProps) {
     const {
@@ -34,27 +36,28 @@ export function CommentSidebar({
 
     const sidebarRef = useRef<HTMLDivElement>(null);
 
-    // Filter threads if activeHeadingId is set? 
-    // Filter threads if activeHeadingId is set?
-    // For now, let's show all, but scroll to active one or highlight it.
-    // Actually, let's filter if provided, or show all if not?
-    // Plan says "Displays threads relevant to the visible viewport or all threads".
-    // Let's stick to showing all for now, maybe highlight.
-
     useEffect(() => {
         // If activeHeadingId changes, scroll that thread into view
         if (activeHeadingId && threads) {
             const threadElement = document.getElementById(`thread-${activeHeadingId}`);
             if (threadElement) {
                 threadElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                // Maybe add a highlight class temporarily
             }
         }
     }, [activeHeadingId, threads]);
 
     if (!isOpen) return null;
 
-    const existingThread = activeHeadingId ? threads?.find(t => t.anchor_heading_id === activeHeadingId) : null;
+    const existingThread = activeHeadingId && !activeQuotedText
+        ? threads?.find(t => t.anchor_heading_id === activeHeadingId && !t.quoted_text)
+        : null;
+
+    // Check if there's an existing thread for this exact quoted text
+    const existingQuotedThread = activeQuotedText
+        ? threads?.find(t => t.quoted_text === activeQuotedText)
+        : null;
+
+    const showNewCommentInput = activeHeadingId && !existingThread && !existingQuotedThread;
 
     return (
         <div
@@ -74,14 +77,25 @@ export function CommentSidebar({
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {activeHeadingId && !existingThread && (
+                {showNewCommentInput && (
                     <div className="mb-6">
-                        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-2 px-1">
-                            Start a discussion on "{activeHeadingId}"
-                        </p>
+                        {activeQuotedText ? (
+                            <div className="mb-3">
+                                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">
+                                    Commenting on selected text
+                                </p>
+                                <blockquote className="text-sm text-slate-700 dark:text-slate-300 border-l-2 border-blue-400 pl-3 py-1 bg-blue-50 dark:bg-blue-900/20 rounded-r italic line-clamp-4">
+                                    &ldquo;{activeQuotedText}&rdquo;
+                                </blockquote>
+                            </div>
+                        ) : (
+                            <p className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-2 px-1">
+                                Start a discussion on &quot;{activeHeadingId}&quot;
+                            </p>
+                        )}
                         <CommentInput
                             onSubmit={async (content, mentions) => {
-                                await createComment(activeHeadingId, content, mentions);
+                                await createComment(activeHeadingId!, content, mentions, activeQuotedText || undefined);
                             }}
                             autoFocus
                             placeholder="Write a comment..."
@@ -98,7 +112,7 @@ export function CommentSidebar({
                 ) : threads?.length === 0 ? (
                     <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                         <p>No comments yet.</p>
-                        <p className="text-sm mt-2">Select a section to start a discussion.</p>
+                        <p className="text-sm mt-2">Select text or a section heading to start a discussion.</p>
                     </div>
                 ) : (
                     (() => {
@@ -114,13 +128,12 @@ export function CommentSidebar({
                         return sortedThreads;
                     })()?.map(thread => (
                         <div key={thread.id} id={`thread-${thread.anchor_heading_id}`}>
-                            <div className="mb-1">
+                            <div className="mb-1 flex flex-wrap items-center gap-1">
                                 <button
                                     onClick={() => {
                                         const el = document.getElementById(thread.anchor_heading_id);
                                         if (el) {
                                             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                            // Optional: highlight text temporarily
                                             el.classList.add('bg-yellow-100', 'dark:bg-yellow-900/30');
                                             setTimeout(() => {
                                                 el.classList.remove('bg-yellow-100', 'dark:bg-yellow-900/30');
@@ -133,6 +146,11 @@ export function CommentSidebar({
                                     #{thread.anchor_heading_id}
                                 </button>
                             </div>
+                            {thread.quoted_text && (
+                                <blockquote className="text-xs text-slate-600 dark:text-slate-400 border-l-2 border-amber-400 pl-2 py-0.5 mb-2 italic line-clamp-2">
+                                    &ldquo;{thread.quoted_text}&rdquo;
+                                </blockquote>
+                            )}
                             <CommentThread
                                 thread={thread}
                                 currentUser={currentUser}
