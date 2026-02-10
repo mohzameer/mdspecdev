@@ -252,7 +252,7 @@ export function MarkdownRenderer({
               <div className="flex items-center group">
                 <HeadingTag
                   id={section.id}
-                  className="!m-0 !p-0 flex items-center scroll-mt-20"
+                  className="!m-0 !p-0 !border-0 flex items-center scroll-mt-20"
                 >
                   <span dangerouslySetInnerHTML={{ __html: section.titleHtml }} />
                 </HeadingTag>
