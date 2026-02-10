@@ -94,7 +94,7 @@ export function OrgMembersPage({ orgSlug }: OrgMembersPageProps) {
 
     return (
         <div className="space-y-8">
-            <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm p-6">
+            <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-6">
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Add Member</h2>
                 <form onSubmit={handleInvite} className="flex flex-col gap-4 max-w-lg">
                     <div className="flex flex-col gap-2">
@@ -154,8 +154,8 @@ export function OrgMembersPage({ orgSlug }: OrgMembersPageProps) {
                 )}
             </div>
 
-            <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm overflow-hidden">
-                <div className="p-6 border-b border-slate-200 dark:border-white/10">
+            <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+                <div className="p-6 border-b border-slate-200 dark:border-slate-700">
                     <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
                         Members ({members.length})
                     </h2>

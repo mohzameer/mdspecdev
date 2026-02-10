@@ -1,18 +1,27 @@
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
 
 :root {
   --background: #f8fafc;
   --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
 }
 
 .dark {
-  --background: #0f172a;
+  --background: #020617;
+  /* Darker slate-950 */
   --foreground: #f8fafc;
+  --card: #1e293b;
+  /* slate-800 */
+  --card-foreground: #f8fafc;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -29,7 +38,7 @@ body {
 }
 
 .dark .card-bg {
-  @apply bg-white/5 border-white/10;
+  @apply bg-slate-800/50 border-white/10;
 }
 
 /* Markdown prose styling */

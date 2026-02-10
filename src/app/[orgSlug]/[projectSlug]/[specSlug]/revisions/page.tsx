@@ -121,7 +121,7 @@ export default async function RevisionsPage({ params }: Props) {
                 </div>
 
                 {!revisions || revisions.length === 0 ? (
-                    <div className="text-center py-16 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+                    <div className="text-center py-16 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
                         <p className="text-slate-500 dark:text-slate-400">
                             No revisions found.
                         </p>
@@ -131,7 +131,7 @@ export default async function RevisionsPage({ params }: Props) {
                         {revisions.map((revision: any, index: number) => (
                             <div
                                 key={revision.id}
-                                className="p-6 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm"
+                                className="p-6 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm"
                             >
                                 <div className="flex items-start justify-between">
                                     <div>
@@ -160,14 +160,14 @@ export default async function RevisionsPage({ params }: Props) {
                                     <div className="flex gap-2">
                                         <Link
                                             href={`/${org.slug}/${project.slug}/${specSlug}/revisions/${revision.revision_number}`}
-                                            className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white rounded-lg transition-colors"
+                                            className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white rounded-lg transition-colors"
                                         >
                                             View
                                         </Link>
                                         {index > 0 && (
                                             <Link
                                                 href={`/${org.slug}/${project.slug}/${specSlug}/revisions/${revision.revision_number}/diff`}
-                                                className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white rounded-lg transition-colors"
+                                                className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white rounded-lg transition-colors"
                                             >
                                                 Diff
                                             </Link>

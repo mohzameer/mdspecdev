@@ -149,7 +149,7 @@ export function OrgDashboard({
                     <div className="flex gap-3">
                         <Link
                             href={`/${org.slug}/members`}
-                            className="px-4 py-2 bg-white dark:bg-white/10 hover:bg-slate-50 dark:hover:bg-white/20 text-slate-700 dark:text-white font-medium rounded-lg border border-slate-200 dark:border-white/10 transition-colors"
+                            className="px-4 py-2 bg-white dark:bg-white/10 hover:bg-slate-50 dark:hover:bg-white/20 text-slate-700 dark:text-white font-medium rounded-lg border border-slate-200 dark:border-slate-700 transition-colors"
                         >
                             Manage Members
                         </Link>
@@ -179,7 +179,7 @@ export function OrgDashboard({
                 </div>
 
                 {/* Filters */}
-                <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-4 mb-6 shadow-sm">
+                <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-4 mb-6 shadow-sm">
                     <div className="flex flex-wrap items-center gap-4">
                         {/* Search */}
                         <div className="flex-1 min-w-[200px]">
@@ -188,7 +188,7 @@ export function OrgDashboard({
                                 placeholder="Search specs..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
 
@@ -196,7 +196,7 @@ export function OrgDashboard({
                         <select
                             value={projectFilter}
                             onChange={(e) => setProjectFilter(e.target.value)}
-                            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">All Projects</option>
                             {filterOptions.projects.map(p => (
@@ -208,7 +208,7 @@ export function OrgDashboard({
                         <select
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
-                            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">All Statuses</option>
                             {filterOptions.statuses.map(s => (
@@ -220,7 +220,7 @@ export function OrgDashboard({
                         <select
                             value={ownerFilter}
                             onChange={(e) => setOwnerFilter(e.target.value)}
-                            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/50 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">All Owners</option>
                             {filterOptions.owners.map(o => (
@@ -249,7 +249,7 @@ export function OrgDashboard({
 
                 {/* Specs grouped by project */}
                 {groupedSpecs.length === 0 ? (
-                    <div className="text-center py-16 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+                    <div className="text-center py-16 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
                         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
                             <span className="text-2xl">🔍</span>
                         </div>
@@ -349,9 +349,9 @@ function MetricCard({
     return (
         <Component
             onClick={onClick}
-            className={`p-4 bg-white dark:bg-white/5 rounded-xl border transition-all ${active
+            className={`p-4 bg-white dark:bg-slate-800/50 rounded-xl border transition-all ${active
                     ? 'border-blue-500 ring-2 ring-blue-500/20'
-                    : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-white/20'
                 } ${onClick ? 'cursor-pointer' : ''} shadow-sm`}
         >
             <div className="flex items-center gap-2 mb-1">
@@ -378,7 +378,7 @@ function SpecCard({
     return (
         <Link
             href={`/${orgSlug}/${projectSlug}/${spec.slug}`}
-            className="block p-6 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl border border-slate-200 dark:border-white/10 transition-all duration-200 group shadow-sm"
+            className="block p-6 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-700 transition-all duration-200 group shadow-sm"
         >
             <div className="flex items-start justify-between mb-3">
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">

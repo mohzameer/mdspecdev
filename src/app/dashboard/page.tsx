@@ -142,16 +142,18 @@ export default async function DashboardPage() {
                                 <Link
                                     key={spec.id}
                                     href={`/${spec.project.organization.slug}/${spec.project.slug}/${spec.slug}`}
-                                    className="block p-6 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl border border-slate-200 dark:border-white/10 transition-all duration-200 group shadow-sm"
+                                    className="flex flex-col h-full p-6 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-700 transition-all duration-200 group shadow-sm"
                                 >
-                                    <div className="flex items-start justify-between mb-3">
-                                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                            {spec.name}
-                                        </h3>
-                                        <StatusBadge status={spec.status} />
-                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-start justify-between mb-3">
+                                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                                {spec.name}
+                                            </h3>
+                                            <StatusBadge status={spec.status} />
+                                        </div>
 
-                                    <TagsList tags={spec.tags} />
+                                        <TagsList tags={spec.tags} />
+                                    </div>
 
                                     {spec.progress !== null && (
                                         <div className="mt-4">

@@ -256,7 +256,7 @@ tags: ${tagsStr}
                     )}
 
                     {/* Basic Info Section */}
-                    <div className="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm space-y-6">
+                    <div className="bg-white dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-6">
                         <h2 className="text-lg font-semibold text-slate-900 dark:text-white border-b border-slate-100 dark:border-white/5 pb-4">
                             Basic Information
                         </h2>
@@ -271,7 +271,7 @@ tags: ${tagsStr}
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     required
-                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                                     placeholder="e.g. API Authentication"
                                 />
                             </div>
@@ -286,7 +286,7 @@ tags: ${tagsStr}
                                     value={specSlug}
                                     onChange={(e) => setSpecSlug(e.target.value)}
                                     required
-                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                                     placeholder="e.g. api-authentication"
                                 />
                             </div>
@@ -294,7 +294,7 @@ tags: ${tagsStr}
                     </div>
 
                     {/* Metadata Section */}
-                    <div className="bg-white dark:bg-white/5 p-6 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm space-y-6">
+                    <div className="bg-white dark:bg-slate-800/50 p-6 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm space-y-6">
                         <h2 className="text-lg font-semibold text-slate-900 dark:text-white border-b border-slate-100 dark:border-white/5 pb-4">
                             Metadata
                         </h2>
@@ -307,7 +307,7 @@ tags: ${tagsStr}
                                     id="status"
                                     value={status}
                                     onChange={(e) => setStatus(e.target.value as Status)}
-                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 >
                                     <option value="planned">Planned</option>
                                     <option value="in-progress">In Progress</option>
@@ -323,7 +323,7 @@ tags: ${tagsStr}
                                     id="maturity"
                                     value={maturity}
                                     onChange={(e) => setMaturity(e.target.value as Maturity)}
-                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 >
                                     <option value="draft">Draft</option>
                                     <option value="review">In Review</option>
@@ -341,7 +341,7 @@ tags: ${tagsStr}
                                     type="text"
                                     value={tagsInput}
                                     onChange={(e) => setTagsInput(e.target.value)}
-                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     placeholder="api, security, v1"
                                 />
                             </div>
@@ -374,7 +374,7 @@ tags: ${tagsStr}
                         <label htmlFor="content" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                             Spec Content
                         </label>
-                        <div className="border border-slate-300 dark:border-white/10 rounded-lg overflow-hidden bg-white dark:bg-white/5 shadow-sm">
+                        <div className="border border-slate-300 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-800/50 shadow-sm">
                             {/* Read-only Frontmatter Preview */}
                             <div className="bg-slate-50 dark:bg-black/20 border-b border-slate-200 dark:border-white/5 p-4 select-none">
                                 <div className="flex items-center justify-between mb-2">
@@ -400,11 +400,11 @@ tags: ${tagsStr}
                         </div>
                     </div>
 
-                    <div className="flex gap-4 pt-4 border-t border-slate-200 dark:border-white/10">
+                    <div className="flex gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
                         <button
                             type="button"
                             onClick={() => router.back()}
-                            className="px-6 py-3 bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-white font-medium rounded-lg transition-all"
+                            className="px-6 py-3 bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white font-medium rounded-lg transition-all"
                         >
                             Cancel
                         </button>

@@ -275,7 +275,7 @@ export default function RestoreRevisionPage() {
                     </Link>
                 </div>
 
-                <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-8 shadow-sm">
+                <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
                     <div className="text-center">
                         <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-amber-100 dark:bg-amber-500/20 mb-4">
                             <span className="text-3xl">↩️</span>
@@ -299,7 +299,7 @@ export default function RestoreRevisionPage() {
                             <button
                                 type="button"
                                 onClick={() => router.back()}
-                                className="px-6 py-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white font-medium rounded-lg transition-all"
+                                className="px-6 py-3 bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white font-medium rounded-lg transition-all"
                             >
                                 Cancel
                             </button>

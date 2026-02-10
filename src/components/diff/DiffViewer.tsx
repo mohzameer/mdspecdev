@@ -182,7 +182,7 @@ export function DiffViewer({ oldContent, newContent, comments = [] }: DiffViewer
 
     if (oldContent === newContent) {
         return (
-            <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-8 text-center shadow-sm">
+            <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-8 text-center shadow-sm">
                 <p className="text-slate-500 dark:text-slate-400">
                     No changes between these versions.
                 </p>
@@ -194,7 +194,7 @@ export function DiffViewer({ oldContent, newContent, comments = [] }: DiffViewer
         <div className="space-y-4">
             {/* Summary Panel */}
             {showSummary && sectionChanges.length > 0 && (
-                <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-4 shadow-sm">
+                <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-4 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
                         <h3 className="font-semibold text-slate-900 dark:text-white">Summary of Changes</h3>
                         <button
@@ -237,9 +237,9 @@ export function DiffViewer({ oldContent, newContent, comments = [] }: DiffViewer
             )}
 
             {/* Main Diff Panel */}
-            <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
+            <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden shadow-sm">
                 {/* Toolbar */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
                     <div className="flex items-center gap-4">
                         <span className="text-green-600 dark:text-green-400 text-sm font-medium">
                             +{stats.addedLines} lines
@@ -251,10 +251,10 @@ export function DiffViewer({ oldContent, newContent, comments = [] }: DiffViewer
 
                     <div className="flex items-center gap-4">
                         {/* Navigation buttons */}
-                        <div className="flex items-center gap-1 border-r border-slate-200 dark:border-white/10 pr-4">
+                        <div className="flex items-center gap-1 border-r border-slate-200 dark:border-slate-700 pr-4">
                             <button
                                 onClick={() => navigateChange('prev')}
-                                className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-lg transition-colors"
                                 title="Previous change"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -263,7 +263,7 @@ export function DiffViewer({ oldContent, newContent, comments = [] }: DiffViewer
                             </button>
                             <button
                                 onClick={() => navigateChange('next')}
-                                className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
+                                className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700/50 rounded-lg transition-colors"
                                 title="Next change"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -273,7 +273,7 @@ export function DiffViewer({ oldContent, newContent, comments = [] }: DiffViewer
                         </div>
 
                         {/* View mode buttons */}
-                        <div className="flex gap-1 bg-slate-100 dark:bg-white/5 p-1 rounded-lg">
+                        <div className="flex gap-1 bg-slate-100 dark:bg-slate-800/50 p-1 rounded-lg">
                             <button
                                 onClick={() => setViewMode('unified')}
                                 className={`px-3 py-1.5 text-sm rounded-md transition-colors ${viewMode === 'unified'
@@ -373,7 +373,7 @@ function SplitDiff({
         <div className="grid grid-cols-2 gap-0.5">
             {/* Old side */}
             <div className="bg-red-50 dark:bg-red-500/5 rounded-l-lg overflow-hidden">
-                <div className="px-3 py-2 border-b border-slate-200 dark:border-white/10 text-sm text-red-600 dark:text-red-400 font-medium">
+                <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-700 text-sm text-red-600 dark:text-red-400 font-medium">
                     Previous
                 </div>
                 <pre className="p-3 font-mono text-sm overflow-x-auto">
@@ -400,7 +400,7 @@ function SplitDiff({
 
             {/* New side */}
             <div className="bg-green-50 dark:bg-green-500/5 rounded-r-lg overflow-hidden">
-                <div className="px-3 py-2 border-b border-slate-200 dark:border-white/10 text-sm text-green-600 dark:text-green-400 font-medium">
+                <div className="px-3 py-2 border-b border-slate-200 dark:border-slate-700 text-sm text-green-600 dark:text-green-400 font-medium">
                     Current
                 </div>
                 <pre className="p-3 font-mono text-sm overflow-x-auto">

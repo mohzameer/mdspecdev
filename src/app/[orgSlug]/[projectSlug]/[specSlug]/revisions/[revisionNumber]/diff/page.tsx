@@ -166,7 +166,7 @@ export default async function DiffPage({ params }: Props) {
                 </div>
 
                 {/* Header */}
-                <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-6 mb-6 shadow-sm">
+                <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-6 mb-6 shadow-sm">
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
                         Comparing v{revisionNum - 1} → v{revisionNum}
                     </h1>

@@ -125,7 +125,7 @@ export default async function ProjectDetailPage({ params }: Props) {
                 </div>
 
                 {!specs || specs.length === 0 ? (
-                    <div className="text-center py-16 bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 shadow-sm">
+                    <div className="text-center py-16 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
                         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 mb-4">
                             <span className="text-2xl">📄</span>
                         </div>
@@ -154,7 +154,7 @@ export default async function ProjectDetailPage({ params }: Props) {
                                 <Link
                                     key={spec.id}
                                     href={`/${org.slug}/${project.slug}/${spec.slug}`}
-                                    className="block p-6 bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 rounded-xl border border-slate-200 dark:border-white/10 transition-all duration-200 group shadow-sm"
+                                    className="block p-6 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-700 transition-all duration-200 group shadow-sm"
                                 >
                                     <div className="flex items-start justify-between mb-3">
                                         <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">

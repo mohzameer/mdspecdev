@@ -34,20 +34,20 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-            <div className="w-full max-w-md p-8 space-y-8 bg-white/5 backdrop-blur-xl rounded-2xl border border-white/10 shadow-2xl">
+        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 transition-colors duration-300">
+            <div className="w-full max-w-md p-8 space-y-8 bg-white dark:bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl">
                 <div className="text-center">
-                    <h1 className="text-3xl font-bold text-white tracking-tight">
+                    <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
                         Welcome back
                     </h1>
-                    <p className="mt-2 text-slate-400">
+                    <p className="mt-2 text-slate-600 dark:text-slate-400">
                         Sign in to access your specifications
                     </p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                     {error && (
-                        <div className="p-4 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm">
                             {error}
                         </div>
                     )}
@@ -56,7 +56,7 @@ export default function LoginPage() {
                         <div>
                             <label
                                 htmlFor="email"
-                                className="block text-sm font-medium text-slate-300 mb-2"
+                                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
                             >
                                 Email address
                             </label>
@@ -66,7 +66,7 @@ export default function LoginPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                className="w-full px-4 py-3 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                                 placeholder="you@example.com"
                             />
                         </div>
@@ -74,7 +74,7 @@ export default function LoginPage() {
                         <div>
                             <label
                                 htmlFor="password"
-                                className="block text-sm font-medium text-slate-300 mb-2"
+                                className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
                             >
                                 Password
                             </label>
@@ -84,7 +84,7 @@ export default function LoginPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
-                                className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                className="w-full px-4 py-3 bg-white dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                                 placeholder="••••••••"
                             />
                         </div>
@@ -93,7 +93,7 @@ export default function LoginPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 text-white font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-500/25"
+                        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-blue-500/20"
                     >
                         {loading ? (
                             <span className="flex items-center justify-center gap-2">
@@ -123,11 +123,11 @@ export default function LoginPage() {
                         )}
                     </button>
 
-                    <p className="text-center text-slate-400 text-sm">
+                    <p className="text-center text-slate-600 dark:text-slate-400 text-sm">
                         Don&apos;t have an account?{' '}
                         <Link
                             href="/signup"
-                            className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 font-medium transition-colors"
                         >
                             Sign up
                         </Link>

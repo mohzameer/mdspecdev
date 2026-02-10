@@ -63,7 +63,7 @@ export function NotificationSettings() {
     }
 
     return (
-        <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-6 shadow-sm">
+        <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
                 Email Notifications
             </h3>

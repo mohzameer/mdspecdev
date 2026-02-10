@@ -150,7 +150,7 @@ export default async function RevisionDetailPage({ params }: Props) {
                 </div>
 
                 {/* Header */}
-                <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-6 mb-6 shadow-sm">
+                <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-6 mb-6 shadow-sm">
                     <div className="flex items-start justify-between">
                         <div>
                             <div className="flex items-center gap-3 mb-2">
@@ -186,7 +186,7 @@ export default async function RevisionDetailPage({ params }: Props) {
                             {revisionNum > 1 && (
                                 <Link
                                     href={`/${org.slug}/${project.slug}/${specSlug}/revisions/${revisionNum}/diff`}
-                                    className="px-4 py-2 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-slate-700 dark:text-white font-medium rounded-lg transition-colors border border-slate-200 dark:border-white/10"
+                                    className="px-4 py-2 bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white font-medium rounded-lg transition-colors border border-slate-200 dark:border-slate-700"
                                 >
                                     Compare with v{revisionNum - 1}
                                 </Link>
@@ -196,7 +196,7 @@ export default async function RevisionDetailPage({ params }: Props) {
                 </div>
 
                 {/* Content */}
-                <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-8 shadow-sm">
+                <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
                     <MarkdownRenderer content={contentWithoutFrontmatter} />
                 </div>
             </div>

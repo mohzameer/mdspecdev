@@ -14,7 +14,7 @@ export default async function SettingsPage() {
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-[#0B1120]">
-            <header className="sticky top-0 z-40 bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-xl border-b border-slate-200 dark:border-white/10">
+            <header className="sticky top-0 z-40 bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-xl border-b border-slate-200 dark:border-slate-700">
                 <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center h-16 gap-4">
                         <Link
@@ -35,7 +35,7 @@ export default async function SettingsPage() {
             <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="space-y-6">
                     {/* Profile Section (Placeholder for future) */}
-                    <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-6 shadow-sm">
+                    <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
                         <div className="flex items-center gap-4">
                             <div className="h-16 w-16 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-xl font-bold text-slate-600 dark:text-slate-300">
                                 {user.user_metadata?.full_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
