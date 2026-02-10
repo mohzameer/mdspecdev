@@ -16,11 +16,12 @@ type SpecWithRelations = {
     updated_at: string;
     project: { id: string; name: string; slug: string; organization: { id: string; name: string; slug: string } };
     owner: { full_name: string | null; avatar_url: string | null } | null;
-    comment_threads: { id: string; resolved: boolean }[];
+    comment_threads: { id: string; resolved: boolean; comments: { id: string; deleted: boolean }[] }[];
     revisions: { id: string }[];
 };
 
-export default async function DashboardPage() {
+export default async function DashboardPage(props: { searchParams: Promise<{ archived?: string }> }) {
+    const searchParams = await props.searchParams;
     const supabase = await createClient();
     const {
         data: { user },
@@ -42,8 +43,11 @@ export default async function DashboardPage() {
         )
         .eq('user_id', user.id);
 
+    // Filter handling
+    const showArchived = searchParams?.archived === 'true';
+
     // Get specs from all user's orgs
-    const { data: specs } = (await supabase
+    let query = supabase
         .from('specs')
         .select(
             `
@@ -62,11 +66,18 @@ export default async function DashboardPage() {
         slug,
         organization:organizations(id, name, slug)
       ),
-      comment_threads(id, resolved),
+      comment_threads(id, resolved, comments(id, deleted)),
       revisions(id)
     `
-        )
-        .is('archived_at', null)
+        );
+
+    if (showArchived) {
+        query = query.not('archived_at', 'is', null);
+    } else {
+        query = query.is('archived_at', null);
+    }
+
+    const { data: specs } = (await query
         .order('updated_at', { ascending: false })
         .limit(50)) as { data: SpecWithRelations[] | null };
 
@@ -85,12 +96,28 @@ export default async function DashboardPage() {
                         </p>
                     </div>
                     {hasOrgs && (
-                        <Link
-                            href="/new-org"
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
-                        >
-                            New Spec
-                        </Link>
+                        <div className="flex gap-4">
+                            <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+                                <Link
+                                    href="/dashboard"
+                                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${!showArchived ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                                >
+                                    Active
+                                </Link>
+                                <Link
+                                    href="/dashboard?archived=true"
+                                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${showArchived ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
+                                >
+                                    Archived
+                                </Link>
+                            </div>
+                            <Link
+                                href="/new-org"
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
+                            >
+                                New Spec
+                            </Link>
+                        </div>
                     )}
                 </div>
 
@@ -119,30 +146,34 @@ export default async function DashboardPage() {
                             <span className="text-3xl">📄</span>
                         </div>
                         <h2 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-                            No specifications yet
+                            {showArchived ? 'No archived specifications' : 'No specifications yet'}
                         </h2>
                         <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-md mx-auto">
-                            Create your first specification to get started.
+                            {showArchived
+                                ? 'Archived specifications will appear here.'
+                                : 'Create your first specification to get started.'}
                         </p>
-                        <Link
-                            href="/new-org"
-                            className="inline-flex px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
-                        >
-                            Create Specification
-                        </Link>
+                        {!showArchived && (
+                            <Link
+                                href="/new-org"
+                                className="inline-flex px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
+                            >
+                                Create Specification
+                            </Link>
+                        )}
                     </div>
                 ) : (
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         {specs.map((spec) => {
                             const unresolvedCount =
-                                spec.comment_threads?.filter((t) => !t.resolved).length || 0;
+                                spec.comment_threads?.filter((t) => !t.resolved && t.comments?.some((c) => !c.deleted)).length || 0;
                             const revisionCount = spec.revisions?.length || 0;
 
                             return (
                                 <Link
                                     key={spec.id}
                                     href={`/${spec.project.organization.slug}/${spec.project.slug}/${spec.slug}`}
-                                    className="flex flex-col h-full p-6 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-700 transition-all duration-200 group shadow-sm"
+                                    className={`flex flex-col h-full p-6 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-700 transition-all duration-200 group shadow-sm ${showArchived ? 'opacity-75 grayscale' : ''}`}
                                 >
                                     <div className="flex-1">
                                         <div className="flex items-start justify-between mb-3">

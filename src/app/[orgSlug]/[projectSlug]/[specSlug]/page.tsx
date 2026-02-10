@@ -82,6 +82,7 @@ export default async function SpecDetailPage({ params }: Props) {
       tags,
       created_at,
       updated_at,
+      archived_at,
       owner:profiles!specs_owner_id_fkey(id, full_name, avatar_url, email),
       revisions(id, revision_number, created_at, content_key, summary, ai_summary, author:profiles(full_name)),
       comment_threads(id, resolved, comments(id, deleted))
@@ -89,7 +90,6 @@ export default async function SpecDetailPage({ params }: Props) {
         )
         .eq('project_id', project.id)
         .eq('slug', specSlug)
-        .is('archived_at', null)
         .single();
 
     if (!spec) {

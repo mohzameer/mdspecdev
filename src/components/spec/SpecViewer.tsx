@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useRef, useCallback } from 'react';
@@ -15,7 +14,7 @@ import {
 } from '@/components/spec/StatusBadge';
 import { formatRelativeTime, formatDate } from '@/lib/utils';
 import { useComments } from '@/hooks/useComments';
-import { Profile, Spec, Project, Organization } from '@/lib/types';
+import { Profile } from '@/lib/types';
 
 interface SpecInfo {
     id: string;
@@ -27,6 +26,7 @@ interface SpecInfo {
     tags: string[] | null;
     updated_at: string;
     created_at: string;
+    archived_at: string | null;
     owner: any;
 }
 
@@ -91,6 +91,32 @@ export function SpecViewer({
 
     return (
         <div className="relative">
+            {spec.archived_at && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-6 flex items-center gap-3">
+                    <svg
+                        className="w-5 h-5 text-amber-600 dark:text-amber-500 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"
+                        />
+                    </svg>
+                    <div>
+                        <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+                            This specification is archived
+                        </h3>
+                        <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                            It has been automatically archived due to inactivity. You can view it, but editing is disabled.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Header Section */}
             <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-6 mb-6 shadow-sm">
                 <div className="flex items-start justify-between mb-4">
@@ -111,12 +137,14 @@ export function SpecViewer({
                         >
                             History ({revisionCount})
                         </Link>
-                        <Link
-                            href={`/${org.slug}/${project.slug}/${spec.slug}/edit`}
-                            className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors text-sm"
-                        >
-                            Edit
-                        </Link>
+                        {!spec.archived_at && (
+                            <Link
+                                href={`/${org.slug}/${project.slug}/${spec.slug}/edit`}
+                                className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors text-sm"
+                            >
+                                Edit
+                            </Link>
+                        )}
                     </div>
                 </div>
 
@@ -190,8 +218,6 @@ export function SpecViewer({
                     )}
                 </div>
             )}
-
-
 
             <div className={`flex items-start transition-all duration-300 ${isSidebarOpen && !isTocOpen ? 'gap-2' : 'gap-6'}`}>
                 <div className="flex-1 min-w-0 relative">

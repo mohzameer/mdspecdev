@@ -187,6 +187,7 @@ export interface DashboardFilters {
   owner_id?: string;
   search?: string;
   my_specs?: boolean;
+  show_archived?: boolean;
 }
 
 export interface HeadingInfo {
