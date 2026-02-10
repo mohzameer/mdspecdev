@@ -62,7 +62,7 @@ export function CommentSidebar({
     return (
         <div
             ref={sidebarRef}
-            className="w-80 flex-shrink-0 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col sticky top-24 h-[calc(100vh-8rem)] rounded-r-xl ml-4 shadow-sm"
+            className="w-96 flex-shrink-0 border-l border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex flex-col sticky top-24 h-[calc(100vh-8rem)] rounded-r-xl ml-4 shadow-sm"
         >
             <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Comments</h2>

@@ -1,21 +1,22 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { useState, useEffect } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { UserNav } from '@/components/shared/UserNav';
 
 interface UserInfo {
     email: string;
     fullName: string | null;
+    avatarUrl?: string | null;
 }
 
 export function Header() {
     const [user, setUser] = useState<UserInfo | null>(null);
     const [loading, setLoading] = useState(true);
-    const router = useRouter();
     const pathname = usePathname();
     const supabase = createClient();
 
@@ -30,13 +31,14 @@ export function Header() {
                     // Try to get profile, but fall back to auth user data
                     const { data: profile } = await supabase
                         .from('profiles')
-                        .select('full_name, email')
+                        .select('full_name, email, avatar_url')
                         .eq('id', authUser.id)
                         .single();
 
                     setUser({
                         email: profile?.email || authUser.email || '',
                         fullName: profile?.full_name || authUser.user_metadata?.full_name || null,
+                        avatarUrl: profile?.avatar_url || authUser.user_metadata?.avatar_url || null,
                     });
                 } else {
                     setUser(null);
@@ -58,6 +60,7 @@ export function Header() {
                 setUser({
                     email: session.user.email || '',
                     fullName: session.user.user_metadata?.full_name || null,
+                    avatarUrl: session.user.user_metadata?.avatar_url || null,
                 });
             } else if (event === 'SIGNED_OUT') {
                 setUser(null);
@@ -66,13 +69,6 @@ export function Header() {
 
         return () => subscription.unsubscribe();
     }, [supabase]);
-
-    async function handleSignOut() {
-        await supabase.auth.signOut();
-        setUser(null);
-        router.push('/login');
-        router.refresh();
-    }
 
     const isAuthPage =
         pathname?.startsWith('/login') || pathname?.startsWith('/signup');
@@ -119,25 +115,9 @@ export function Header() {
                     {user && <NotificationBell />}
 
                     {loading ? (
-                        <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
+                        <div className="h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
                     ) : user ? (
-                        <div className="flex items-center gap-3">
-                            <span className="text-sm text-slate-600 dark:text-slate-300 hidden sm:block">
-                                {user.fullName || user.email}
-                            </span>
-                            <Link
-                                href="/settings"
-                                className="px-3 py-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
-                            >
-                                Settings
-                            </Link>
-                            <button
-                                onClick={handleSignOut}
-                                className="px-4 py-2 text-sm text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors"
-                            >
-                                Sign out
-                            </button>
-                        </div>
+                        <UserNav user={user} />
                     ) : (
                         <Link
                             href="/login"

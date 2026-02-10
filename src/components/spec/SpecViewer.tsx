@@ -54,6 +54,7 @@ export function SpecViewer({
     latestRevisionNumber,
 }: SpecViewerProps) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+    const [isTocOpen, setIsTocOpen] = useState(true);
     const [isSummaryOpen, setIsSummaryOpen] = useState(false);
     const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
     const [activeQuotedText, setActiveQuotedText] = useState<string | null>(null);
@@ -192,7 +193,7 @@ export function SpecViewer({
 
 
 
-            <div className="flex items-start gap-6">
+            <div className={`flex items-start transition-all duration-300 ${isSidebarOpen && !isTocOpen ? 'gap-2' : 'gap-6'}`}>
                 <div className="flex-1 min-w-0 relative">
                     {/* Content Section */}
                     <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-8 shadow-sm">
@@ -215,8 +216,23 @@ export function SpecViewer({
                 </div>
 
                 {/* Table of Contents - Hidden on smaller screens, always visible on xl */}
-                <div className="hidden xl:block w-64 flex-shrink-0 sticky top-24 self-start">
-                    <TableOfContents content={content} />
+                <div className={`hidden xl:block flex-shrink-0 sticky top-24 self-start transition-all duration-300 ${!isSidebarOpen || isTocOpen ? 'w-64' : 'w-4'}`}>
+                    <div className="relative">
+                        {isSidebarOpen && (
+                            <button
+                                onClick={() => setIsTocOpen(!isTocOpen)}
+                                className={`absolute top-0 p-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-full text-slate-400 hover:text-blue-600 shadow-sm z-10 transition-all duration-300 ${isTocOpen ? '-left-3' : 'left-0'}`}
+                                title={isTocOpen ? "Collapse ToC" : "Expand ToC"}
+                            >
+                                <svg className={`w-3 h-3 transition-transform ${isTocOpen ? 'rotate-0' : 'rotate-180'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+                        )}
+                        <div className={`transition-opacity duration-300 ${!isSidebarOpen || isTocOpen ? 'opacity-100' : 'opacity-0 pointer-events-none hidden'} ${isSidebarOpen ? 'pl-6' : ''}`}>
+                            <TableOfContents content={content} />
+                        </div>
+                    </div>
                 </div>
 
                 <CommentSidebar

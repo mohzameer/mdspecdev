@@ -84,7 +84,7 @@ export default async function SpecDetailPage({ params }: Props) {
       updated_at,
       owner:profiles!specs_owner_id_fkey(id, full_name, avatar_url, email),
       revisions(id, revision_number, created_at, content_key, summary, ai_summary, author:profiles(full_name)),
-      comment_threads(id, resolved)
+      comment_threads(id, resolved, comments(id, deleted))
     `
         )
         .eq('project_id', project.id)
@@ -113,7 +113,9 @@ export default async function SpecDetailPage({ params }: Props) {
     const contentWithoutFrontmatter = content.replace(/^---[\s\S]*?---\n*/, '');
 
     const unresolvedCount =
-        (spec.comment_threads as any[])?.filter((t) => !t.resolved).length || 0;
+        (spec.comment_threads as any[])?.filter((t) =>
+            !t.resolved && t.comments?.some((c: any) => !c.deleted)
+        ).length || 0;
     const revisionCount = (spec.revisions as any[])?.length || 0;
 
     // Fetch current user profile
