@@ -7,6 +7,7 @@ import { useState, useEffect } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { UserNav } from '@/components/shared/UserNav';
+import { SearchInput } from '@/components/shared/SearchInput';
 
 interface UserInfo {
     email: string;
@@ -110,6 +111,9 @@ export function Header() {
                 </div>
 
                 <div className="flex items-center gap-4">
+                    <div className="hidden md:block w-full max-w-sm mr-4">
+                        <SearchInput />
+                    </div>
                     <ThemeToggle />
 
                     {user && <NotificationBell />}

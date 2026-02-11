@@ -37,7 +37,7 @@ export function getSectionContent(
     markdown: string,
     headingText: string
 ): string {
-    const lines = markdown.split('\n');
+    const lines = markdown.split(/\r?\n/);
     const headingId = generateHeadingId(headingText);
 
     let inSection = false;

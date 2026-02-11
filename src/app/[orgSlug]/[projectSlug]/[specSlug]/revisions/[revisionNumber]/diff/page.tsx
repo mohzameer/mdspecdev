@@ -21,6 +21,7 @@ export default async function DiffPage({ params }: Props) {
         specSlug,
         revisionNumber,
     } = await params;
+
     const supabase = await createClient();
     const {
         data: { user },
@@ -32,28 +33,38 @@ export default async function DiffPage({ params }: Props) {
 
     // Resolve org by slug
     let org = null;
-    const { data: orgBySlug } = await supabase
+    const { data: orgBySlug, error: orgError } = await supabase
         .from('organizations')
         .select('id, name, slug')
         .eq('slug', orgSlug)
         .single();
 
+    if (orgError) {
+        console.error('[DiffPage] Org lookup error:', orgError);
+    }
+
     if (orgBySlug) {
         org = orgBySlug;
     } else {
-        const { data: orgById } = await supabase
-            .from('organizations')
-            .select('id, name, slug')
-            .eq('id', orgSlug)
-            .single();
+        console.log('[DiffPage] Org not found by slug, trying ID...');
+        // Only try ID if it looks like a UUID
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orgSlug);
 
-        if (orgById) {
-            redirect(
-                `/${orgById.slug}/${projectSlug}/${specSlug}/revisions/${revisionNumber}/diff`
-            );
-        } else {
-            redirect('/dashboard');
+        if (isUuid) {
+            const { data: orgById } = await supabase
+                .from('organizations')
+                .select('id, name, slug')
+                .eq('id', orgSlug)
+                .single();
+
+            if (orgById) {
+                redirect(
+                    `/${orgById.slug}/${projectSlug}/${specSlug}/revisions/${revisionNumber}/diff`
+                );
+            }
         }
+
+        redirect('/dashboard');
     }
 
     // Resolve project by slug
@@ -86,43 +97,77 @@ export default async function DiffPage({ params }: Props) {
 
     const revisionNum = parseInt(revisionNumber);
 
-    const { data: spec } = await supabase
+
+
+    // 1. Fetch Spec Details First
+    const { data: specData, error: specError } = await supabase
         .from('specs')
-        .select(
-            `
-      id,
-      name,
-      slug,
-      revisions(
-        id,
-        revision_number,
-        created_at,
-        content_key,
-        summary,
-        revision_number,
-        created_at,
-        content_key,
-        summary,
-        author:profiles(full_name)
-      ),
-      comments(
-        id,
-        content,
-        heading_id,
-        status,
-        created_at,
-        user:profiles(full_name)
-      )
-    `
-        )
+        .select('id, name, slug, project_id')
         .eq('project_id', project.id)
         .eq('slug', specSlug)
-        .is('archived_at', null)
         .single();
 
-    if (!spec) {
-        redirect(`/${org.slug}/${project.slug}`);
+    if (specError || !specData) {
+        redirect(`/${orgSlug}/${projectSlug}`);
     }
+
+    // 2. Fetch Revisions
+    const { data: revisionsData } = await supabase
+        .from('revisions')
+        .select(`
+            id,
+            revision_number,
+            created_at,
+            content_key,
+            summary,
+            author:profiles(full_name)
+        `)
+        .eq('spec_id', specData.id);
+
+    // 3. Fetch Comments
+    const { data: commentsData } = await supabase
+        .from('comments')
+        .select(`
+            id,
+            content,
+            heading_id,
+            status,
+            created_at,
+            user:profiles(full_name)
+        `)
+    // .eq('spec_id', specData.id) // Comments might need a join if not directly linked, checking schema... 
+    // Wait, comments usually link to threads. Let's look at original query: 
+    // comments(...) from specs select usually implies a reverse relation.
+    // Actually, the original query had `comments(...)`.
+    // Let's check schema. comments table has `thread_id`. `comment_threads` has `spec_id`.
+    // The original query likely relied on a view or a direct relation if comments has spec_id.
+    // Checking schema... `comments` usually linked to threads. 
+    // Let's check `comment_threads` first.
+
+    const { data: threadsData } = await supabase
+        .from('comment_threads')
+        .select(`
+            id,
+            comments(
+                id,
+                content,
+                heading_id,
+                status,
+                created_at,
+                user:profiles(full_name)
+            )
+        `)
+        .eq('spec_id', specData.id);
+
+    // Flatten comments from threads for the view
+    const comments = threadsData?.flatMap(t => t.comments) || [];
+
+    const spec = {
+        ...specData,
+        revisions: revisionsData || [],
+        comments: comments
+    };
+
 
     const currentRevision = (spec.revisions as any[])?.find(
         (r) => r.revision_number === revisionNum
@@ -143,7 +188,9 @@ export default async function DiffPage({ params }: Props) {
             .download(contentKey);
         if (data) {
             const text = await data.text();
-            return text.replace(/^---[\s\S]*?---\n*/, '');
+            // Robust frontmatter stripping handling various newlines and spacing
+            const frontmatterRegex = /^\s*---\r?\n[\s\S]*?\r?\n---\r?\n+/;
+            return text.replace(frontmatterRegex, '').trim();
         }
         return '';
     }
@@ -218,6 +265,7 @@ export default async function DiffPage({ params }: Props) {
                     oldContent={oldContent}
                     newContent={newContent}
                     comments={spec.comments || []}
+                    hideSummaryPanel={true}
                 />
             </div>
         </div>

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { ProgressBar } from '@/components/spec/ProgressBar';
 import { StatusBadge, TagsList } from '@/components/spec/StatusBadge';
+import { SpecCard } from '@/components/dashboard/SpecCard';
 import { formatRelativeTime } from '@/lib/utils';
 
 type SpecWithRelations = {
@@ -14,6 +15,7 @@ type SpecWithRelations = {
     maturity: string | null;
     tags: string[] | null;
     updated_at: string;
+    archived_at: string | null;
     project: { id: string; name: string; slug: string; organization: { id: string; name: string; slug: string } };
     owner: { full_name: string | null; avatar_url: string | null } | null;
     comment_threads: { id: string; resolved: boolean; comments: { id: string; deleted: boolean }[] }[];
@@ -59,6 +61,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ arc
       maturity,
       tags,
       updated_at,
+      archived_at,
       owner:profiles!specs_owner_id_fkey(full_name, avatar_url),
       project:projects(
         id,
@@ -112,7 +115,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ arc
                                 </Link>
                             </div>
                             <Link
-                                href="/new-org"
+                                href="/new-spec"
                                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
                             >
                                 New Spec
@@ -155,7 +158,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ arc
                         </p>
                         {!showArchived && (
                             <Link
-                                href="/new-org"
+                                href="/new-spec"
                                 className="inline-flex px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
                             >
                                 Create Specification
@@ -163,60 +166,57 @@ export default async function DashboardPage(props: { searchParams: Promise<{ arc
                         )}
                     </div>
                 ) : (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {specs.map((spec) => {
-                            const unresolvedCount =
-                                spec.comment_threads?.filter((t) => !t.resolved && t.comments?.some((c) => !c.deleted)).length || 0;
-                            const revisionCount = spec.revisions?.length || 0;
+                    <div className="space-y-12">
+                        {(() => {
+                            // Group specs by project
+                            const projectsMap = new Map<string, {
+                                project: SpecWithRelations['project'];
+                                specs: SpecWithRelations[];
+                            }>();
 
-                            return (
-                                <Link
-                                    key={spec.id}
-                                    href={`/${spec.project.organization.slug}/${spec.project.slug}/${spec.slug}`}
-                                    className={`flex flex-col h-full p-6 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-700 transition-all duration-200 group shadow-sm ${showArchived ? 'opacity-75 grayscale' : ''}`}
-                                >
-                                    <div className="flex-1">
-                                        <div className="flex items-start justify-between mb-3">
-                                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                                {spec.name}
-                                            </h3>
-                                            <StatusBadge status={spec.status} />
-                                        </div>
+                            specs.forEach(spec => {
+                                const projectId = spec.project.id;
+                                if (!projectsMap.has(projectId)) {
+                                    projectsMap.set(projectId, {
+                                        project: spec.project,
+                                        specs: []
+                                    });
+                                }
+                                projectsMap.get(projectId)!.specs.push(spec);
+                            });
 
-                                        <TagsList tags={spec.tags} />
+                            // Sort projects by latest update
+                            const projects = Array.from(projectsMap.values()).sort((a, b) => {
+                                const aLatest = Math.max(...a.specs.map(s => new Date(s.updated_at).getTime()));
+                                const bLatest = Math.max(...b.specs.map(s => new Date(s.updated_at).getTime()));
+                                return bLatest - aLatest;
+                            });
+
+                            return projects.map(({ project, specs }) => (
+                                <section key={project.id}>
+                                    <div className="flex items-center gap-3 mb-4 border-b border-slate-200 dark:border-slate-800 pb-2">
+                                        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">
+                                            {project.name}
+                                        </h2>
+                                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700">
+                                            {project.organization.name}
+                                        </span>
                                     </div>
-
-                                    {spec.progress !== null && (
-                                        <div className="mt-4">
-                                            <ProgressBar progress={spec.progress} size="sm" />
-                                        </div>
-                                    )}
-
-                                    <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-sm">
-                                        <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                                            <span>@{spec.owner?.full_name || 'Unknown'}</span>
-                                            <span>·</span>
-                                            <span>{formatRelativeTime(spec.updated_at)}</span>
-                                        </div>
-                                        <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500">
-                                            {unresolvedCount > 0 && (
-                                                <span className="text-orange-500 dark:text-orange-400">
-                                                    💬 {unresolvedCount}
-                                                </span>
-                                            )}
-                                            <span>{revisionCount} rev</span>
-                                        </div>
+                                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                        {specs.map((spec) => (
+                                            <SpecCard
+                                                key={spec.id}
+                                                spec={spec}
+                                                showArchivedStyle={showArchived}
+                                            />
+                                        ))}
                                     </div>
-
-                                    <div className="mt-2 text-xs text-slate-400 dark:text-slate-500">
-                                        {spec.project.organization.name} / {spec.project.name}
-                                    </div>
-                                </Link>
-                            );
-                        })}
+                                </section>
+                            ));
+                        })()}
                     </div>
                 )}
             </div>
-        </div>
+        </div >
     );
 }

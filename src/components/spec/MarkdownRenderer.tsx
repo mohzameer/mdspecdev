@@ -387,6 +387,20 @@ export function MarkdownRenderer({
     };
   }, [handleClick, sections]);
 
+  // handle hash scrolling ensuring content is loaded
+  useEffect(() => {
+    if (sections.length > 0 && typeof window !== 'undefined' && window.location.hash) {
+      const hash = window.location.hash.substring(1); // remove #
+      const element = document.getElementById(hash);
+      if (element) {
+        // small delay to ensure layout is stable
+        setTimeout(() => {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }, 100);
+      }
+    }
+  }, [sections]);
+
   return (
     <div ref={containerRef} className={`prose prose-slate dark:prose-invert max-w-none ${className}`}>
       {highlightedSections.map((section, index) => {

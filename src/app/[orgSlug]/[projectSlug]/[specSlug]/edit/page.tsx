@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import { createRevision } from '@/app/actions/spec';
+import { createRevision, indexSpecAction } from '@/app/actions/spec';
+import { Status, Maturity } from '@/lib/types';
+import { SpecMetadataEditor } from '@/components/spec/SpecMetadataEditor';
 
 export default function EditSpecPage() {
     const params = useParams();
@@ -21,6 +23,12 @@ export default function EditSpecPage() {
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+
+    // Metadata State
+    const [status, setStatus] = useState<Status>('planned');
+    const [maturity, setMaturity] = useState<Maturity>('draft');
+    const [progress, setProgress] = useState(0);
+    const [tagsInput, setTagsInput] = useState('');
 
     const router = useRouter();
     const supabase = createClient();
@@ -95,6 +103,10 @@ export default function EditSpecPage() {
                         `
             id,
             name,
+            status,
+            maturity,
+            progress,
+            tags,
             revisions(revision_number, content_key)
           `
                     )
@@ -110,6 +122,10 @@ export default function EditSpecPage() {
 
                 setSpecId(spec.id);
                 setName(spec.name);
+                setStatus(spec.status as Status || 'planned');
+                setMaturity(spec.maturity as Maturity || 'draft');
+                setProgress(spec.progress || 0);
+                setTagsInput(spec.tags ? spec.tags.join(', ') : '');
 
                 // Get latest revision
                 const latestRevision = (spec.revisions as any[])?.sort(
@@ -125,7 +141,17 @@ export default function EditSpecPage() {
                         .download(latestRevision.content_key);
 
                     if (data) {
-                        setContent(await data.text());
+                        const fullText = await data.text();
+                        // Strip frontmatter from content for the editor
+                        const frontmatterRegex = /^---\n[\s\S]*?\n---\n\n/;
+                        const contentBody = fullText.replace(frontmatterRegex, '');
+                        // Fallback if no double newline after frontmatter
+                        const contentBodyFallback = fullText.replace(/^---\n[\s\S]*?\n---\n/, '');
+
+                        // Use the one that actually removed something, or just full text if no frontmatter
+                        setContent(frontmatterRegex.test(fullText) ? contentBody : (
+                            /^---\n[\s\S]*?\n---\n/.test(fullText) ? contentBodyFallback : fullText
+                        ));
                     }
                 }
 
@@ -146,69 +172,34 @@ export default function EditSpecPage() {
         setError(null);
 
         try {
-            // Parse frontmatter
-            const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
-            let metadata: Record<string, any> = {};
+            // Generate Frontmatter
+            const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
+            const tagsStr = tags.length > 0 ? `[${tags.map(t => `"${t}"`).join(', ')}]` : '[]';
 
-            if (frontmatterMatch) {
-                const yaml = frontmatterMatch[1];
-                const lines = yaml.split('\n');
-                for (const line of lines) {
-                    const match = line.match(/^(\w+):\s*(.*)$/);
-                    if (match) {
-                        const key = match[1];
-                        let value: any = match[2].trim();
+            const frontmatter = `---
+progress: ${progress}
+status: ${status}
+maturity: ${maturity}
+tags: ${tagsStr}
+---`;
 
-                        if (value.startsWith('[') && value.endsWith(']')) {
-                            value = value
-                                .slice(1, -1)
-                                .split(',')
-                                .map((v: string) => v.trim())
-                                .filter(Boolean);
-                        }
-
-                        if (!isNaN(Number(value)) && value !== '') {
-                            value = Number(value);
-                        }
-
-                        metadata[key] = value;
-                    }
-                }
-            }
-
-            // Ensure tags is an array or null
-            let tags: string[] | null = null;
-            if (metadata.tags) {
-                if (Array.isArray(metadata.tags)) {
-                    tags = metadata.tags.filter((t: string) => t && t.trim());
-                } else if (typeof metadata.tags === 'string') {
-                    tags = [metadata.tags.trim()].filter(Boolean);
-                }
-                if (tags && tags.length === 0) tags = null;
-            }
-
-            // Validate and clamp progress to 0-100
-            let progress: number | null = null;
-            if (metadata.progress !== undefined && metadata.progress !== null) {
-                const p = Number(metadata.progress);
-                if (!isNaN(p)) {
-                    progress = Math.max(0, Math.min(100, p));
-                }
-            }
+            const fullContent = `${frontmatter}\n\n${content}`;
 
             const formData = new FormData();
             formData.append('specId', specId);
-            formData.append('content', content);
+            formData.append('content', fullContent);
             formData.append('orgSlug', orgSlug);
             formData.append('projectSlug', projectSlug);
             formData.append('specSlug', specSlug);
             formData.append('revisionNumber', revisionNumber.toString());
 
             formData.append('name', name);
-            if (progress !== null) formData.append('progress', progress.toString());
-            if (metadata.status) formData.append('status', metadata.status);
-            if (metadata.maturity) formData.append('maturity', metadata.maturity);
-            if (tags) formData.append('tags', JSON.stringify(tags));
+            formData.append('progress', progress.toString());
+            formData.append('status', status);
+            formData.append('maturity', maturity);
+            if (tags.length > 0) {
+                formData.append('tags', JSON.stringify(tags));
+            }
 
             const result: any = await createRevision(formData);
 
@@ -301,6 +292,17 @@ export default function EditSpecPage() {
                             placeholder="What changed in this revision?"
                         />
                     </div>
+
+                    <SpecMetadataEditor
+                        status={status}
+                        setStatus={setStatus}
+                        maturity={maturity}
+                        setMaturity={setMaturity}
+                        progress={progress}
+                        setProgress={setProgress}
+                        tagsInput={tagsInput}
+                        setTagsInput={setTagsInput}
+                    />
 
                     <div>
                         <label

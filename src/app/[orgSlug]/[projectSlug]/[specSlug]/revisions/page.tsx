@@ -86,7 +86,6 @@ export default async function RevisionsPage({ params }: Props) {
         )
         .eq('project_id', project.id)
         .eq('slug', specSlug)
-        .is('archived_at', null)
         .single();
 
     if (!spec) {

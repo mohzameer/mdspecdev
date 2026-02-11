@@ -16,6 +16,7 @@ interface DiffViewerProps {
     oldContent: string;
     newContent: string;
     comments?: Comment[];
+    hideSummaryPanel?: boolean;
 }
 
 type ViewMode = 'unified' | 'split' | 'rendered';
@@ -28,9 +29,9 @@ interface Change {
     commentCount?: number;
 }
 
-export function DiffViewer({ oldContent, newContent, comments = [] }: DiffViewerProps) {
+export function DiffViewer({ oldContent, newContent, comments = [], hideSummaryPanel = false }: DiffViewerProps) {
     const [viewMode, setViewMode] = useState<ViewMode>('unified');
-    const [showSummary, setShowSummary] = useState(true);
+    const [showSummary, setShowSummary] = useState(!hideSummaryPanel);
     const [currentChangeIndex, setCurrentChangeIndex] = useState(0);
     const changeRefs = useRef<(HTMLDivElement | null)[]>([]);
 
