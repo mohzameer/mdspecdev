@@ -1,0 +1,209 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
+import { slugify } from '@/lib/utils';
+
+export default function NewProjectPage() {
+    const params = useParams();
+    const orgSlug = params.orgSlug as string;
+    const [name, setName] = useState('');
+    const [slug, setSlug] = useState('');
+    const [description, setDescription] = useState('');
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [orgId, setOrgId] = useState<string | null>(null);
+    const router = useRouter();
+    const supabase = createClient();
+
+    // Auto-generate slug from name
+    useEffect(() => {
+        if (name) {
+            setSlug(slugify(name));
+        }
+    }, [name]);
+
+    // Resolve org by slug on mount
+    useEffect(() => {
+        async function resolveOrg() {
+            const { data: org } = await supabase
+                .from('organizations')
+                .select('id')
+                .eq('slug', orgSlug)
+                .single();
+
+            if (org) {
+                setOrgId(org.id);
+            } else {
+                const { data: orgById } = await supabase
+                    .from('organizations')
+                    .select('id, slug')
+                    .eq('id', orgSlug)
+                    .single();
+
+                if (orgById) {
+                    setOrgId(orgById.id);
+                    router.replace(`/${orgById.slug}/new`);
+                } else {
+                    router.push('/dashboard');
+                }
+            }
+        }
+        resolveOrg();
+    }, [supabase, orgSlug, router]);
+
+    async function handleSubmit(e: React.FormEvent) {
+        e.preventDefault();
+        if (!orgId) return;
+
+        setLoading(true);
+        setError(null);
+
+        // Check if slug is taken within this org
+        const { data: existingProject } = await supabase
+            .from('projects')
+            .select('id')
+            .eq('org_id', orgId)
+            .eq('slug', slug)
+            .single();
+
+        if (existingProject) {
+            setError('A project with this URL slug already exists in this organization');
+            setLoading(false);
+            return;
+        }
+
+        const { data: project, error: createError } = await supabase
+            .from('projects')
+            .insert({
+                org_id: orgId,
+                name,
+                slug,
+                description: description || null,
+            })
+            .select()
+            .single();
+
+        if (createError) {
+            setError(createError.message);
+            setLoading(false);
+            return;
+        }
+
+        router.push(`/${orgSlug}/${project.slug}`);
+        router.refresh();
+    }
+
+    if (!orgId) {
+        return (
+            <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+                <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+            <div className="container mx-auto px-4 py-8 max-w-lg">
+                <div className="mb-4">
+                    <Link
+                        href={`/${orgSlug}`}
+                        className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white text-sm"
+                    >
+                        ← Back to organization
+                    </Link>
+                </div>
+
+                <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
+                    Create Project
+                </h1>
+                <p className="text-slate-500 dark:text-slate-400 mb-8">
+                    Projects contain specifications and help organize your work.
+                </p>
+
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {error && (
+                        <div className="p-4 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm">
+                            {error}
+                        </div>
+                    )}
+
+                    <div>
+                        <label
+                            htmlFor="name"
+                            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                        >
+                            Project name
+                        </label>
+                        <input
+                            id="name"
+                            type="text"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            required
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            placeholder="API Platform"
+                        />
+                    </div>
+
+                    <div>
+                        <label
+                            htmlFor="slug"
+                            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                        >
+                            URL slug
+                        </label>
+                        <input
+                            id="slug"
+                            type="text"
+                            value={slug}
+                            onChange={(e) => setSlug(e.target.value)}
+                            required
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                            placeholder="api-platform"
+                        />
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                            This will be used in URLs for this project
+                        </p>
+                    </div>
+
+                    <div>
+                        <label
+                            htmlFor="description"
+                            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
+                        >
+                            Description (optional)
+                        </label>
+                        <textarea
+                            id="description"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            rows={3}
+                            className="w-full px-4 py-3 bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
+                            placeholder="A brief description of this project..."
+                        />
+                    </div>
+
+                    <div className="flex gap-3">
+                        <button
+                            type="button"
+                            onClick={() => router.back()}
+                            className="flex-1 py-3 px-4 bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white font-medium rounded-lg transition-all"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={loading}
+                            className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-all disabled:opacity-50"
+                        >
+                            {loading ? 'Creating...' : 'Create Project'}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+}
