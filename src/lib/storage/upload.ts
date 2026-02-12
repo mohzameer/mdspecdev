@@ -1,19 +1,22 @@
 import { createClient } from '@/lib/supabase/server';
 import { hashContent } from '@/lib/utils';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Save spec content to Supabase Storage
  * @param specId - The spec UUID
  * @param revisionNumber - The revision number
  * @param content - The markdown content
+ * @param client - Optional Supabase client (for API usage)
  * @returns The storage path (content_key)
  */
 export async function saveSpecContent(
     specId: string,
     revisionNumber: number,
-    content: string
+    content: string,
+    client?: SupabaseClient
 ): Promise<{ contentKey: string; contentHash: string }> {
-    const supabase = await createClient();
+    const supabase = client || await createClient();
     const path = `specs/${specId}/${revisionNumber}.md`;
     const contentHash = await hashContent(content);
 

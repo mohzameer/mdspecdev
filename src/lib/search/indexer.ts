@@ -6,7 +6,11 @@ import { SupabaseClient } from '@supabase/supabase-js';
 /**
  * Split spec content by headings and index into spec_sections
  */
-export async function indexSpecContent(specId: string, content: string, client?: SupabaseClient): Promise<void> {
+export async function indexSpecContent(
+    specId: string,
+    content: string,
+    client?: SupabaseClient
+): Promise<void> {
     const supabase = client || await createClient();
 
     // 1. Parse markdown headings
