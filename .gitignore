@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Supabase
+supabase/functions/**/.env
+supabase/functions/**/deno.lock
+supabase/.temp
+supabase/.branches
