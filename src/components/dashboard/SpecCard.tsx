@@ -5,7 +5,7 @@ import { formatRelativeTime } from '@/lib/utils';
 import { Spec, Project, Organization, Profile, CommentThread, Comment, Revision } from '@/lib/types';
 
 // Define a type that matches what the dashboard (and search) query returns
-export interface SpecWithRelations extends Partial<Spec> {
+export interface SpecWithRelations extends Omit<Partial<Spec>, 'project' | 'owner' | 'comment_threads' | 'revisions'> {
     id: string;
     name: string;
     slug: string;

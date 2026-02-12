@@ -52,8 +52,7 @@ export default async function SearchPage(props: { searchParams: Promise<{ q?: st
         );
     }
 
-    // 4. Fetch Spec Details
-    const { data: specs } = await supabase
+    const { data: specs } = (await supabase
         .from('specs')
         .select(
             `
@@ -78,7 +77,7 @@ export default async function SearchPage(props: { searchParams: Promise<{ q?: st
     `
         )
         .in('id', Array.from(specIds))
-        .order('updated_at', { ascending: false });
+        .order('updated_at', { ascending: false })) as { data: SpecWithRelations[] | null };
 
     // Helper to get snippets
     const getSnippet = (text: string, term: string) => {

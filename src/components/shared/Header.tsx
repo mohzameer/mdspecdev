@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { UserNav } from '@/components/shared/UserNav';
@@ -112,7 +112,9 @@ export function Header() {
 
                 <div className="flex items-center gap-4">
                     <div className="hidden md:block w-full max-w-sm mr-4">
-                        <SearchInput />
+                        <Suspense fallback={<div className="h-10 w-full animate-pulse bg-slate-100 dark:bg-slate-800 rounded-lg" />}>
+                            <SearchInput />
+                        </Suspense>
                     </div>
                     <ThemeToggle />
 
