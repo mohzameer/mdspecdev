@@ -1,10 +1,31 @@
-import { redirect } from 'next/navigation';
+import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
-import { SpecViewer } from '@/components/spec/SpecViewer';
+import { SpecViewer, SpecInfo } from '@/components/spec/SpecViewer';
 
 interface Props {
     params: Promise<{ orgSlug: string; projectSlug: string; specSlug: string }>;
+}
+
+interface SpecData extends SpecInfo {
+    is_member: boolean;
+    user_role?: string;
+    project_id: string;
+    revisions: {
+        revision_number: number;
+        content_key: string;
+        ai_summary?: string;
+    }[];
+    comment_threads: {
+        resolved: boolean;
+        comments: { deleted: boolean }[];
+    }[];
+}
+
+interface RPCResult {
+    spec: SpecData;
+    org: { name: string; slug: string };
+    project: { name: string; slug: string };
 }
 
 export default async function SpecDetailPage({ params }: Props) {
@@ -14,89 +35,37 @@ export default async function SpecDetailPage({ params }: Props) {
         data: { user },
     } = await supabase.auth.getUser();
 
-    if (!user) {
-        redirect('/login');
-    }
+    // Call the security definer function to get spec details
+    // This allows public access if spec is public, or member access if not
+    const { data: result, error } = await supabase.rpc('get_spec_by_slugs', {
+        p_org_slug: orgSlug,
+        p_project_slug: projectSlug,
+        p_spec_slug: specSlug,
+    });
 
-    // Resolve org by slug
-    let org = null;
-    const { data: orgBySlug } = await supabase
-        .from('organizations')
-        .select('id, name, slug')
-        .eq('slug', orgSlug)
-        .single();
-
-    if (orgBySlug) {
-        org = orgBySlug;
-    } else {
-        const { data: orgById } = await supabase
-            .from('organizations')
-            .select('id, name, slug')
-            .eq('id', orgSlug)
-            .single();
-
-        if (orgById) {
-            redirect(`/${orgById.slug}/${projectSlug}/${specSlug}`);
-        } else {
-            redirect('/dashboard');
+    if (error || !result) {
+        // If user is not logged in and spec not found (or private), redirect to login
+        if (!user) {
+            redirect('/login');
         }
+        // If logged in but spec not found or no access
+        return notFound();
     }
 
-    // Resolve project by slug
-    let project = null;
-    const { data: projectBySlug } = await supabase
-        .from('projects')
-        .select('id, name, slug')
-        .eq('slug', projectSlug)
-        .eq('org_id', org.id)
-        .single();
+    const { spec, org, project } = result as unknown as RPCResult;
 
-    if (projectBySlug) {
-        project = projectBySlug;
-    } else {
-        const { data: projectById } = await supabase
-            .from('projects')
-            .select('id, name, slug')
-            .eq('id', projectSlug)
-            .eq('org_id', org.id)
-            .single();
+    // Determine if this is a public view (read-only for non-members)
+    // The RPC returns is_member boolean
+    const isPublicView = !spec.is_member;
 
-        if (projectById) {
-            redirect(`/${org.slug}/${projectById.slug}/${specSlug}`);
-        } else {
-            redirect(`/${org.slug}`);
-        }
-    }
+    // Determine if user can resolve threads (Owners, Admins, Members - NOT Viewers)
+    // If user_role is missing (migration not run), default to true for backward compatibility if member
+    const userRole = spec.user_role;
+    const canResolve = !isPublicView && (
+        userRole ? ['owner', 'admin', 'member'].includes(userRole) : true
+    );
 
-    // Now fetch spec using actual project ID
-    const { data: spec } = await supabase
-        .from('specs')
-        .select(
-            `
-      id,
-      name,
-      slug,
-      progress,
-      status,
-      maturity,
-      tags,
-      created_at,
-      updated_at,
-      archived_at,
-      owner:profiles!specs_owner_id_fkey(id, full_name, avatar_url, email),
-      revisions(id, revision_number, created_at, content_key, summary, ai_summary, author:profiles(full_name)),
-      comment_threads(id, resolved, comments(id, deleted))
-    `
-        )
-        .eq('project_id', project.id)
-        .eq('slug', specSlug)
-        .single();
-
-    if (!spec) {
-        redirect(`/${org.slug}/${project.slug}`);
-    }
-
-    const latestRevision = (spec.revisions as any[])?.sort(
+    const latestRevision = spec.revisions?.sort(
         (a, b) => b.revision_number - a.revision_number
     )[0];
 
@@ -113,44 +82,50 @@ export default async function SpecDetailPage({ params }: Props) {
     const contentWithoutFrontmatter = content.replace(/^---[\s\S]*?---\n*/, '');
 
     const unresolvedCount =
-        (spec.comment_threads as any[])?.filter((t) =>
-            !t.resolved && t.comments?.some((c: any) => !c.deleted)
+        spec.comment_threads?.filter((t) =>
+            !t.resolved && t.comments?.some((c) => !c.deleted)
         ).length || 0;
-    const revisionCount = (spec.revisions as any[])?.length || 0;
+    const revisionCount = spec.revisions?.length || 0;
 
-    // Fetch current user profile
-    const { data: currentUserProfile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
+    // Fetch current user profile if logged in
+    let currentUserProfile = null;
+    if (user) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+        currentUserProfile = profile;
+    }
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
             <div className="container mx-auto px-4 py-8">
                 {/* Breadcrumb */}
-                <div className="mb-4 text-sm">
-                    <Link
-                        href="/dashboard"
-                        className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
-                    >
-                        Dashboard
-                    </Link>
-                    <span className="mx-2 text-slate-300 dark:text-slate-600">/</span>
-                    <Link
-                        href={`/${org.slug}`}
-                        className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
-                    >
-                        {org.name}
-                    </Link>
-                    <span className="mx-2 text-slate-300 dark:text-slate-600">/</span>
-                    <Link
-                        href={`/${org.slug}/${project.slug}`}
-                        className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
-                    >
-                        {project.name}
-                    </Link>
-                </div>
+                {!isPublicView && (
+                    <div className="mb-4 text-sm">
+                        <Link
+                            href="/dashboard"
+                            className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
+                        >
+                            Dashboard
+                        </Link>
+                        <span className="mx-2 text-slate-300 dark:text-slate-600">/</span>
+                        <Link
+                            href={`/${org.slug}`}
+                            className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
+                        >
+                            {org.name}
+                        </Link>
+                        <span className="mx-2 text-slate-300 dark:text-slate-600">/</span>
+                        <Link
+                            href={`/${org.slug}/${project.slug}`}
+                            className="text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-white"
+                        >
+                            {project.name}
+                        </Link>
+                    </div>
+                )}
 
                 <SpecViewer
                     content={contentWithoutFrontmatter}
@@ -162,6 +137,8 @@ export default async function SpecDetailPage({ params }: Props) {
                     revisionCount={revisionCount}
                     aiSummary={latestRevision?.ai_summary}
                     latestRevisionNumber={latestRevision?.revision_number || 1}
+                    isPublicView={isPublicView}
+                    canResolve={canResolve}
                 />
             </div>
         </div>

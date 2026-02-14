@@ -15,8 +15,11 @@ import {
 import { formatRelativeTime, formatDate } from '@/lib/utils';
 import { useComments } from '@/hooks/useComments';
 import { Profile } from '@/lib/types';
+import { generatePdf } from '@/actions/pdf';
+import { createClient } from '@/lib/supabase/client';
+import { useRouter } from 'next/navigation';
 
-interface SpecInfo {
+export interface SpecInfo {
     id: string;
     name: string;
     slug: string;
@@ -27,6 +30,7 @@ interface SpecInfo {
     updated_at: string;
     created_at: string;
     archived_at: string | null;
+    is_public: boolean;
     owner: any;
 }
 
@@ -40,6 +44,8 @@ interface SpecViewerProps {
     revisionCount: number;
     aiSummary?: string;
     latestRevisionNumber: number;
+    isPublicView?: boolean;
+    canResolve?: boolean;
 }
 
 export function SpecViewer({
@@ -52,12 +58,17 @@ export function SpecViewer({
     revisionCount,
     aiSummary,
     latestRevisionNumber,
+    isPublicView = false,
+    canResolve = !isPublicView,
 }: SpecViewerProps) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isTocOpen, setIsTocOpen] = useState(true);
     const [isSummaryOpen, setIsSummaryOpen] = useState(false);
     const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
     const [activeQuotedText, setActiveQuotedText] = useState<string | null>(null);
+    const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+    const [isSharing, setIsSharing] = useState(false);
+    const router = useRouter();
     const markdownContainerRef = useRef<React.RefObject<HTMLElement | null> | null>(null);
 
     // Fetch threads for highlight rendering
@@ -88,6 +99,58 @@ export function SpecViewer({
     const handleContainerRef = useCallback((ref: React.RefObject<HTMLDivElement | null>) => {
         markdownContainerRef.current = ref;
     }, []);
+
+    const handleExportPdf = async () => {
+        try {
+            setIsGeneratingPdf(true);
+            const base64Pdf = await generatePdf(spec.id);
+
+            // Create a blob and download it
+            const byteCharacters = atob(base64Pdf);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${spec.slug}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Failed to generate PDF:', error);
+            alert('Failed to generate PDF. Please try again.');
+        } finally {
+            setIsGeneratingPdf(false);
+        }
+    };
+
+    const handleTogglePublic = async () => {
+        try {
+            setIsSharing(true);
+            const supabase = createClient();
+            const { error } = await supabase
+                .from('specs')
+                .update({ is_public: !spec.is_public })
+                .eq('id', spec.id);
+
+            if (error) throw error;
+            router.refresh();
+        } catch (error) {
+            console.error('Failed to toggle public access:', error);
+            alert('Failed to update sharing settings.');
+        } finally {
+            setIsSharing(false);
+        }
+    };
+
+    const isOwner = currentUser?.id === (spec.owner as any)?.id;
+    const canEdit = !isPublicView && !spec.archived_at;
 
     return (
         <div className="relative">
@@ -131,13 +194,48 @@ export function SpecViewer({
                         </div>
                     </div>
                     <div className="flex gap-2">
+                        {isOwner && !isPublicView && (
+                            <button
+                                onClick={handleTogglePublic}
+                                disabled={isSharing}
+                                className={`px-4 py-2 font-medium rounded-lg transition-colors text-sm flex items-center gap-2 ${spec.is_public
+                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50'
+                                    : 'bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700/50'
+                                    }`}
+                            >
+                                {isSharing ? (
+                                    <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                    </svg>
+                                )}
+                                {spec.is_public ? 'Public' : 'Private'}
+                            </button>
+                        )}
+
+                        <button
+                            onClick={handleExportPdf}
+                            disabled={isGeneratingPdf}
+                            className="px-4 py-2 bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white font-medium rounded-lg transition-colors text-sm flex items-center gap-2"
+                        >
+                            {isGeneratingPdf ? (
+                                <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            )}
+                            PDF
+                        </button>
+
                         <Link
                             href={`/${org.slug}/${project.slug}/${spec.slug}/revisions`}
                             className="px-4 py-2 bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white font-medium rounded-lg transition-colors text-sm"
                         >
                             History ({revisionCount})
                         </Link>
-                        {!spec.archived_at && (
+                        {canEdit && (
                             <Link
                                 href={`/${org.slug}/${project.slug}/${spec.slug}/edit`}
                                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors text-sm"
@@ -166,17 +264,30 @@ export function SpecViewer({
                     <span>
                         Created {formatDate(spec.created_at)}
                     </span>
-                    {unresolvedCount > 0 && (
-                        <>
-                            <span>·</span>
-                            <button
-                                onClick={() => setIsSidebarOpen(true)}
-                                className="text-orange-500 dark:text-orange-400 hover:underline focus:outline-none"
-                            >
-                                💬 {unresolvedCount} unresolved
-                            </button>
-                        </>
-                    )}
+                    {(() => {
+                        const hasThreads = threads !== undefined;
+                        const activeUnresolved = hasThreads
+                            ? threads.filter(t => !t.resolved).length
+                            : unresolvedCount;
+                        const totalThreads = hasThreads ? threads.length : 0;
+                        const showUnresolved = activeUnresolved > 0;
+                        const showTotal = !showUnresolved && hasThreads && totalThreads > 0;
+
+                        if (showUnresolved || showTotal) {
+                            return (
+                                <>
+                                    <span>·</span>
+                                    <button
+                                        onClick={() => setIsSidebarOpen(true)}
+                                        className={`${showUnresolved ? "text-orange-500 dark:text-orange-400" : "text-slate-500 dark:text-slate-400"} hover:underline focus:outline-none`}
+                                    >
+                                        💬 {showUnresolved ? `${activeUnresolved} unresolved` : `${totalThreads} comments`}
+                                    </button>
+                                </>
+                            );
+                        }
+                        return null;
+                    })()}
                 </div>
             </div>
 
@@ -237,6 +348,7 @@ export function SpecViewer({
                         <SelectionPopover
                             containerRef={markdownContainerRef.current as React.RefObject<HTMLElement | null>}
                             onComment={handleTextSelect}
+                            isReadOnly={isPublicView}
                         />
                     )}
                 </div>
@@ -269,6 +381,8 @@ export function SpecViewer({
                     activeHeadingId={activeHeadingId}
                     activeQuotedText={activeQuotedText}
                     orgSlug={org.slug}
+                    isReadOnly={isPublicView}
+                    canResolve={canResolve}
                 />
             </div>
 

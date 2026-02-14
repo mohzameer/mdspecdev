@@ -13,6 +13,8 @@ interface CommentSidebarProps {
     activeHeadingId?: string | null;
     activeQuotedText?: string | null;
     orgSlug: string;
+    isReadOnly?: boolean;
+    canResolve?: boolean;
 }
 
 export function CommentSidebar({
@@ -23,6 +25,8 @@ export function CommentSidebar({
     activeHeadingId,
     activeQuotedText,
     orgSlug,
+    isReadOnly = false,
+    canResolve = !isReadOnly,
 }: CommentSidebarProps) {
     const {
         threads,
@@ -37,13 +41,7 @@ export function CommentSidebar({
     const sidebarRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        // If activeHeadingId changes, scroll that thread into view
-        if (activeHeadingId && threads) {
-            const threadElement = document.getElementById(`thread-${activeHeadingId}`);
-            if (threadElement) {
-                threadElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
+        // ... (existing code)
     }, [activeHeadingId, threads]);
 
     if (!isOpen) return null;
@@ -57,7 +55,7 @@ export function CommentSidebar({
         ? threads?.find(t => t.quoted_text === activeQuotedText)
         : null;
 
-    const showNewCommentInput = activeHeadingId && !existingThread && !existingQuotedThread;
+    const showNewCommentInput = !isReadOnly && activeHeadingId && !existingThread && !existingQuotedThread;
 
     return (
         <div
@@ -112,7 +110,9 @@ export function CommentSidebar({
                 ) : threads?.length === 0 ? (
                     <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                         <p>No comments yet.</p>
-                        <p className="text-sm mt-2">Select text or a section heading to start a discussion.</p>
+                        {!isReadOnly && (
+                            <p className="text-sm mt-2">Select text or a section heading to start a discussion.</p>
+                        )}
                     </div>
                 ) : (
                     (() => {
@@ -156,6 +156,8 @@ export function CommentSidebar({
                                 currentUser={currentUser}
                                 orgSlug={orgSlug}
                                 quotedText={thread.quoted_text}
+                                isReadOnly={isReadOnly}
+                                canResolve={canResolve}
                                 onAddReply={async (threadId, content, mentions) => {
                                     await addReply(threadId, content, mentions);
                                 }}

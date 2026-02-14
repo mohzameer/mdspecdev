@@ -5,9 +5,10 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 interface SelectionPopoverProps {
     containerRef: React.RefObject<HTMLElement | null>;
     onComment: (selectedText: string, nearestHeadingId: string) => void;
+    isReadOnly?: boolean;
 }
 
-export function SelectionPopover({ containerRef, onComment }: SelectionPopoverProps) {
+export function SelectionPopover({ containerRef, onComment, isReadOnly = false }: SelectionPopoverProps) {
     const [isVisible, setIsVisible] = useState(false);
     const [position, setPosition] = useState({ top: 0, left: 0 });
     const [selectedText, setSelectedText] = useState('');
@@ -98,6 +99,8 @@ export function SelectionPopover({ containerRef, onComment }: SelectionPopoverPr
     }, []);
 
     useEffect(() => {
+        if (isReadOnly) return; // Don't attach listeners if read-only
+
         const container = containerRef.current;
         if (!container) return;
 
@@ -110,7 +113,7 @@ export function SelectionPopover({ containerRef, onComment }: SelectionPopoverPr
             document.removeEventListener('mousedown', handleMouseDown);
             window.removeEventListener('scroll', handleScroll);
         };
-    }, [containerRef, handleMouseUp, handleMouseDown, handleScroll]);
+    }, [containerRef, handleMouseUp, handleMouseDown, handleScroll, isReadOnly]);
 
     const handleCommentClick = () => {
         onComment(selectedText, nearestHeadingId);
@@ -119,7 +122,7 @@ export function SelectionPopover({ containerRef, onComment }: SelectionPopoverPr
         window.getSelection()?.removeAllRanges();
     };
 
-    if (!isVisible) return null;
+    if (!isVisible || isReadOnly) return null;
 
     return (
         <div

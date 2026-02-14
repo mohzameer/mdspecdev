@@ -221,9 +221,6 @@ export async function POST(req: NextRequest) {
 
         // --- Email Notifications ---
         try {
-            console.log('--- Email Debugging Start (Restored) ---');
-            console.log('Mentions received:', mentions);
-
             // 1. Send Mention Emails
             if (mentions && Array.isArray(mentions) && mentions.length > 0) {
                 const serviceClient = createServiceRoleClient();
@@ -401,6 +398,18 @@ export async function PATCH(req: NextRequest) {
         // type: 'resolve_thread' | 'edit_comment'
 
         if (type === 'resolve_thread') {
+            console.log('Resolving thread:', id, 'Value:', value, 'User:', user.id);
+
+            // --- DEBUG RPC CALL ---
+            try {
+                const { data: debugData, error: debugError } = await supabase
+                    .rpc('debug_comments_rls', { p_thread_id: id });
+                console.log('DEBUG RLS:', debugData, debugError);
+            } catch (rpcError) {
+                console.error('DEBUG RPC FAILED:', rpcError);
+            }
+            // ----------------------
+
             const { data, error } = await supabase
                 .from('comment_threads')
                 .update({
@@ -412,7 +421,10 @@ export async function PATCH(req: NextRequest) {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                console.error('Supabase update error:', error);
+                throw error;
+            }
             return NextResponse.json(data);
         } else if (type === 'edit_comment') {
             // Ensure user owns the comment
@@ -440,8 +452,8 @@ export async function PATCH(req: NextRequest) {
 
         return NextResponse.json({ error: 'Invalid operation' }, { status: 400 });
     } catch (error: any) {
-        console.error('Error updating comment:', error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error('Error updating comment (PATCH):', error);
+        return NextResponse.json({ error: error.message, details: error }, { status: 500 });
     }
 }
 
@@ -496,9 +508,6 @@ async function sendCommentNotifications(
     author: any
 ) {
     try {
-        console.log('--- Email Notification Process Start ---');
-        console.log('Mentions:', mentions);
-
         const supabase = createServiceRoleClient();
 
         // Fetch thread details to get Context (Spec Name, Project, Org) and Participants
@@ -628,7 +637,5 @@ async function sendCommentNotifications(
 
     } catch (error) {
         console.error('Failed to process/send email notifications:', error);
-    } finally {
-        console.log('--- Email Notification Process End ---');
     }
 }
