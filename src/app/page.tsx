@@ -14,7 +14,7 @@ export default async function HomePage() {
 
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 transition-colors duration-300 px-4 pt-20">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 transition-colors duration-300 px-4">
       <div className="text-center max-w-3xl mx-auto">
         <div className="mb-8">
           <Logo className="h-16 w-16 mx-auto drop-shadow-xl" />
