@@ -4,6 +4,7 @@ import Link from 'next/link';
 
 
 import { Logo } from '@/components/shared/Logo';
+import { VideoPopup } from '@/components/home/VideoPopup';
 
 export default async function HomePage() {
   const supabase = await createClient();
@@ -29,6 +30,10 @@ export default async function HomePage() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-start justify-center gap-6 w-full">
+          <div className="flex flex-col items-center w-full sm:w-auto">
+            <VideoPopup />
+          </div>
+
           <div className="flex flex-col items-center w-full sm:w-auto">
             <Link
               href="/extension"
