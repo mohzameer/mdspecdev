@@ -89,33 +89,49 @@ export function Header() {
                     </Link>
 
                     <nav className="hidden md:flex items-center gap-6">
-                        <Link
-                            href="/dashboard"
-                            className={`text-sm font-medium transition-colors hover:text-slate-900 dark:hover:text-white ${pathname === '/dashboard'
-                                ? 'text-slate-900 dark:text-white'
-                                : 'text-slate-500 dark:text-slate-400'
-                                }`}
-                        >
-                            Dashboard
-                        </Link>
-                        <Link
-                            href="/orgs"
-                            className={`text-sm font-medium transition-colors hover:text-slate-900 dark:hover:text-white ${pathname?.startsWith('/orgs')
-                                ? 'text-slate-900 dark:text-white'
-                                : 'text-slate-500 dark:text-slate-400'
-                                }`}
-                        >
-                            My Organization
-                        </Link>
+                        {user ? (
+                            <>
+                                <Link
+                                    href="/dashboard"
+                                    className={`text-sm font-medium transition-colors hover:text-slate-900 dark:hover:text-white ${pathname === '/dashboard'
+                                        ? 'text-slate-900 dark:text-white'
+                                        : 'text-slate-500 dark:text-slate-400'
+                                        }`}
+                                >
+                                    Dashboard
+                                </Link>
+                                <Link
+                                    href="/orgs"
+                                    className={`text-sm font-medium transition-colors hover:text-slate-900 dark:hover:text-white ${pathname?.startsWith('/orgs')
+                                        ? 'text-slate-900 dark:text-white'
+                                        : 'text-slate-500 dark:text-slate-400'
+                                        }`}
+                                >
+                                    My Organization
+                                </Link>
+                            </>
+                        ) : (
+                            <Link
+                                href="/guide"
+                                className={`text-sm font-medium transition-colors hover:text-slate-900 dark:hover:text-white ${pathname === '/guide'
+                                    ? 'text-slate-900 dark:text-white'
+                                    : 'text-slate-500 dark:text-slate-400'
+                                    }`}
+                            >
+                                Guide
+                            </Link>
+                        )}
                     </nav>
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <div className="hidden md:block w-full max-w-sm mr-4">
-                        <Suspense fallback={<div className="h-10 w-full animate-pulse bg-slate-100 dark:bg-slate-800 rounded-lg" />}>
-                            <SearchInput />
-                        </Suspense>
-                    </div>
+                    {user && (
+                        <div className="hidden md:block w-full max-w-sm mr-4">
+                            <Suspense fallback={<div className="h-10 w-full animate-pulse bg-slate-100 dark:bg-slate-800 rounded-lg" />}>
+                                <SearchInput />
+                            </Suspense>
+                        </div>
+                    )}
                     <ThemeToggle />
 
                     {user && <NotificationBell />}

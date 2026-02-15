@@ -87,8 +87,10 @@ Create a new specification.
 |---|---|---|---|
 | `name` | string | Yes | Title of the specification |
 | `content` | string | Yes | Initial markdown content |
-| `project_id` | string | No | Target project UUID. Defaults to user's first project if omitted. |
-| `slug` | string | No | Custom URL slug. Auto-generated from name if omitted. |
+| `project_slug` | string | No | **Recommended**. The slug of the project to create the spec in. |
+| `org_slug` | string | No | **Recommended**. The slug of the organization the project belongs to. Used to resolve ambiguous project slugs. |
+| `project_id` | string | No | **Legacy**. The UUID of the project. If provided, takes precedence over slugs. |
+| `slug` | string | No | Custom URL slug for the spec. Auto-generated from name if omitted. |
 
 #### Response (200 OK)
 ```json
@@ -102,6 +104,8 @@ Create a new specification.
   }
 }
 ```
+
+> **Note:** If neither `project_id` nor `project_slug` is provided, the API attempts to assign the spec to the user's first available project. Behavior is undefined if the user has multiple projects but no default context.
 
 #### Errors
 - `409 Conflict`: If the provided or generated slug already exists.

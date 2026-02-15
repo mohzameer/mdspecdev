@@ -1,4 +1,5 @@
 import { getAuthenticatedClient } from '@/lib/api-auth';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { slugify } from '@/lib/utils';
 import { saveSpecContent } from '@/lib/storage/upload';
 import { NextResponse } from 'next/server';
@@ -73,13 +74,61 @@ export async function POST(request: Request) {
 
         // 1. Determine Project ID
         let targetProjectId = project_id;
+        const projectSlug = body.project_slug;
+        const orgSlug = body.org_slug;
+
         if (!targetProjectId) {
-            // Find a project the user is part of (limit to 1)
-            const { data: projects } = await supabase.from('projects').select('id').limit(1);
-            if (projects && projects.length > 0) {
-                targetProjectId = projects[0].id;
+            if (projectSlug) {
+                // Use service role client to bypass RLS for lookup
+                const adminClient = createServiceRoleClient();
+                let projectData: { id: string, org_id: string } | null = null;
+
+                if (orgSlug) {
+                    const { data, error } = await adminClient.from('projects')
+                        .select('id, org_id, organizations!inner(slug)')
+                        .eq('slug', projectSlug)
+                        .eq('organizations.slug', orgSlug)
+                        .single();
+
+                    if (!error && data) {
+                        projectData = { id: data.id, org_id: data.org_id };
+                    }
+                } else {
+                    const { data, error } = await adminClient.from('projects')
+                        .select('id, org_id')
+                        .eq('slug', projectSlug)
+                        .single();
+
+                    if (!error && data) {
+                        projectData = data;
+                    }
+                }
+
+                if (!projectData) {
+                    return NextResponse.json({ error: `Project not found with slug: ${projectSlug}${orgSlug ? ` in org: ${orgSlug}` : ''}` }, { status: 404 });
+                }
+
+                // Verify user is a member of the organization
+                const { data: membership, error: memberError } = await adminClient
+                    .from('org_memberships')
+                    .select('id')
+                    .eq('org_id', projectData.org_id)
+                    .eq('user_id', user.id)
+                    .single();
+
+                if (memberError || !membership) {
+                    return NextResponse.json({ error: 'You do not have access to this project.' }, { status: 403 });
+                }
+
+                targetProjectId = projectData.id;
             } else {
-                return NextResponse.json({ error: 'No project found. Please specify project_id.' }, { status: 400 });
+                // Determine default project (first one available)
+                const { data: projects } = await supabase.from('projects').select('id').limit(1);
+                if (projects && projects.length > 0) {
+                    targetProjectId = projects[0].id;
+                } else {
+                    return NextResponse.json({ error: 'No project found. Please specify project_slug or project_id.' }, { status: 400 });
+                }
             }
         }
 
@@ -158,7 +207,7 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: `Failed to upload content: ${uploadError.message}` }, { status: 500 });
         }
 
-    } catch (error) {
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    } catch (error: any) {
+        return NextResponse.json({ error: `Internal Server Error: ${error.message}` }, { status: 500 });
     }
 }

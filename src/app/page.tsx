@@ -24,23 +24,19 @@ export default async function HomePage() {
         </h1>
 
         <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
-          A lightweight specification governance platform for technical teams.
-          <br />
-          <span className="text-slate-500 dark:text-slate-300">
-            Markdown-native. Governance-focused. Developer-friendly.
-          </span>
+          An opensource lightweight specification governance platform for technical teams.
         </p>
 
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/signup"
-            className="px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/25 text-lg"
+            className="px-8 py-4 w-full sm:w-auto min-w-[160px] inline-flex items-center justify-center bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-xl transition-all duration-200 shadow-lg shadow-blue-500/25 text-lg"
           >
             Get Started
           </Link>
           <Link
             href="/login"
-            className="px-8 py-4 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white font-medium rounded-xl transition-all duration-200 border border-slate-200 dark:border-slate-700 text-lg shadow-sm"
+            className="px-8 py-4 w-full sm:w-auto min-w-[160px] inline-flex items-center justify-center bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white font-medium rounded-xl transition-all duration-200 border border-slate-200 dark:border-slate-700 text-lg shadow-sm"
           >
             Sign In
           </Link>
