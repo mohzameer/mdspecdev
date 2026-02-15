@@ -11,6 +11,9 @@ export const metadata: Metadata = {
   title: 'mdspec - Specification Governance Platform',
   description:
     'A lightweight specification governance platform for technical teams. Create, track, and collaborate on technical specifications.',
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({

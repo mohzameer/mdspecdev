@@ -9,6 +9,9 @@ import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { UserNav } from '@/components/shared/UserNav';
 import { SearchInput } from '@/components/shared/SearchInput';
 
+
+import { Logo } from '@/components/shared/Logo';
+
 interface UserInfo {
     email: string;
     fullName: string | null;
@@ -80,9 +83,7 @@ export function Header() {
             <div className="container mx-auto flex h-16 items-center justify-between px-4">
                 <div className="flex items-center gap-8">
                     <Link href="/dashboard" className="flex items-center gap-2">
-                        <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                            <span className="text-white font-bold text-sm">M</span>
-                        </div>
+                        <Logo className="h-8 w-8" />
                         <span className="text-xl font-bold text-slate-900 dark:text-white">
                             mdspec
                         </span>

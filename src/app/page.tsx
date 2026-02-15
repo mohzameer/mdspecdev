@@ -2,6 +2,9 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 
+
+import { Logo } from '@/components/shared/Logo';
+
 export default async function HomePage() {
   const supabase = await createClient();
   const {
@@ -14,9 +17,7 @@ export default async function HomePage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-900 transition-colors duration-300 px-4 pt-20">
       <div className="text-center max-w-3xl mx-auto">
         <div className="mb-8">
-          <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mx-auto shadow-xl shadow-blue-500/20">
-            <span className="text-white font-bold text-2xl">M</span>
-          </div>
+          <Logo className="h-16 w-16 mx-auto drop-shadow-xl" />
         </div>
 
         <h1 className="text-5xl md:text-6xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight">
