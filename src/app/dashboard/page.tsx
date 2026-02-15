@@ -3,7 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { ProgressBar } from '@/components/spec/ProgressBar';
 import { StatusBadge, TagsList } from '@/components/spec/StatusBadge';
-import { SpecCard } from '@/components/dashboard/SpecCard';
+import { SpecListItem } from '@/components/dashboard/SpecListItem';
+import { ProjectBadge } from '@/components/dashboard/ProjectBadge';
 import { formatRelativeTime } from '@/lib/utils';
 
 type SpecWithRelations = {
@@ -198,13 +199,11 @@ export default async function DashboardPage(props: { searchParams: Promise<{ arc
                                         <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">
                                             {project.name}
                                         </h2>
-                                        <span className="text-xs text-slate-500 dark:text-slate-400 font-medium px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-full border border-slate-200 dark:border-slate-700">
-                                            {project.organization.name}
-                                        </span>
+                                        <ProjectBadge orgSlug={project.organization.slug} projectSlug={project.slug} />
                                     </div>
-                                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                    <div className="flex flex-col gap-3">
                                         {specs.map((spec) => (
-                                            <SpecCard
+                                            <SpecListItem
                                                 key={spec.id}
                                                 spec={spec}
                                                 showArchivedStyle={showArchived}

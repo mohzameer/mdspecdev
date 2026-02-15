@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ProgressBar } from '@/components/spec/ProgressBar';
 import { StatusBadge, TagsList } from '@/components/spec/StatusBadge';
+import { SpecListItem } from '@/components/dashboard/SpecListItem';
 import { formatRelativeTime } from '@/lib/utils';
 
 interface OrgDashboardProps {
@@ -302,14 +303,18 @@ export function OrgDashboard({
                                     </Link>
                                 </div>
 
-                                {/* Spec Cards Grid */}
-                                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                                {/* Spec List */}
+                                <div className="flex flex-col gap-3">
                                     {specs.map((spec: any) => (
-                                        <SpecCard
+                                        <SpecListItem
                                             key={spec.id}
-                                            spec={spec}
-                                            orgSlug={org.slug}
-                                            projectSlug={project.slug}
+                                            spec={{
+                                                ...spec,
+                                                project: {
+                                                    ...project,
+                                                    organization: org
+                                                }
+                                            }}
                                         />
                                     ))}
                                 </div>
@@ -350,8 +355,8 @@ function MetricCard({
         <Component
             onClick={onClick}
             className={`p-4 bg-white dark:bg-slate-800/50 rounded-xl border transition-all ${active
-                    ? 'border-blue-500 ring-2 ring-blue-500/20'
-                    : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-white/20'
+                ? 'border-blue-500 ring-2 ring-blue-500/20'
+                : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-white/20'
                 } ${onClick ? 'cursor-pointer' : ''} shadow-sm`}
         >
             <div className="flex items-center gap-2 mb-1">
@@ -363,53 +368,4 @@ function MetricCard({
     );
 }
 
-function SpecCard({
-    spec,
-    orgSlug,
-    projectSlug
-}: {
-    spec: any;
-    orgSlug: string;
-    projectSlug: string;
-}) {
-    const unresolvedCount = spec.comment_threads?.filter((t: any) => !t.resolved).length || 0;
-    const revisionCount = spec.revisions?.length || 0;
 
-    return (
-        <Link
-            href={`/${orgSlug}/${projectSlug}/${spec.slug}`}
-            className="block p-6 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-700 transition-all duration-200 group shadow-sm"
-        >
-            <div className="flex items-start justify-between mb-3">
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                    {spec.name}
-                </h3>
-                <StatusBadge status={spec.status} />
-            </div>
-
-            <TagsList tags={spec.tags} />
-
-            {spec.progress !== null && (
-                <div className="mt-4">
-                    <ProgressBar progress={spec.progress} size="sm" />
-                </div>
-            )}
-
-            <div className="mt-4 pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400">
-                    <span>@{spec.owner?.full_name || 'Unknown'}</span>
-                    <span>·</span>
-                    <span>{formatRelativeTime(spec.updated_at)}</span>
-                </div>
-                <div className="flex items-center gap-3 text-slate-400 dark:text-slate-500">
-                    {unresolvedCount > 0 && (
-                        <span className="text-orange-500 dark:text-orange-400">
-                            💬 {unresolvedCount}
-                        </span>
-                    )}
-                    <span>{revisionCount} rev</span>
-                </div>
-            </div>
-        </Link>
-    );
-}
