@@ -24,6 +24,63 @@ export function Header() {
     const pathname = usePathname();
     const supabase = createClient();
 
+    const [currentOrgSlug, setCurrentOrgSlug] = useState<string | null>(null);
+    const [orgName, setOrgName] = useState<string | null>(null);
+
+    // Extract org slug from pathname and fetch details
+    useEffect(() => {
+        const segments = pathname?.split('/').filter(Boolean) || [];
+        // Pattern: /[orgSlug] or /[orgSlug]/...
+        // Ignore reserved paths like: dashboard, login, settings, orgs, etc.
+        const reservedPaths = ['dashboard', 'login', 'signup', 'settings', 'orgs', 'new-org', 'guide', 'api'];
+
+        if (segments.length > 0 && !reservedPaths.includes(segments[0])) {
+            const slug = segments[0];
+            if (slug !== currentOrgSlug) {
+                setCurrentOrgSlug(slug);
+                // Fetch org name
+                const fetchOrgName = async () => {
+                    if (!supabase) return;
+                    const { data } = await supabase
+                        .from('organizations')
+                        .select('name')
+                        .eq('slug', slug)
+                        .single();
+
+                    if (data) {
+                        setOrgName(data.name);
+                    } else {
+                        setOrgName(null);
+                    }
+                };
+                fetchOrgName();
+            }
+        } else {
+            // We are on a dashboard or other page, try to fetch the first organization for the user
+            const fetchDefaultOrg = async () => {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+
+                const { data: membership } = await supabase
+                    .from('org_memberships')
+                    .select('organization:organizations(name, slug)')
+                    .eq('user_id', user.id)
+                    .limit(1)
+                    .single();
+
+                if (membership?.organization) {
+                    const org = membership.organization as any;
+                    setCurrentOrgSlug(org.slug);
+                    setOrgName(org.name);
+                } else {
+                    setCurrentOrgSlug(null);
+                    setOrgName(null);
+                }
+            };
+            fetchDefaultOrg();
+        }
+    }, [pathname, supabase]);
+
     useEffect(() => {
         async function getUser() {
             try {
@@ -101,15 +158,17 @@ export function Header() {
                                 >
                                     Dashboard
                                 </Link>
-                                <Link
-                                    href="/orgs"
-                                    className={`text-sm font-medium transition-colors hover:text-slate-900 dark:hover:text-white ${pathname?.startsWith('/orgs')
-                                        ? 'text-slate-900 dark:text-white'
-                                        : 'text-slate-500 dark:text-slate-400'
-                                        }`}
-                                >
-                                    Organizations
-                                </Link>
+                                {orgName && (
+                                    <Link
+                                        href={`/${currentOrgSlug}`}
+                                        className={`text-sm font-medium transition-colors hover:text-slate-900 dark:hover:text-white ${pathname?.startsWith(`/${currentOrgSlug}`)
+                                            ? 'text-slate-900 dark:text-white'
+                                            : 'text-slate-500 dark:text-slate-400'
+                                            }`}
+                                    >
+                                        {orgName}
+                                    </Link>
+                                )}
                             </>
                         ) : (
                             <Link

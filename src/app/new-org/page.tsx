@@ -77,28 +77,24 @@ export default function NewOrgPage() {
             return;
         }
 
-        // Create organization with slug
+        // Use RPC to create organization and handle membership atomically
         const { data: org, error: createError } = await supabase
-            .from('organizations')
-            .insert({ name, slug })
-            .select()
-            .single();
+            .rpc('create_organization', {
+                org_name: name,
+                org_slug: slug
+            });
 
         if (createError) {
+            console.error('Organization creation failed:', createError);
             setError(createError.message);
             setLoading(false);
             return;
         }
 
-        // Create owner membership manually
-        await supabase.from('org_memberships').insert({
-            org_id: org.id,
-            user_id: user.id,
-            role: 'owner',
-        });
-
-        router.push(`/orgs/${org.slug}`);
+        router.push(`/orgs/${(org as any).slug}`);
         router.refresh();
+
+
     }
 
     return (
