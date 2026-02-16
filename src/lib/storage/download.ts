@@ -1,12 +1,14 @@
 import { createClient } from '@/lib/supabase/server';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 /**
  * Get spec content from Supabase Storage
  * @param contentKey - The storage path (e.g., "specs/{spec_id}/{revision_number}.md")
+ * @param client - Optional authenticated Supabase client (defaults to cookie-based client)
  * @returns The markdown content
  */
-export async function getSpecContent(contentKey: string): Promise<string> {
-    const supabase = await createClient();
+export async function getSpecContent(contentKey: string, client?: SupabaseClient): Promise<string> {
+    const supabase = client || await createClient();
 
     const { data, error } = await supabase.storage
         .from('spec-content')

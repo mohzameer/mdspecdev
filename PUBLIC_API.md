@@ -74,7 +74,38 @@ Get a list of all specifications visible to the authenticated user.
 
 ---
 
-### 3. Create Spec
+### 3. Get Spec (Download)
+Retrieve a specific specification by its slug, including its full markdown content.
+
+- **URL**: `/api/public/specs/[slug]`
+- **Method**: `GET`
+- **Headers**: `Authorization: Bearer <token>`
+
+#### Response (200 OK)
+```json
+{
+  "spec": {
+    "id": "uuid",
+    "name": "Spec Name",
+    "slug": "spec-slug",
+    "updated_at": "2024-01-01T00:00:00Z",
+    "project_id": "uuid",
+    "latest_revision": {
+      "revision_number": 5,
+      "content_hash": "sha256_hash",
+      "created_at": "2024-01-05T00:00:00Z"
+    }
+  },
+  "content": "# Full Markdown Content\n\nThis is the latest content of the spec."
+}
+```
+
+#### Errors
+- `404 Not Found`: If the spec does not exist or user does not have access.
+
+---
+
+### 4. Create Spec
 Create a new specification.
 
 - **URL**: `/api/public/specs`
@@ -87,6 +118,7 @@ Create a new specification.
 |---|---|---|---|
 | `name` | string | Yes | Title of the specification |
 | `content` | string | Yes | Initial markdown content |
+| `file_name` | string | No | Original file name (e.g., README.md) |
 | `project_slug` | string | No | **Recommended**. The slug of the project to create the spec in. |
 | `org_slug` | string | No | **Recommended**. The slug of the organization the project belongs to. Used to resolve ambiguous project slugs. |
 | `project_id` | string | No | **Legacy**. The UUID of the project. If provided, takes precedence over slugs. |

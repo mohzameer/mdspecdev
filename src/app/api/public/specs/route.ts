@@ -18,6 +18,7 @@ export async function GET(request: Request) {
         .select(`
             id,
             name,
+            file_name,
             slug,
             updated_at,
             project_id,
@@ -44,6 +45,7 @@ export async function GET(request: Request) {
         return {
             id: spec.id,
             name: spec.name,
+            file_name: spec.file_name,
             slug: spec.slug,
             updated_at: spec.updated_at,
             project_id: spec.project_id,
@@ -66,7 +68,7 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { name, content, project_id, slug: providedSlug } = body;
+        const { name, content, project_id, file_name, slug: providedSlug } = body;
 
         if (!name || !content) {
             return NextResponse.json({ error: 'Name and content are required' }, { status: 400 });
@@ -141,6 +143,7 @@ export async function POST(request: Request) {
             .insert({
                 name,
                 slug,
+                file_name,
                 project_id: targetProjectId,
                 owner_id: user.id,
                 status: 'planned',
@@ -197,6 +200,7 @@ export async function POST(request: Request) {
                     id: spec.id,
                     slug: spec.slug,
                     name: spec.name,
+                    file_name: spec.file_name,
                     latest_revision_number: 1
                 }
             });

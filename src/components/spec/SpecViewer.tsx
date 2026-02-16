@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import { MarkdownRenderer } from '@/components/spec/MarkdownRenderer';
 import { TableOfContents } from '@/components/spec/TableOfContents';
@@ -68,8 +68,27 @@ export function SpecViewer({
     const [activeQuotedText, setActiveQuotedText] = useState<string | null>(null);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
     const [isSharing, setIsSharing] = useState(false);
+    const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
     const router = useRouter();
     const markdownContainerRef = useRef<React.RefObject<HTMLElement | null> | null>(null);
+    const shareMenuRef = useRef<HTMLDivElement>(null);
+
+    // Close share menu when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (shareMenuRef.current && !shareMenuRef.current.contains(event.target as Node)) {
+                setIsShareMenuOpen(false);
+            }
+        }
+
+        if (isShareMenuOpen) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [isShareMenuOpen]);
 
     // Fetch threads for highlight rendering
     const { threads } = useComments(spec.id);
@@ -195,23 +214,59 @@ export function SpecViewer({
                     </div>
                     <div className="flex gap-2">
                         {isOwner && !isPublicView && (
-                            <button
-                                onClick={handleTogglePublic}
-                                disabled={isSharing}
-                                className={`px-4 py-2 font-medium rounded-lg transition-colors text-sm flex items-center gap-2 ${spec.is_public
-                                    ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50'
-                                    : 'bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700/50'
-                                    }`}
-                            >
-                                {isSharing ? (
-                                    <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                ) : (
+                            <div className="relative" ref={shareMenuRef}>
+                                <button
+                                    onClick={() => setIsShareMenuOpen(!isShareMenuOpen)}
+                                    className={`px-4 py-2 font-medium rounded-lg transition-colors text-sm flex items-center gap-2 ${spec.is_public
+                                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50'
+                                        : 'bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700/50'
+                                        }`}
+                                >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
                                     </svg>
+                                    {spec.is_public ? 'Public' : 'Private'}
+                                </button>
+
+                                {isShareMenuOpen && (
+                                    <div className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50">
+                                        <div className="px-4 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-700/50 mb-1">
+                                            Currently: <span className={spec.is_public ? "text-green-600 dark:text-green-400" : "text-slate-700 dark:text-slate-300"}>{spec.is_public ? 'Public' : 'Private'}</span>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                handleTogglePublic();
+                                                setIsShareMenuOpen(false);
+                                            }}
+                                            disabled={isSharing}
+                                            className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2"
+                                        >
+                                            {isSharing ? (
+                                                <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                            ) : spec.is_public ? (
+                                                <>
+                                                    <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                    </svg>
+                                                    Make Private
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    Make Public
+                                                </>
+                                            )}
+                                        </button>
+                                        <div className="px-4 py-2 text-xs text-slate-400">
+                                            {spec.is_public
+                                                ? 'Anyone with the link can view.'
+                                                : 'Only organization members can view.'}
+                                        </div>
+                                    </div>
                                 )}
-                                {spec.is_public ? 'Public' : 'Private'}
-                            </button>
+                            </div>
                         )}
 
                         <button

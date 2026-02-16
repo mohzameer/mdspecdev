@@ -57,6 +57,7 @@ export interface Spec {
   progress: number | null;
   status: Status | null;
   maturity: Maturity | null;
+  file_name: string | null;
   tags: string[] | null;
   created_at: string;
   updated_at: string;
@@ -146,11 +147,13 @@ export interface CreateSpecInput {
   project_id: string;
   name: string;
   slug: string;
+  file_name?: string;
   content: string;
 }
 
 export interface UpdateSpecInput {
   name?: string;
+  file_name?: string;
   content?: string;
   summary?: string;
 }

@@ -33,33 +33,47 @@ export function SpecMetadataEditor({
                     <label htmlFor="status" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         Status
                     </label>
-                    <select
-                        id="status"
-                        value={status}
-                        onChange={(e) => setStatus(e.target.value as Status)}
-                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                        <option value="planned">Planned</option>
-                        <option value="in-progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                    </select>
+                    <div className="relative">
+                        <select
+                            id="status"
+                            value={status}
+                            onChange={(e) => setStatus(e.target.value as Status)}
+                            className="w-full pl-4 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                        >
+                            <option value="planned">Planned</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-500 dark:text-slate-400">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </div>
                 </div>
 
                 <div>
                     <label htmlFor="maturity" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
                         Maturity
                     </label>
-                    <select
-                        id="maturity"
-                        value={maturity}
-                        onChange={(e) => setMaturity(e.target.value as Maturity)}
-                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    >
-                        <option value="draft">Draft</option>
-                        <option value="review">In Review</option>
-                        <option value="stable">Stable</option>
-                        <option value="deprecated">Deprecated</option>
-                    </select>
+                    <div className="relative">
+                        <select
+                            id="maturity"
+                            value={maturity}
+                            onChange={(e) => setMaturity(e.target.value as Maturity)}
+                            className="w-full pl-4 pr-10 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent appearance-none"
+                        >
+                            <option value="draft">Draft</option>
+                            <option value="review">In Review</option>
+                            <option value="stable">Stable</option>
+                            <option value="deprecated">Deprecated</option>
+                        </select>
+                        <div className="absolute inset-y-0 right-0 flex items-center px-3 pointer-events-none text-slate-500 dark:text-slate-400">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </div>
                 </div>
 
                 <div>
