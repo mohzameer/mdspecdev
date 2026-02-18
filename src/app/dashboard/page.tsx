@@ -170,7 +170,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ arc
                         </p>
                     </div>
                     {hasOrgs && (
-                        <div className="flex gap-4">
+                        <div className="flex items-center gap-4">
                             <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
                                 <Link
                                     href="/dashboard"
@@ -233,42 +233,45 @@ export default async function DashboardPage(props: { searchParams: Promise<{ arc
                         </Link>
                     </div>
                 ) : (
-                    <div className="space-y-12">
+                    <div className="space-y-8">
                         {projectsWithSpecs.map((project) => (
                             <section key={project.id}>
-                                <div className="flex items-center gap-3 mb-4 border-b border-slate-200 dark:border-slate-800 pb-2">
-                                    <h2 className="text-xl font-bold text-slate-800 dark:text-slate-200">
+                                {/* Project header */}
+                                <div className="flex items-center gap-3 mb-1 pb-2 border-b border-slate-200 dark:border-slate-800">
+                                    <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
                                         {project.name}
                                     </h2>
                                     <ProjectBadge orgSlug={project.organization.slug} projectSlug={project.slug} />
                                 </div>
-                                <div className="flex flex-col gap-3">
-                                    {project.specs.length > 0 ? (
-                                        project.specs.map((spec) => (
-                                            <SpecListItem
-                                                key={spec.id}
-                                                spec={{
-                                                    ...spec,
-                                                    project: {
-                                                        id: project.id,
-                                                        name: project.name,
-                                                        slug: project.slug,
-                                                        organization: project.organization,
-                                                    },
-                                                }}
-                                                showArchivedStyle={showArchived}
-                                            />
-                                        ))
-                                    ) : (
-                                        <div className="text-center py-8 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-dashed border-slate-200 dark:border-slate-700">
-                                            <p className="text-slate-500 dark:text-slate-400 text-sm">
-                                                {showArchived
-                                                    ? 'No archived specifications in this project'
-                                                    : 'No specifications have been created in this project'}
-                                            </p>
+
+                                {project.specs.length > 0 ? (
+                                    <div>
+                                        {/* Spec rows */}
+                                        <div className="flex flex-col gap-1">
+                                            {project.specs.map((spec) => (
+                                                <SpecListItem
+                                                    key={spec.id}
+                                                    spec={{
+                                                        ...spec,
+                                                        project: {
+                                                            id: project.id,
+                                                            name: project.name,
+                                                            slug: project.slug,
+                                                            organization: project.organization,
+                                                        },
+                                                    }}
+                                                    showArchivedStyle={showArchived}
+                                                />
+                                            ))}
                                         </div>
-                                    )}
-                                </div>
+                                    </div>
+                                ) : (
+                                    <div className="px-3 py-5 text-sm text-slate-400 dark:text-slate-600 italic">
+                                        {showArchived
+                                            ? 'No archived specifications in this project'
+                                            : 'No specifications have been created in this project'}
+                                    </div>
+                                )}
                             </section>
                         ))}
                     </div>

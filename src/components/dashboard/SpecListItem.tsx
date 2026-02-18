@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { ProgressBar } from '@/components/spec/ProgressBar';
-import { StatusBadge } from '@/components/spec/StatusBadge';
 import { formatRelativeTime } from '@/lib/utils';
 import { SpecWithRelations } from './SpecCard';
 
@@ -9,69 +8,87 @@ interface SpecListItemProps {
     showArchivedStyle?: boolean;
 }
 
+const STATUS_CONFIG: Record<string, { dot: string; label: string }> = {
+    'planned': { dot: 'bg-slate-400', label: 'Planned' },
+    'in-progress': { dot: 'bg-blue-500', label: 'In Progress' },
+    'completed': { dot: 'bg-green-500', label: 'Completed' },
+};
+
+const MATURITY_CONFIG: Record<string, { color: string; label: string }> = {
+    'draft': { color: 'text-slate-400 dark:text-slate-500', label: 'Draft' },
+    'review': { color: 'text-amber-500 dark:text-amber-400', label: 'Review' },
+    'stable': { color: 'text-green-600 dark:text-green-400', label: 'Stable' },
+    'deprecated': { color: 'text-red-500 dark:text-red-400', label: 'Deprecated' },
+};
+
 export function SpecListItem({ spec, showArchivedStyle = false }: SpecListItemProps) {
-    // Calculate stats safely
     const unresolvedCount =
         spec.comment_threads?.filter((t) => !t.resolved && t.comments?.some((c) => !c.deleted)).length || 0;
     const revisionCount = spec.revisions?.length || 0;
     const isArchived = !!spec.archived_at;
     const displayArchived = showArchivedStyle || isArchived;
 
+    const statusCfg = spec.status ? STATUS_CONFIG[spec.status] : null;
+    const maturityCfg = spec.maturity ? MATURITY_CONFIG[spec.maturity] : null;
+
     return (
         <Link
             href={`/${spec.project.organization.slug}/${spec.project.slug}/${spec.slug}`}
-            className={`group flex items-center justify-between p-3 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-700 transition-all duration-200 shadow-sm ${displayArchived ? 'opacity-75 grayscale' : ''}`}
+            className={`group grid items-center gap-3 px-3 py-2.5 rounded-md bg-white dark:bg-slate-800/60 border border-slate-100 dark:border-slate-700/60 hover:bg-slate-50 dark:hover:bg-slate-800 hover:border-slate-200 dark:hover:border-slate-600 transition-colors duration-100 ${displayArchived ? 'opacity-60' : ''}`}
+            style={{ gridTemplateColumns: '16px 1fr auto auto auto auto' }}
         >
-            {/* Left Section: Icon + Info */}
-            <div className="flex items-center gap-3 flex-1 min-w-0">
-                {/* Icon */}
-                <div className="flex-shrink-0 w-9 h-9 rounded-md bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-lg">
-                    📄
-                </div>
+            {/* Status dot */}
+            <span
+                className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${statusCfg?.dot ?? 'bg-slate-300 dark:bg-slate-600'}`}
+                title={statusCfg?.label ?? 'No status'}
+            />
 
-                <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2.5">
-                        <h3 className="text-sm font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors truncate">
-                            {spec.name}
-                        </h3>
-                        <StatusBadge status={spec.status} />
-                    </div>
-
-                    <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                        <span>@{spec.owner?.full_name || 'Unknown'}</span>
-                        <span>•</span>
-                        <span>{formatRelativeTime(spec.updated_at)}</span>
-                    </div>
-                </div>
+            {/* Name + maturity */}
+            <div className="min-w-0 flex items-center gap-2">
+                <span className="text-sm font-medium text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate transition-colors">
+                    {spec.name}
+                </span>
+                {maturityCfg && (
+                    <span className={`hidden sm:inline text-xs font-medium ${maturityCfg.color} flex-shrink-0`}>
+                        {maturityCfg.label}
+                    </span>
+                )}
             </div>
 
-            {/* Middle Section: Progress Bar */}
-            {spec.progress !== null && (
-                <div className="hidden md:flex flex-col w-24 mx-4">
+            {/* Progress bar */}
+            <div className="hidden md:flex w-20 flex-shrink-0">
+                {spec.progress !== null ? (
                     <ProgressBar progress={spec.progress} size="sm" showLabel={false} />
-                </div>
-            )}
+                ) : (
+                    <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
+                )}
+            </div>
 
-            {/* Right Section: Stats & Tags */}
-            <div className="flex items-center gap-4 pl-3 border-l border-slate-100 dark:border-slate-700">
-                <div className="flex items-center gap-3 text-xs text-slate-400 dark:text-slate-500">
-                    {unresolvedCount > 0 && (
-                        <div className="flex items-center gap-1 text-orange-500 dark:text-orange-400" title="Unresolved discussions">
-                            <span>💬</span>
-                            <span className="font-medium">{unresolvedCount}</span>
-                        </div>
-                    )}
-                    <div className="flex items-center gap-1" title="Revisions">
-                        <span>📝</span>
-                        <span>{revisionCount}</span>
-                    </div>
-                </div>
+            {/* Unresolved comments */}
+            <div className="flex items-center gap-1 w-10 justify-end flex-shrink-0">
+                {unresolvedCount > 0 ? (
+                    <span className="flex items-center gap-0.5 text-xs font-medium text-orange-500 dark:text-orange-400" title="Unresolved comments">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                        {unresolvedCount}
+                    </span>
+                ) : (
+                    <span className="text-xs text-slate-300 dark:text-slate-600">—</span>
+                )}
+            </div>
 
-                <div className="text-slate-300 dark:text-slate-600">
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                </div>
+            {/* Revisions */}
+            <div className="hidden sm:flex items-center gap-0.5 w-10 justify-end flex-shrink-0 text-xs text-slate-400 dark:text-slate-500" title="Revisions">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>v{revisionCount}</span>
+            </div>
+
+            {/* Updated at */}
+            <div className="hidden sm:block text-xs text-slate-400 dark:text-slate-500 w-20 text-right flex-shrink-0 tabular-nums">
+                {formatRelativeTime(spec.updated_at)}
             </div>
         </Link>
     );
