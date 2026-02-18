@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { generateAISummary } from '@/lib/ai-summary';
@@ -27,6 +27,7 @@ export async function createRevision(formData: FormData) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
+
     if (!user) {
         return { error: 'You must be logged in' };
     }
@@ -47,9 +48,12 @@ export async function createRevision(formData: FormData) {
         return { error: updateError.message };
     }
 
-    // 2. Upload Content
+    // 2. Upload Content to Storage
+    // Use service role client for storage: upsert RLS is unreliable from server actions.
+    // Security is enforced by the revisions table RLS (only owners/admins can insert).
+    const serviceClient = createServiceRoleClient();
     const contentPath = `specs/${specId}/${revisionNumber}.md`;
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await serviceClient.storage
         .from('spec-content')
         .upload(contentPath, content, { contentType: 'text/markdown', upsert: true });
 
@@ -57,7 +61,7 @@ export async function createRevision(formData: FormData) {
         return { error: `Failed to upload content: ${uploadError.message}` };
     }
 
-    // 3. Create Revision
+    // 3. Create Revision row
     const encoder = new TextEncoder();
     const data = encoder.encode(content);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
@@ -83,8 +87,6 @@ export async function createRevision(formData: FormData) {
     }
 
     if (revisionNumber >= 2 && revision?.id) {
-        // Call the function directly (fire-and-forget in Node environment)
-        // This avoids HTTP roundtrip issues and is more robust
         generateAISummary(revision.id).catch(err =>
             console.error('[AI Summary] Background generation failed:', err)
         );
@@ -146,10 +148,12 @@ export async function createSpec(formData: FormData) {
     }
 
     // 2. Upload Content
+    // Use service role client for storage: upsert RLS is unreliable from server actions.
+    const serviceClient = createServiceRoleClient();
     const fullContent = `${frontmatter}\n\n${content}`;
     const contentPath = `specs/${spec.id}/1.md`;
 
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await serviceClient.storage
         .from('spec-content')
         .upload(contentPath, fullContent, { contentType: 'text/markdown', upsert: true });
 

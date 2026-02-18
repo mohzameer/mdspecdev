@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -32,6 +32,18 @@ export default function EditSpecPage() {
 
     const router = useRouter();
     const supabase = createClient();
+
+    // Live frontmatter preview — updates as metadata changes
+    const frontmatter = useMemo(() => {
+        const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
+        const tagsStr = tags.length > 0 ? `[${tags.map(t => `"${t}"`).join(', ')}]` : '[]';
+        return `---
+progress: ${progress}
+status: ${status}
+maturity: ${maturity}
+tags: ${tagsStr}
+---`;
+    }, [progress, status, maturity, tagsInput]);
 
     useEffect(() => {
         async function loadSpec() {
@@ -304,21 +316,34 @@ tags: ${tagsStr}
                         setTagsInput={setTagsInput}
                     />
 
-                    <div>
-                        <label
-                            htmlFor="content"
-                            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2"
-                        >
+                    <div className="space-y-2">
+                        <label htmlFor="content" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                             Content
                         </label>
-                        <textarea
-                            id="content"
-                            value={content}
-                            onChange={(e) => setContent(e.target.value)}
-                            required
-                            rows={25}
-                            className="w-full px-4 py-3 bg-white dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all font-mono text-sm resize-none"
-                        />
+                        <div className="border border-slate-300 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-800/50 shadow-sm">
+                            {/* Read-only Frontmatter Preview */}
+                            <div className="bg-slate-50 dark:bg-black/20 border-b border-slate-200 dark:border-white/5 p-4 select-none">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                        Frontmatter (Auto-generated)
+                                    </span>
+                                </div>
+                                <pre className="font-mono text-sm text-slate-500 dark:text-slate-400 whitespace-pre-wrap">
+                                    {frontmatter}
+                                </pre>
+                            </div>
+
+                            {/* Main Editor */}
+                            <textarea
+                                id="content"
+                                value={content}
+                                onChange={(e) => setContent(e.target.value)}
+                                required
+                                rows={25}
+                                className="w-full px-4 py-4 bg-transparent focus:outline-none resize-y font-mono text-sm text-slate-900 dark:text-slate-200 placeholder-slate-400"
+                                placeholder="Write your markdown content here..."
+                            />
+                        </div>
                     </div>
 
                     <div className="flex gap-3">
