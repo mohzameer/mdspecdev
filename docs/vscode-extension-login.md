@@ -18,8 +18,8 @@ sequenceDiagram
     participant mdspec API
 
     User->>VSCode Extension: Runs "mdspec: Sign In" command
-    VSCode Extension->>VSCode Extension: Starts local HTTP server on random port (e.g. 54321)
-    VSCode Extension->>Browser (mdspec.app): Opens https://mdspec.app/auth/vscode?port=54321
+    VSCode Extension->>VSCode Extension: Picks random ephemeral port (49152–65535), starts local server
+    VSCode Extension->>Browser (mdspec.app): Opens https://mdspec.app/auth/vscode?port=62847
     Browser (mdspec.app)->>User: Shows login form (email + password)
     User->>Browser (mdspec.app): Submits credentials
     Browser (mdspec.app)->>mdspec API: POST /api/public/auth/login
@@ -288,10 +288,12 @@ export async function startBrowserLogin(authManager: AuthManager): Promise<void>
             res.end();
         });
 
-        // 2. Listen on a random port (OS assigns it)
-        server.listen(0, '127.0.0.1', () => {
-            const address = server.address() as { port: number };
-            const port = address.port;
+        // 2. Pick a random port in the IANA ephemeral range (49152–65535).
+        //    This avoids colliding with common developer services (3000, 8080, 5432, etc.).
+        //    The web app page validates that the port is in this range before accepting it.
+        const ephemeralPort = Math.floor(Math.random() * (65535 - 49152 + 1)) + 49152;
+        server.listen(ephemeralPort, '127.0.0.1', () => {
+            const port = ephemeralPort;
 
             // 3. Open the browser to the mdspec login page with the port
             const loginUrl = `${MDSPEC_BASE}/auth/vscode?port=${port}`;
@@ -409,7 +411,8 @@ async function listSpecs(authManager: AuthManager) {
 | Token storage | `context.secrets` (OS keychain / encrypted) — never `globalState` |
 | Local server exposure | Binds to `127.0.0.1` only (not `0.0.0.0`), not reachable from network |
 | CORS on local server | Restricts `Access-Control-Allow-Origin` to `https://mdspec.app` only |
-| Port collision | OS assigns a random free port (`listen(0)`) — no hardcoded port |
+| Port safety | Extension picks a random port in the IANA ephemeral range (49152–65535), avoiding common developer ports (3000, 8080, 5432, etc.) |
+| Port validation | The web app page rejects any `?port=` value outside 49152–65535, preventing malicious links from targeting local services |
 | Timeout | Local server auto-closes after 5 minutes if no callback received |
 | HTTPS only | All calls to mdspec API use HTTPS |
 
