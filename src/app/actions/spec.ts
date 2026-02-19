@@ -209,3 +209,121 @@ export async function indexSpecAction(specId: string, content: string) {
     );
     return { success: true };
 }
+
+export async function copySpec(formData: FormData) {
+    const sourceSpecId = formData.get('sourceSpecId') as string;
+    const targetProjectId = formData.get('targetProjectId') as string;
+    const newName = formData.get('newName') as string;
+    const newSlug = formData.get('newSlug') as string;
+
+    // These are needed for the redirect path
+    const targetOrgSlug = formData.get('targetOrgSlug') as string;
+    const targetProjectSlug = formData.get('targetProjectSlug') as string;
+
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { error: 'You must be logged in' };
+    }
+
+    // 1. Fetch the source spec's latest revision content from storage
+    const { data: revisions, error: revError } = await supabase
+        .from('revisions')
+        .select('content_key, revision_number')
+        .eq('spec_id', sourceSpecId)
+        .order('revision_number', { ascending: false })
+        .limit(1);
+
+    if (revError || !revisions || revisions.length === 0) {
+        return { error: 'Could not find source spec content' };
+    }
+
+    const { data: sourceSpecData } = await supabase
+        .from('specs')
+        .select('progress, status, maturity, tags')
+        .eq('id', sourceSpecId)
+        .single();
+
+    const serviceClient = createServiceRoleClient();
+    const { data: contentBlob, error: downloadError } = await serviceClient.storage
+        .from('spec-content')
+        .download(revisions[0].content_key);
+
+    if (downloadError || !contentBlob) {
+        return { error: 'Failed to download source spec content' };
+    }
+
+    const content = await contentBlob.text();
+
+    // 2. Create new spec in the target project
+    const { data: newSpec, error: specError } = await supabase
+        .from('specs')
+        .insert({
+            project_id: targetProjectId,
+            name: newName,
+            slug: newSlug,
+            owner_id: user.id,
+            progress: sourceSpecData?.progress ?? 0,
+            status: sourceSpecData?.status ?? null,
+            maturity: sourceSpecData?.maturity ?? null,
+            tags: sourceSpecData?.tags ?? null,
+        })
+        .select()
+        .single();
+
+    if (specError) {
+        return { error: specError.message };
+    }
+
+    // 3. Upload content to storage
+    const contentPath = `specs/${newSpec.id}/1.md`;
+    const { error: uploadError } = await serviceClient.storage
+        .from('spec-content')
+        .upload(contentPath, content, { contentType: 'text/markdown', upsert: true });
+
+    if (uploadError) {
+        await supabase.from('specs').delete().eq('id', newSpec.id);
+        return { error: `Failed to upload content: ${uploadError.message}` };
+    }
+
+    // 4. Create first revision
+    const encoder = new TextEncoder();
+    const encoded = encoder.encode(content);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', encoded);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const contentHash = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+
+    const { data: revision, error: revisionError } = await supabase
+        .from('revisions')
+        .insert({
+            spec_id: newSpec.id,
+            revision_number: 1,
+            content_key: contentPath,
+            content_hash: contentHash,
+            summary: `Copied from spec ${sourceSpecId}`,
+            author_id: user.id,
+        })
+        .select()
+        .single();
+
+    if (revisionError) {
+        return { error: revisionError.message };
+    }
+
+    // 5. Async fire-and-forget
+    if (revision?.id) {
+        generateAISummary(revision.id).catch(err =>
+            console.error('[AI Summary] Background generation failed:', err)
+        );
+    }
+
+    indexSpecContent(newSpec.id, content).catch(err =>
+        console.error('[Search Indexer] Failed to index copied spec:', err)
+    );
+
+    revalidatePath(`/${targetOrgSlug}/${targetProjectSlug}`);
+    revalidatePath(`/dashboard`);
+
+    return { success: true, path: `/${targetOrgSlug}/${targetProjectSlug}/${newSpec.slug}` };
+}
