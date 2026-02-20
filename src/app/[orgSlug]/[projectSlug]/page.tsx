@@ -79,6 +79,7 @@ export default async function ProjectDetailPage({ params }: Props) {
       id,
       name,
       slug,
+      file_name,
       progress,
       status,
       maturity,
@@ -157,9 +158,16 @@ export default async function ProjectDetailPage({ params }: Props) {
                                     className="block p-6 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl border border-slate-200 dark:border-slate-700 transition-all duration-200 group shadow-sm"
                                 >
                                     <div className="flex items-start justify-between mb-3">
-                                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                                            {spec.name}
-                                        </h3>
+                                        <div className="flex flex-col gap-1">
+                                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                                                {spec.name}
+                                            </h3>
+                                            {spec.file_name && (
+                                                <span className="text-xs font-mono text-slate-500 dark:text-slate-400 truncate">
+                                                    {spec.file_name}
+                                                </span>
+                                            )}
+                                        </div>
                                         <StatusBadge status={spec.status} />
                                     </div>
 

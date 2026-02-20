@@ -43,11 +43,16 @@ export function SpecListItem({ spec, showArchivedStyle = false }: SpecListItemPr
                 title={statusCfg?.label ?? 'No status'}
             />
 
-            {/* Name + maturity */}
+            {/* Name + file_name + maturity */}
             <div className="min-w-0 flex items-center gap-2">
                 <span className="text-sm font-medium text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate transition-colors">
                     {spec.name}
                 </span>
+                {spec.file_name && (
+                    <span className="text-xs font-mono text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                        {spec.file_name}
+                    </span>
+                )}
                 {maturityCfg && (
                     <span className={`hidden sm:inline text-xs font-medium ${maturityCfg.color} flex-shrink-0`}>
                         {maturityCfg.label}

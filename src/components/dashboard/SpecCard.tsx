@@ -9,6 +9,7 @@ export interface SpecWithRelations extends Omit<Partial<Spec>, 'project' | 'owne
     id: string;
     name: string;
     slug: string;
+    file_name?: string | null;
     progress: number | null;
     status: any; // using any to avoid strict type mismatch with database enums vs string
     maturity: any;

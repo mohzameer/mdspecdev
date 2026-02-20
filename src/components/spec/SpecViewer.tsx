@@ -25,6 +25,7 @@ export interface SpecInfo {
     id: string;
     name: string;
     slug: string;
+    file_name?: string | null;
     progress: number | null;
     status: any;
     maturity: any;
@@ -272,10 +273,17 @@ export function SpecViewer({
                         className="flex-1 min-w-0 cursor-pointer"
                         onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
                     >
-                        <div className="flex items-center gap-2 mb-2">
-                            <h1 className="text-3xl font-bold text-slate-900 dark:text-white truncate">
-                                {spec.name}
-                            </h1>
+                        <div className="flex flex-col gap-1 mb-2">
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-3xl font-bold text-slate-900 dark:text-white truncate">
+                                    {spec.name}
+                                </h1>
+                            </div>
+                            {spec.file_name && (
+                                <span className="text-sm font-mono text-slate-500 dark:text-slate-400">
+                                    {spec.file_name}
+                                </span>
+                            )}
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
                             <StatusBadge status={spec.status} />

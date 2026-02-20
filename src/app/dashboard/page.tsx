@@ -24,6 +24,7 @@ type SpecWithRelations = {
     id: string;
     name: string;
     slug: string;
+    file_name?: string | null;
     progress: number | null;
     status: 'planned' | 'in-progress' | 'completed' | null;
     maturity: string | null;
@@ -90,6 +91,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ arc
                 id,
                 name,
                 slug,
+                file_name,
                 progress,
                 status,
                 maturity,
