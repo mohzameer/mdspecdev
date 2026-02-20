@@ -8,7 +8,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
 import { UserNav } from '@/components/shared/UserNav';
 import { SearchInput } from '@/components/shared/SearchInput';
-
+import { useStickyHeader } from '@/components/providers/StickyHeaderProvider';
 
 import { Logo } from '@/components/shared/Logo';
 
@@ -23,6 +23,7 @@ export function Header() {
     const [loading, setLoading] = useState(true);
     const pathname = usePathname();
     const supabase = createClient();
+    const { title: stickyTitle, isVisible: isStickyTitleVisible } = useStickyHeader();
 
     const [currentOrgSlug, setCurrentOrgSlug] = useState<string | null>(null);
     const [orgName, setOrgName] = useState<string | null>(null);
@@ -137,8 +138,8 @@ export function Header() {
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl">
-            <div className="container mx-auto flex h-16 items-center justify-between px-4">
-                <div className="flex items-center gap-8">
+            <div className="container mx-auto flex h-16 items-center justify-between px-4 relative">
+                <div className="flex items-center gap-8 z-10">
                     <Link href="/dashboard" className="flex items-center gap-2">
                         <Logo className="h-8 w-8" />
                         <span className="text-xl font-bold text-slate-900 dark:text-white">
@@ -184,7 +185,17 @@ export function Header() {
                     </nav>
                 </div>
 
-                <div className="flex items-center gap-4">
+                {/* Centered Sticky Title */}
+                <div
+                    className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-w-[40%] flex justify-center transition-all duration-300 ease-in-out z-0 pointer-events-none ${isStickyTitleVisible ? 'opacity-100 translate-y-[-50%]' : 'opacity-0 translate-y-[0%]'
+                        }`}
+                >
+                    <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate px-4">
+                        {stickyTitle}
+                    </h2>
+                </div>
+
+                <div className="flex items-center gap-4 z-10">
                     {user && (
                         <div className="hidden md:block w-full max-w-sm mr-4">
                             <Suspense fallback={<div className="h-10 w-full animate-pulse bg-slate-100 dark:bg-slate-800 rounded-lg" />}>

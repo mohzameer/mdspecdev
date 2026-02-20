@@ -19,6 +19,7 @@ import { generatePdf } from '@/actions/pdf';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { CopySpecModal } from '@/components/spec/CopySpecModal';
+import { useStickyHeader } from '@/components/providers/StickyHeaderProvider';
 
 export interface SpecInfo {
     id: string;
@@ -78,6 +79,38 @@ export function SpecViewer({
     const markdownContainerRef = useRef<React.RefObject<HTMLElement | null> | null>(null);
     const shareMenuRef = useRef<HTMLDivElement>(null);
     const overflowMenuRef = useRef<HTMLDivElement>(null);
+    const headerCardRef = useRef<HTMLDivElement>(null);
+    const { setTitle, setIsVisible } = useStickyHeader();
+
+    // Intersection Observer for sticky title
+    useEffect(() => {
+        setTitle(spec.name);
+
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                // If it's not intersecting and the top is above viewport, we scrolled past it
+                if (!entry.isIntersecting && entry.boundingClientRect.top < 0) {
+                    setIsVisible(true);
+                } else {
+                    setIsVisible(false);
+                }
+            },
+            {
+                // Trigger when the very bottom of the card leaves the viewport (top: -64px for header offset if needed, but 0 is safe)
+                rootMargin: '-64px 0px 0px 0px',
+                threshold: 0,
+            }
+        );
+
+        if (headerCardRef.current) {
+            observer.observe(headerCardRef.current);
+        }
+
+        return () => {
+            observer.disconnect();
+            setIsVisible(false);
+        };
+    }, [spec.name, setTitle, setIsVisible]);
 
     // Close share menu and overflow menu when clicking outside
     useEffect(() => {
@@ -232,7 +265,7 @@ export function SpecViewer({
             )}
 
             {/* Header Section — Collapsible */}
-            <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 mb-6 shadow-sm">
+            <div ref={headerCardRef} className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 mb-6 shadow-sm">
                 {/* Always-visible row: title, badges, Edit + "..." */}
                 <div className="flex items-start justify-between p-6 gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
                     <div
@@ -255,8 +288,8 @@ export function SpecViewer({
                                         setIsSidebarOpen(true);
                                     }}
                                     className={`px-2 py-0.5 rounded-full text-xs font-medium border flex items-center gap-1 transition-colors ${showUnresolved
-                                            ? "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800/50 dark:hover:bg-orange-900/50"
-                                            : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-700"
+                                        ? "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800/50 dark:hover:bg-orange-900/50"
+                                        : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-700"
                                         }`}
                                 >
                                     💬 {showUnresolved ? `${activeUnresolved} unresolved` : `${totalThreads} comments`}
@@ -481,8 +514,8 @@ export function SpecViewer({
                 </div>
             )}
 
-            <div className={`flex items-start transition-all duration-300 ${isSidebarOpen && !isTocOpen ? 'gap-2' : 'gap-6'}`}>
-                <div className="flex-1 min-w-0 relative">
+            <div className={`flex items-start transition-all duration-300 relative ${isSidebarOpen && !isTocOpen ? 'lg:gap-2' : 'lg:gap-6'}`}>
+                <div className="flex-1 min-w-0 relative w-full lg:w-auto">
                     {/* Content Section */}
                     <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
                         <MarkdownRenderer

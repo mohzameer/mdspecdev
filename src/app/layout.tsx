@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { Header } from '@/components/shared/Header';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import QueryProvider from '@/components/providers/QueryProvider';
+import { StickyHeaderProvider } from '@/components/providers/StickyHeaderProvider';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -28,8 +29,10 @@ export default function RootLayout({
       >
         <QueryProvider>
           <ThemeProvider>
-            <Header />
-            <main>{children}</main>
+            <StickyHeaderProvider>
+              <Header />
+              <main>{children}</main>
+            </StickyHeaderProvider>
           </ThemeProvider>
         </QueryProvider>
       </body>
