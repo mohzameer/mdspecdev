@@ -71,26 +71,33 @@ export function SpecViewer({
     const [isSharing, setIsSharing] = useState(false);
     const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
     const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+    const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
+    const [isOverflowMenuOpen, setIsOverflowMenuOpen] = useState(false);
+    const [isCopied, setIsCopied] = useState(false);
     const router = useRouter();
     const markdownContainerRef = useRef<React.RefObject<HTMLElement | null> | null>(null);
     const shareMenuRef = useRef<HTMLDivElement>(null);
+    const overflowMenuRef = useRef<HTMLDivElement>(null);
 
-    // Close share menu when clicking outside
+    // Close share menu and overflow menu when clicking outside
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (shareMenuRef.current && !shareMenuRef.current.contains(event.target as Node)) {
                 setIsShareMenuOpen(false);
             }
+            if (overflowMenuRef.current && !overflowMenuRef.current.contains(event.target as Node)) {
+                setIsOverflowMenuOpen(false);
+            }
         }
 
-        if (isShareMenuOpen) {
+        if (isShareMenuOpen || isOverflowMenuOpen) {
             document.addEventListener('mousedown', handleClickOutside);
         }
 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [isShareMenuOpen]);
+    }, [isShareMenuOpen, isOverflowMenuOpen]);
 
     // Fetch threads for highlight rendering
     const { threads } = useComments(spec.id);
@@ -170,8 +177,31 @@ export function SpecViewer({
         }
     };
 
+    const handleCopyMarkdown = async () => {
+        try {
+            await navigator.clipboard.writeText(content);
+            setIsCopied(true);
+            setTimeout(() => {
+                setIsCopied(false);
+                setIsOverflowMenuOpen(false);
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            alert('Failed to copy markdown. Please try again.');
+        }
+    };
+
     const isOwner = currentUser?.id === (spec.owner as any)?.id;
     const canEdit = !isPublicView && !spec.archived_at;
+
+    // Calculate comment metrics for display
+    const hasThreads = threads !== undefined;
+    const activeUnresolved = hasThreads
+        ? threads.filter(t => !t.resolved).length
+        : unresolvedCount;
+    const totalThreads = hasThreads ? threads.length : 0;
+    const showUnresolved = activeUnresolved > 0;
+    const showTotal = !showUnresolved && hasThreads && totalThreads > 0;
 
     return (
         <div className="relative">
@@ -201,110 +231,176 @@ export function SpecViewer({
                 </div>
             )}
 
-            {/* Header Section */}
-            <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-6 mb-6 shadow-sm">
-                <div className="flex items-start justify-between mb-4">
-                    <div>
-                        <h1 className="text-3xl font-bold text-slate-900 dark:text-white mb-2">
-                            {spec.name}
-                        </h1>
+            {/* Header Section — Collapsible */}
+            <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 mb-6 shadow-sm">
+                {/* Always-visible row: title, badges, Edit + "..." */}
+                <div className="flex items-start justify-between p-6 gap-4 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors">
+                    <div
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={() => setIsHeaderExpanded(!isHeaderExpanded)}
+                    >
+                        <div className="flex items-center gap-2 mb-2">
+                            <h1 className="text-3xl font-bold text-slate-900 dark:text-white truncate">
+                                {spec.name}
+                            </h1>
+                        </div>
                         <div className="flex items-center gap-2 flex-wrap">
                             <StatusBadge status={spec.status} />
                             <MaturityBadge maturity={spec.maturity} />
                             <TagsList tags={spec.tags} max={5} />
-                        </div>
-                    </div>
-                    <div className="flex gap-2">
-                        {isOwner && !isPublicView && (
-                            <div className="relative" ref={shareMenuRef}>
+                            {(showUnresolved || showTotal) && (
                                 <button
-                                    onClick={() => setIsShareMenuOpen(!isShareMenuOpen)}
-                                    className={`px-4 py-2 font-medium rounded-lg transition-colors text-sm flex items-center gap-2 ${spec.is_public
-                                        ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50'
-                                        : 'bg-slate-100 dark:bg-slate-800/50 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700/50'
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsSidebarOpen(true);
+                                    }}
+                                    className={`px-2 py-0.5 rounded-full text-xs font-medium border flex items-center gap-1 transition-colors ${showUnresolved
+                                            ? "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800/50 dark:hover:bg-orange-900/50"
+                                            : "bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700 dark:hover:bg-slate-700"
                                         }`}
                                 >
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                                    </svg>
-                                    {spec.is_public ? 'Public' : 'Private'}
+                                    💬 {showUnresolved ? `${activeUnresolved} unresolved` : `${totalThreads} comments`}
                                 </button>
+                            )}
+                        </div>
+                    </div>
+                    <div className="flex gap-2 flex-shrink-0">
+                        {/* Overflow "..." menu */}
+                        <div className="relative" ref={overflowMenuRef}>
+                            <button
+                                onClick={() => setIsOverflowMenuOpen(!isOverflowMenuOpen)}
+                                className="px-3 py-2 bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white font-medium rounded-lg transition-colors text-sm"
+                                title="More actions"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01" />
+                                </svg>
+                            </button>
 
-                                {isShareMenuOpen && (
-                                    <div className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50">
-                                        <div className="px-4 py-2 text-xs font-medium text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-700/50 mb-1">
-                                            Currently: <span className={spec.is_public ? "text-green-600 dark:text-green-400" : "text-slate-700 dark:text-slate-300"}>{spec.is_public ? 'Public' : 'Private'}</span>
+                            {isOverflowMenuOpen && (
+                                <div className="absolute top-full right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 py-1 z-50">
+                                    {/* Share / Public toggle — owner only */}
+                                    {isOwner && !isPublicView && (
+                                        <div ref={shareMenuRef}>
+                                            <button
+                                                onClick={() => setIsShareMenuOpen(!isShareMenuOpen)}
+                                                className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                                                </svg>
+                                                Share ({spec.is_public ? 'Public' : 'Private'})
+                                            </button>
+                                            {isShareMenuOpen && (
+                                                <div className="border-t border-b border-slate-100 dark:border-slate-700/50 py-1 my-1 bg-slate-50/50 dark:bg-slate-900/30">
+                                                    <div className="px-4 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
+                                                        Currently: <span className={spec.is_public ? "text-green-600 dark:text-green-400" : "text-slate-700 dark:text-slate-300"}>{spec.is_public ? 'Public' : 'Private'}</span>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => {
+                                                            handleTogglePublic();
+                                                            setIsShareMenuOpen(false);
+                                                            setIsOverflowMenuOpen(false);
+                                                        }}
+                                                        disabled={isSharing}
+                                                        className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 flex items-center gap-2"
+                                                    >
+                                                        {isSharing ? (
+                                                            <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                                        ) : spec.is_public ? (
+                                                            <>
+                                                                <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                                                </svg>
+                                                                Make Private
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                                </svg>
+                                                                Make Public
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                    <div className="px-4 py-1.5 text-xs text-slate-400">
+                                                        {spec.is_public
+                                                            ? 'Anyone with the link can view.'
+                                                            : 'Only organization members can view.'}
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
+                                    )}
+
+                                    {/* Duplicate — non-public view only */}
+                                    {!isPublicView && (
                                         <button
                                             onClick={() => {
-                                                handleTogglePublic();
-                                                setIsShareMenuOpen(false);
+                                                setIsCopyModalOpen(true);
+                                                setIsOverflowMenuOpen(false);
                                             }}
-                                            disabled={isSharing}
                                             className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2"
                                         >
-                                            {isSharing ? (
-                                                <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                            ) : spec.is_public ? (
-                                                <>
-                                                    <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                                    </svg>
-                                                    Make Private
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <svg className="w-4 h-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                                    </svg>
-                                                    Make Public
-                                                </>
-                                            )}
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                            </svg>
+                                            Duplicate
                                         </button>
-                                        <div className="px-4 py-2 text-xs text-slate-400">
-                                            {spec.is_public
-                                                ? 'Anyone with the link can view.'
-                                                : 'Only organization members can view.'}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )}
+                                    )}
 
-                        {!isPublicView && (
-                            <button
-                                onClick={() => setIsCopyModalOpen(true)}
-                                className="px-4 py-2 bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white font-medium rounded-lg transition-colors text-sm flex items-center gap-2"
-                                title="Duplicate spec to another project"
-                            >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                                </svg>
-                                Duplicate
-                            </button>
-                        )}
+                                    {/* Export PDF */}
+                                    <button
+                                        onClick={() => {
+                                            handleExportPdf();
+                                            setIsOverflowMenuOpen(false);
+                                        }}
+                                        disabled={isGeneratingPdf}
+                                        className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2"
+                                    >
+                                        {isGeneratingPdf ? (
+                                            <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                        ) : (
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
+                                        )}
+                                        Export PDF
+                                    </button>
 
-                        <button
-                            onClick={handleExportPdf}
-                            disabled={isGeneratingPdf}
-                            className="px-4 py-2 bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white font-medium rounded-lg transition-colors text-sm flex items-center gap-2"
-                        >
-                            {isGeneratingPdf ? (
-                                <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                </svg>
+                                    {/* Copy Markdown */}
+                                    <button
+                                        onClick={handleCopyMarkdown}
+                                        className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2"
+                                    >
+                                        {isCopied ? (
+                                            <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        ) : (
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                            </svg>
+                                        )}
+                                        {isCopied ? 'Copied!' : 'Copy Markdown'}
+                                    </button>
+
+                                    {/* History */}
+                                    <Link
+                                        href={`/${org.slug}/${project.slug}/${spec.slug}/revisions`}
+                                        className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2"
+                                        onClick={() => setIsOverflowMenuOpen(false)}
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        History ({revisionCount})
+                                    </Link>
+                                </div>
                             )}
-                            PDF
-                        </button>
+                        </div>
 
-                        <Link
-                            href={`/${org.slug}/${project.slug}/${spec.slug}/revisions`}
-                            className="px-4 py-2 bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white font-medium rounded-lg transition-colors text-sm"
-                        >
-                            History ({revisionCount})
-                        </Link>
+                        {/* Edit — always visible */}
                         {canEdit && (
                             <Link
                                 href={`/${org.slug}/${project.slug}/${spec.slug}/edit`}
@@ -316,49 +412,34 @@ export function SpecViewer({
                     </div>
                 </div>
 
-                {spec.progress !== null && (
-                    <div className="mb-4">
-                        <ProgressBar progress={spec.progress} showLabel={false} />
+                {/* Expandable detail area */}
+                {isHeaderExpanded && (
+                    <div className="px-6 pb-6 border-t border-slate-100 dark:border-slate-700/50 pt-4">
+                        {spec.progress !== null && (
+                            <div className="mb-4">
+                                <ProgressBar progress={spec.progress} showLabel={false} />
+                            </div>
+                        )}
+
+                        <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400 flex-wrap">
+                            <span>
+                                By @{(spec.owner as any)?.full_name || 'Unknown'}
+                            </span>
+                            <span>·</span>
+                            <span>
+                                Updated {formatRelativeTime(spec.updated_at)}
+                            </span>
+                            <span>·</span>
+                            <span>
+                                Created {formatDate(spec.created_at)}
+                            </span>
+                            <span>·</span>
+                            <span>
+                                {revisionCount} {revisionCount === 1 ? 'revision' : 'revisions'}
+                            </span>
+                        </div>
                     </div>
                 )}
-
-                <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
-                    <span>
-                        By @{(spec.owner as any)?.full_name || 'Unknown'}
-                    </span>
-                    <span>·</span>
-                    <span>
-                        Updated {formatRelativeTime(spec.updated_at)}
-                    </span>
-                    <span>·</span>
-                    <span>
-                        Created {formatDate(spec.created_at)}
-                    </span>
-                    {(() => {
-                        const hasThreads = threads !== undefined;
-                        const activeUnresolved = hasThreads
-                            ? threads.filter(t => !t.resolved).length
-                            : unresolvedCount;
-                        const totalThreads = hasThreads ? threads.length : 0;
-                        const showUnresolved = activeUnresolved > 0;
-                        const showTotal = !showUnresolved && hasThreads && totalThreads > 0;
-
-                        if (showUnresolved || showTotal) {
-                            return (
-                                <>
-                                    <span>·</span>
-                                    <button
-                                        onClick={() => setIsSidebarOpen(true)}
-                                        className={`${showUnresolved ? "text-orange-500 dark:text-orange-400" : "text-slate-500 dark:text-slate-400"} hover:underline focus:outline-none`}
-                                    >
-                                        💬 {showUnresolved ? `${activeUnresolved} unresolved` : `${totalThreads} comments`}
-                                    </button>
-                                </>
-                            );
-                        }
-                        return null;
-                    })()}
-                </div>
             </div>
 
             {aiSummary && (
