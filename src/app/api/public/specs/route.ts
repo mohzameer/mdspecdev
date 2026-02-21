@@ -25,7 +25,7 @@ export async function GET(request: Request) {
             slug,
             updated_at,
             project_id,
-            projects!inner(slug),
+            projects!inner(slug, name),
             owner_id,
             revisions (
                 id,
@@ -61,6 +61,7 @@ export async function GET(request: Request) {
             slug: spec.slug,
             updated_at: spec.updated_at,
             project_id: spec.project_id,
+            project_name: (spec.projects as any)?.name,
             latest_revision: latestRevision ? {
                 revision_number: latestRevision.revision_number,
                 content_hash: latestRevision.content_hash,

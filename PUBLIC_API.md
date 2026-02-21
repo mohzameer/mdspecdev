@@ -97,6 +97,7 @@ Get a list of all specifications visible to the authenticated user.
       "slug": "spec-slug",
       "updated_at": "2024-01-01T00:00:00Z",
       "project_id": "uuid",
+      "project_name": "Project Name",
       "latest_revision": {
         "revision_number": 2,
         "content_hash": "sha256_hash_string",
