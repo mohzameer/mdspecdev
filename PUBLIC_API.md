@@ -112,9 +112,9 @@ Get a list of all specifications visible to the authenticated user.
 ---
 
 ### 4. Get Spec (Download)
-Retrieve a specific specification by its slug, including its full markdown content.
+Retrieve a specific specification by its slug (or UUID), including its full markdown content.
 
-- **URL**: `/api/public/specs/[slug]`
+- **URL**: `/api/public/specs/[slug_or_id]`
 - **Method**: `GET`
 - **Headers**: `Authorization: Bearer <token>`
 
@@ -189,7 +189,7 @@ Create a new specification.
 ### 6. Upload Revision
 Upload a new version of content for an existing specification.
 
-- **URL**: `/api/public/specs/[slug]/revisions`
+- **URL**: `/api/public/specs/[slug_or_id]/revisions`
 - **Method**: `POST`
 - **Headers**: `Authorization: Bearer <token>`
 - **Content-Type**: `application/json`

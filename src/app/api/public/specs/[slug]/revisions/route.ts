@@ -24,12 +24,19 @@ export async function POST(
             return NextResponse.json({ error: 'Content is required' }, { status: 400 });
         }
 
-        // 1. Get Spec ID from slug
-        const { data: spec, error: specFetchError } = await supabase
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+
+        let query = supabase
             .from('specs')
-            .select('id, name, source_spec_id')
-            .eq('slug', slug)
-            .single();
+            .select('id, name, source_spec_id');
+
+        if (isUUID) {
+            query = query.or(`id.eq.${slug},slug.eq.${slug}`);
+        } else {
+            query = query.eq('slug', slug);
+        }
+
+        const { data: spec, error: specFetchError } = await query.single();
 
         if (specFetchError || !spec) {
             return NextResponse.json({ error: 'Spec not found' }, { status: 404 });

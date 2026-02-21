@@ -12,8 +12,9 @@ export async function GET(
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get spec by slug
-    const { data: spec, error } = await supabase
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+
+    let query = supabase
         .from('specs')
         .select(`
             id,
@@ -24,9 +25,15 @@ export async function GET(
             project_id,
             source_spec_id,
             owner_id
-        `)
-        .eq('slug', slug)
-        .single();
+        `);
+
+    if (isUUID) {
+        query = query.or(`id.eq.${slug},slug.eq.${slug}`);
+    } else {
+        query = query.eq('slug', slug);
+    }
+
+    const { data: spec, error } = await query.single();
 
     if (error || !spec) {
         return NextResponse.json({ error: 'Spec not found' }, { status: 404 });
