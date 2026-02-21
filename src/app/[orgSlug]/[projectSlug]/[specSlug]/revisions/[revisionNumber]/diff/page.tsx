@@ -188,9 +188,13 @@ export default async function DiffPage({ params }: Props) {
             .download(contentKey);
         if (data) {
             const text = await data.text();
-            // Robust frontmatter stripping handling various newlines and spacing
+            // Use robust frontmatter stripping handling various newlines and spacing (handles stacked frontmatters)
             const frontmatterRegex = /^\s*---\r?\n[\s\S]*?\r?\n---\r?\n+/;
-            return text.replace(frontmatterRegex, '').trim();
+            let strippedText = text;
+            while (frontmatterRegex.test(strippedText)) {
+                strippedText = strippedText.replace(frontmatterRegex, '').trimStart();
+            }
+            return strippedText.trim();
         }
         return '';
     }

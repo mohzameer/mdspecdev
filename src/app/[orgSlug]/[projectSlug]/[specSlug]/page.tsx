@@ -79,7 +79,12 @@ export default async function SpecDetailPage({ params }: Props) {
         }
     }
 
-    const contentWithoutFrontmatter = content.replace(/^---[\s\S]*?---\n*/, '');
+    // Use robust frontmatter stripping handling various newlines and spacing (handles stacked frontmatters)
+    const frontmatterRegex = /^\s*---\r?\n[\s\S]*?\r?\n---\r?\n+/;
+    let contentWithoutFrontmatter = content;
+    while (frontmatterRegex.test(contentWithoutFrontmatter)) {
+        contentWithoutFrontmatter = contentWithoutFrontmatter.replace(frontmatterRegex, '').trimStart();
+    }
 
     const unresolvedCount =
         spec.comment_threads?.filter((t) =>

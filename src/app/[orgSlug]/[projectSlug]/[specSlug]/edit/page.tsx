@@ -154,16 +154,14 @@ tags: ${tagsStr}
 
                     if (data) {
                         const fullText = await data.text();
-                        // Strip frontmatter from content for the editor
-                        const frontmatterRegex = /^---\n[\s\S]*?\n---\n\n/;
-                        const contentBody = fullText.replace(frontmatterRegex, '');
-                        // Fallback if no double newline after frontmatter
-                        const contentBodyFallback = fullText.replace(/^---\n[\s\S]*?\n---\n/, '');
+                        // Strip frontmatter from content for the editor. Some older revisions might have multiple stacked frontmatters.
+                        const frontmatterRegex = /^\s*---\r?\n[\s\S]*?\r?\n---\r?\n+/;
+                        let contentBody = fullText;
+                        while (frontmatterRegex.test(contentBody)) {
+                            contentBody = contentBody.replace(frontmatterRegex, '').trimStart();
+                        }
 
-                        // Use the one that actually removed something, or just full text if no frontmatter
-                        setContent(frontmatterRegex.test(fullText) ? contentBody : (
-                            /^---\n[\s\S]*?\n---\n/.test(fullText) ? contentBodyFallback : fullText
-                        ));
+                        setContent(contentBody);
                     }
                 }
 

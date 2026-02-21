@@ -47,8 +47,12 @@ export async function generatePdf(specId: string) {
     }
 
     const markdownContent = await fileData.text();
-    // Remove frontmatter
-    const contentWithoutFrontmatter = markdownContent.replace(/^---[\s\S]*?---\n*/, '');
+    // Use robust frontmatter stripping handling various newlines and spacing (handles stacked frontmatters)
+    const frontmatterRegex = /^\s*---\r?\n[\s\S]*?\r?\n---\r?\n+/;
+    let contentWithoutFrontmatter = markdownContent;
+    while (frontmatterRegex.test(contentWithoutFrontmatter)) {
+        contentWithoutFrontmatter = contentWithoutFrontmatter.replace(frontmatterRegex, '').trimStart();
+    }
 
     // 3. Call PodPDF API
     const apiKey = process.env.PODPDF_API_KEY;
