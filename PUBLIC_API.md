@@ -45,7 +45,37 @@ Authenticate specifically for API usage to get an access token.
 
 ---
 
-### 2. List Specs
+### 2. Refresh Token
+Get a new access token using a refresh token.
+
+- **URL**: `/api/public/auth/refresh`
+- **Method**: `POST`
+- **Content-Type**: `application/json`
+
+#### Request Body
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `refresh_token` | string | Yes | The refresh token obtained from login |
+
+#### Response (200 OK)
+```json
+{
+  "user": {
+    "id": "uuid",
+    "email": "user@example.com"
+  },
+  "session": {
+    "access_token": "new_jwt_token_string",
+    "refresh_token": "new_refresh_token_string",
+    "expires_in": 3600,
+    "token_type": "bearer"
+  }
+}
+```
+
+---
+
+### 3. List Specs
 Get a list of all specifications visible to the authenticated user.
 
 - **URL**: `/api/public/specs`
@@ -74,7 +104,7 @@ Get a list of all specifications visible to the authenticated user.
 
 ---
 
-### 3. Get Spec (Download)
+### 4. Get Spec (Download)
 Retrieve a specific specification by its slug, including its full markdown content.
 
 - **URL**: `/api/public/specs/[slug]`
@@ -105,7 +135,7 @@ Retrieve a specific specification by its slug, including its full markdown conte
 
 ---
 
-### 4. Create Spec
+### 5. Create Spec
 Create a new specification.
 
 - **URL**: `/api/public/specs`
@@ -144,7 +174,7 @@ Create a new specification.
 
 ---
 
-### 4. Upload Revision
+### 6. Upload Revision
 Upload a new version of content for an existing specification.
 
 - **URL**: `/api/public/specs/[slug]/revisions`
