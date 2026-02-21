@@ -83,3 +83,48 @@ export async function GET(
         content
     });
 }
+
+export async function DELETE(
+    request: Request,
+    { params }: { params: Promise<{ slug: string }> }
+) {
+    const { slug } = await params;
+    const { user, supabase } = await getAuthenticatedClient();
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
+
+    let query = supabase
+        .from('specs')
+        .select('id, source_spec_id');
+
+    if (isUUID) {
+        query = query.or(`id.eq.${slug},slug.eq.${slug}`);
+    } else {
+        query = query.eq('slug', slug);
+    }
+
+    const { data: spec, error } = await query.single();
+
+    if (error || !spec) {
+        return NextResponse.json({ error: 'Spec not found' }, { status: 404 });
+    }
+
+    if (!spec.source_spec_id) {
+        return NextResponse.json({ error: 'Cannot unlink a non-linked specification' }, { status: 400 });
+    }
+
+    const { error: deleteError } = await supabase
+        .from('specs')
+        .delete()
+        .eq('id', spec.id);
+
+    if (deleteError) {
+        console.error('[Unlink Spec] Failed to delete spec:', deleteError);
+        return NextResponse.json({ error: 'Failed to unlink specification' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, message: 'Linked specification removed successfully' });
+}

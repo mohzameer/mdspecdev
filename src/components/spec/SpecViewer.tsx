@@ -16,6 +16,7 @@ import { formatRelativeTime, formatDate } from '@/lib/utils';
 import { useComments } from '@/hooks/useComments';
 import { Profile, Status, Maturity } from '@/lib/types';
 import { generatePdf } from '@/actions/pdf';
+import { unlinkSpec } from '@/app/actions/spec';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { CopySpecModal } from '@/components/spec/CopySpecModal';
@@ -74,6 +75,7 @@ export function SpecViewer({
     const [isSharing, setIsSharing] = useState(false);
     const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
     const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+    const [isUnlinking, setIsUnlinking] = useState(false);
     const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
     const [isOverflowMenuOpen, setIsOverflowMenuOpen] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
@@ -209,6 +211,33 @@ export function SpecViewer({
             alert('Failed to update sharing settings.');
         } finally {
             setIsSharing(false);
+        }
+    };
+
+    const handleUnlink = async () => {
+        if (!confirm('Are you sure you want to remove this linked specification? It will be removed from this project but the original specification will not be affected.')) {
+            return;
+        }
+
+        try {
+            setIsUnlinking(true);
+            const result = await unlinkSpec(spec.id, org.slug, project.slug);
+
+            if (result?.error) {
+                console.error(result.error);
+                alert(result.error);
+                setIsUnlinking(false);
+                setIsOverflowMenuOpen(false);
+            } else {
+                // Success, wait for redirect or explicitly redirect
+                router.push(`/${org.slug}/${project.slug}`);
+                router.refresh();
+            }
+        } catch (error) {
+            console.error('Failed to unlink:', error);
+            alert('Failed to remove link. Please try again.');
+            setIsUnlinking(false);
+            setIsOverflowMenuOpen(false);
         }
     };
 
@@ -448,6 +477,26 @@ export function SpecViewer({
                                         )}
                                         {isCopied ? 'Copied!' : 'Copy Markdown'}
                                     </button>
+
+                                    {/* Unlink - Only for linked specs and non-public view */}
+                                    {isLinked && !isPublicView && (
+                                        <div className="border-t border-slate-100 dark:border-slate-700/50 my-1">
+                                            <button
+                                                onClick={handleUnlink}
+                                                disabled={isUnlinking}
+                                                className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2"
+                                            >
+                                                {isUnlinking ? (
+                                                    <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                                ) : (
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                                    </svg>
+                                                )}
+                                                Remove Link
+                                            </button>
+                                        </div>
+                                    )}
 
                                     {/* History */}
                                     <Link

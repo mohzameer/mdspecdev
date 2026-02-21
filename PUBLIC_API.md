@@ -109,9 +109,31 @@ Get a list of all specifications visible to the authenticated user.
 }
 ```
 
+### 4. Remove Linked Spec
+Remove a linked specification proxy from a project. This does not affect the original source specification.
+
+- **URL**: `/api/public/specs/[slug_or_id]`
+- **Method**: `DELETE`
+- **Headers**: `Authorization: Bearer <token>`
+
+**Response (Success)**
+```json
+{
+  "success": true,
+  "message": "Linked specification removed successfully"
+}
+```
+
+**Response (Error - Not a linked spec)**
+```json
+{
+  "error": "Cannot unlink a non-linked specification"
+}
+```
+
 ---
 
-### 4. Get Spec (Download)
+### 5. Get Spec (Download)
 Retrieve a specific specification by its slug (or UUID), including its full markdown content.
 
 - **URL**: `/api/public/specs/[slug_or_id]`
@@ -143,7 +165,7 @@ Retrieve a specific specification by its slug (or UUID), including its full mark
 
 ---
 
-### 5. Create Spec
+### 6. Create Spec
 Create a new specification.
 
 - **URL**: `/api/public/specs`
@@ -186,7 +208,7 @@ Create a new specification.
 
 ---
 
-### 6. Upload Revision
+### 7. Upload Revision
 Upload a new version of content for an existing specification.
 
 - **URL**: `/api/public/specs/[slug_or_id]/revisions`

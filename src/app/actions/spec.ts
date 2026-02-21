@@ -224,6 +224,42 @@ export async function indexSpecAction(specId: string, content: string) {
     return { success: true };
 }
 
+export async function unlinkSpec(specId: string, orgSlug: string, projectSlug: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { error: 'You must be logged in' };
+    }
+
+    // Ensure it's actually a linked spec before deleting, just as a safety measure
+    const { data: spec } = await supabase
+        .from('specs')
+        .select('source_spec_id, owner_id, project:projects(org_id)')
+        .eq('id', specId)
+        .single();
+
+    if (!spec?.source_spec_id) {
+        return { error: 'Cannot unlink a non-linked specification' };
+    }
+
+    // Delete the proxy spec
+    const { error } = await supabase
+        .from('specs')
+        .delete()
+        .eq('id', specId);
+
+    if (error) {
+        console.error('Error unlinking spec: ', error);
+        return { error: 'Failed to unlink specification' };
+    }
+
+    revalidatePath(`/${orgSlug}/${projectSlug}`);
+    revalidatePath(`/dashboard`);
+
+    return { success: true };
+}
+
 export async function copySpec(formData: FormData) {
     const sourceSpecId = formData.get('sourceSpecId') as string;
     const targetProjectId = formData.get('targetProjectId') as string;
