@@ -16,6 +16,7 @@ export interface SpecWithRelations extends Omit<Partial<Spec>, 'project' | 'owne
     tags: string[] | null;
     updated_at: string;
     archived_at: string | null;
+    source_spec_id?: string | null;
     project: {
         id: string;
         name: string;
@@ -47,9 +48,18 @@ export function SpecCard({ spec, showArchivedStyle = false }: SpecCardProps) {
         >
             <div className="flex-1">
                 <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        {spec.name}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                            {spec.name}
+                        </h3>
+                        {spec.source_spec_id && (
+                            <span className="flex items-center justify-center bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 p-1 rounded-md" title="Linked Spec">
+                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                </svg>
+                            </span>
+                        )}
+                    </div>
                     <StatusBadge status={spec.status} />
                 </div>
 

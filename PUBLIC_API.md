@@ -98,6 +98,7 @@ Get a list of all specifications visible to the authenticated user.
       "updated_at": "2024-01-01T00:00:00Z",
       "project_id": "uuid",
       "project_name": "Project Name",
+      "source_spec_id": null,
       "latest_revision": {
         "revision_number": 2,
         "content_hash": "sha256_hash_string",
@@ -126,6 +127,7 @@ Retrieve a specific specification by its slug, including its full markdown conte
     "slug": "spec-slug",
     "updated_at": "2024-01-01T00:00:00Z",
     "project_id": "uuid",
+    "source_spec_id": null,
     "latest_revision": {
       "revision_number": 5,
       "content_hash": "sha256_hash",
@@ -153,7 +155,8 @@ Create a new specification.
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `name` | string | Yes | Title of the specification |
-| `content` | string | Yes | Initial markdown content |
+| `content` | string | **Conditional** | Initial markdown content. Required unless `source_spec_id` is provided. |
+| `source_spec_id` | string | **Conditional** | UUID of a source specification to link to. If provided, `content` is ignored and a linked spec is created. |
 | `file_name` | string | No | Original file name (e.g., README.md) |
 | `project_slug` | string | No | **Recommended**. The slug of the project to create the spec in. |
 | `org_slug` | string | No | **Recommended**. The slug of the organization the project belongs to. Used to resolve ambiguous project slugs. |
@@ -168,12 +171,15 @@ Create a new specification.
     "id": "uuid",
     "slug": "generated-slug",
     "name": "Spec Name",
+    "source_spec_id": null,
     "latest_revision_number": 1
   }
 }
 ```
 
-> **Note:** If neither `project_id` nor `project_slug` is provided, the API attempts to assign the spec to the user's first available project. Behavior is undefined if the user has multiple projects but no default context.
+> **Note on Linked Specs:** If `source_spec_id` is provided, the API creates a lightweight proxy that synchronizes with the source spec. In this case, `latest_revision_number` will be `null` in the immediate response, as revisions are fetched dynamically from the source spec going forward.
+
+> **Note on Projects:** If neither `project_id` nor `project_slug` is provided, the API attempts to assign the spec to the user's first available project. Behavior is undefined if the user has multiple projects but no default context.
 
 #### Errors
 - `409 Conflict`: If the provided or generated slug already exists.
@@ -205,6 +211,9 @@ Upload a new version of content for an existing specification.
   }
 }
 ```
+
+#### Linked Specifications
+If the target specification is a linked spec (i.e., `source_spec_id` is present), this API will return a `403 Forbidden` error. Revisions must be uploaded to the original source specification, not the proxy.
 
 #### Deduplication
 If the uploaded `content` is identical to the latest revision (based on SHA-256 hash), a new revision is **not** created.

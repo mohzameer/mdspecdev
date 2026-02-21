@@ -32,6 +32,20 @@ export async function createRevision(formData: FormData) {
         return { error: 'You must be logged in' };
     }
 
+    // 0. Prevent revisions on linked specs
+    const { data: specData, error: specFetchError } = await supabase
+        .from('specs')
+        .select('source_spec_id')
+        .eq('id', specId)
+        .single();
+
+    if (specFetchError) {
+        return { error: 'Failed to verify spec' };
+    }
+    if (specData.source_spec_id) {
+        return { error: 'Cannot create revisions for a linked spec' };
+    }
+
     // 1. Update Spec Metadata
     const { error: updateError } = await supabase
         .from('specs')
@@ -321,6 +335,63 @@ export async function copySpec(formData: FormData) {
     indexSpecContent(newSpec.id, content).catch(err =>
         console.error('[Search Indexer] Failed to index copied spec:', err)
     );
+
+    revalidatePath(`/${targetOrgSlug}/${targetProjectSlug}`);
+    revalidatePath(`/dashboard`);
+
+    return { success: true, path: `/${targetOrgSlug}/${targetProjectSlug}/${newSpec.slug}` };
+}
+
+export async function createLinkedSpec(formData: FormData) {
+    const sourceSpecId = formData.get('sourceSpecId') as string;
+    const targetProjectId = formData.get('targetProjectId') as string;
+    const newName = formData.get('newName') as string;
+    const newSlug = formData.get('newSlug') as string;
+
+    // These are needed for the redirect path
+    const targetOrgSlug = formData.get('targetOrgSlug') as string;
+    const targetProjectSlug = formData.get('targetProjectSlug') as string;
+
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { error: 'You must be logged in' };
+    }
+
+    // 1. Fetch the source spec's metadata (progress, status, etc)
+    const { data: sourceSpecData, error: sourceSpecError } = await supabase
+        .from('specs')
+        .select('progress, status, maturity, tags')
+        .eq('id', sourceSpecId)
+        .single();
+
+    if (sourceSpecError || !sourceSpecData) {
+        return { error: 'Could not find source spec' };
+    }
+
+    // 2. Create new linked spec in the target project
+    const { data: newSpec, error: specError } = await supabase
+        .from('specs')
+        .insert({
+            project_id: targetProjectId,
+            name: newName,
+            slug: newSlug,
+            owner_id: user.id,
+            progress: sourceSpecData.progress ?? 0,
+            status: sourceSpecData.status ?? null,
+            maturity: sourceSpecData.maturity ?? null,
+            tags: sourceSpecData.tags ?? null,
+            source_spec_id: sourceSpecId, // The crucial link
+        })
+        .select()
+        .single();
+
+    if (specError) {
+        return { error: specError.message };
+    }
+
+    // 3. No revision or storage upload needed! The linked spec relies on the source spec.
 
     revalidatePath(`/${targetOrgSlug}/${targetProjectSlug}`);
     revalidatePath(`/dashboard`);

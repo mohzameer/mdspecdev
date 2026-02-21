@@ -22,14 +22,8 @@ export async function GET(
             slug,
             updated_at,
             project_id,
-            owner_id,
-            revisions (
-                id,
-                revision_number,
-                content_key,
-                content_hash,
-                created_at
-            )
+            source_spec_id,
+            owner_id
         `)
         .eq('slug', slug)
         .single();
@@ -38,9 +32,21 @@ export async function GET(
         return NextResponse.json({ error: 'Spec not found' }, { status: 404 });
     }
 
-    // Get latest revision
-    const sortedRevisions = spec.revisions?.sort((a: any, b: any) => b.revision_number - a.revision_number);
-    const latestRevision = sortedRevisions?.[0];
+    // Get latest revision (from source spec if linked)
+    const { data: revisions } = await supabase
+        .from('revisions')
+        .select(`
+            id,
+            revision_number,
+            content_key,
+            content_hash,
+            created_at
+        `)
+        .eq('spec_id', spec.source_spec_id || spec.id)
+        .order('revision_number', { ascending: false })
+        .limit(1);
+
+    const latestRevision = revisions?.[0];
 
     let content = '';
     if (latestRevision?.content_key) {
@@ -60,6 +66,7 @@ export async function GET(
             slug: spec.slug,
             updated_at: spec.updated_at,
             project_id: spec.project_id,
+            source_spec_id: spec.source_spec_id,
             latest_revision: latestRevision ? {
                 revision_number: latestRevision.revision_number,
                 content_hash: latestRevision.content_hash,

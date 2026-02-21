@@ -25,7 +25,7 @@ export function NotificationSettings() {
                 .single();
 
             if (data?.notification_preferences) {
-                setPreferences(data.notification_preferences as any);
+                setPreferences(data.notification_preferences as { email_mentions: boolean; email_comments: boolean });
             }
             setLoading(false);
         };

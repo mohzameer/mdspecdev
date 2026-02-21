@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ProgressBar } from '@/components/spec/ProgressBar';
 import { StatusBadge, TagsList } from '@/components/spec/StatusBadge';
 import { formatRelativeTime } from '@/lib/utils';
+import { ProjectHeaderActions } from './ProjectHeaderActions';
 
 interface Props {
     params: Promise<{ orgSlug: string; projectSlug: string }>;
@@ -84,6 +85,7 @@ export default async function ProjectDetailPage({ params }: Props) {
       status,
       maturity,
       tags,
+      source_spec_id,
       updated_at,
       owner:profiles!specs_owner_id_fkey(full_name, avatar_url),
       comment_threads(id, resolved),
@@ -117,12 +119,11 @@ export default async function ProjectDetailPage({ params }: Props) {
                             </p>
                         )}
                     </div>
-                    <Link
-                        href={`/${org.slug}/${project.slug}/new`}
-                        className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
-                    >
-                        New Spec
-                    </Link>
+                    <ProjectHeaderActions
+                        orgSlug={org.slug}
+                        projectSlug={project.slug}
+                        projectId={project.id}
+                    />
                 </div>
 
                 {!specs || specs.length === 0 ? (

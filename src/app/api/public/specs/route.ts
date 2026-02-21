@@ -25,6 +25,7 @@ export async function GET(request: Request) {
             slug,
             updated_at,
             project_id,
+            source_spec_id,
             projects!inner(slug, name),
             owner_id,
             revisions (
@@ -61,6 +62,7 @@ export async function GET(request: Request) {
             slug: spec.slug,
             updated_at: spec.updated_at,
             project_id: spec.project_id,
+            source_spec_id: spec.source_spec_id,
             project_name: (spec.projects as any)?.name,
             latest_revision: latestRevision ? {
                 revision_number: latestRevision.revision_number,
@@ -81,10 +83,13 @@ export async function POST(request: Request) {
 
     try {
         const body = await request.json();
-        const { name, content, project_id, file_name, slug: providedSlug } = body;
+        const { name, content, project_id, file_name, slug: providedSlug, source_spec_id } = body;
 
-        if (!name || !content) {
-            return NextResponse.json({ error: 'Name and content are required' }, { status: 400 });
+        if (!name) {
+            return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+        }
+        if (!content && !source_spec_id) {
+            return NextResponse.json({ error: 'Content or source_spec_id is required' }, { status: 400 });
         }
 
         // 1. Determine Project ID
@@ -151,18 +156,24 @@ export async function POST(request: Request) {
         let slug = providedSlug || slugify(name);
 
         // 3. Create Spec
+        const specPayload: any = {
+            name,
+            slug,
+            file_name,
+            project_id: targetProjectId,
+            owner_id: user.id,
+            status: 'planned',
+            maturity: 'draft',
+            progress: 0
+        };
+
+        if (source_spec_id) {
+            specPayload.source_spec_id = source_spec_id;
+        }
+
         const { data: spec, error: specError } = await supabase
             .from('specs')
-            .insert({
-                name,
-                slug,
-                file_name,
-                project_id: targetProjectId,
-                owner_id: user.id,
-                status: 'planned',
-                maturity: 'draft',
-                progress: 0
-            })
+            .insert(specPayload)
             .select()
             .single();
 
@@ -171,6 +182,21 @@ export async function POST(request: Request) {
                 return NextResponse.json({ error: 'Slug already exists. Please provide a unique slug.' }, { status: 409 });
             }
             return NextResponse.json({ error: specError.message }, { status: 500 });
+        }
+
+        // Return early if it's a linked spec - no content to upload
+        if (source_spec_id) {
+            return NextResponse.json({
+                success: true,
+                spec: {
+                    id: spec.id,
+                    slug: spec.slug,
+                    name: spec.name,
+                    file_name: spec.file_name,
+                    source_spec_id: spec.source_spec_id,
+                    latest_revision_number: null
+                }
+            });
         }
 
         // 4. Upload Content & Create Revision

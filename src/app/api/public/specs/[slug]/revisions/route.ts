@@ -27,12 +27,16 @@ export async function POST(
         // 1. Get Spec ID from slug
         const { data: spec, error: specFetchError } = await supabase
             .from('specs')
-            .select('id, name')
+            .select('id, name, source_spec_id')
             .eq('slug', slug)
             .single();
 
         if (specFetchError || !spec) {
             return NextResponse.json({ error: 'Spec not found' }, { status: 404 });
+        }
+
+        if (spec.source_spec_id) {
+            return NextResponse.json({ error: 'Cannot create revisions for a linked spec via API' }, { status: 403 });
         }
 
         // 2. Get latest revision number

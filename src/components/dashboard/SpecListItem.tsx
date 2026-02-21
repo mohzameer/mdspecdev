@@ -48,6 +48,13 @@ export function SpecListItem({ spec, showArchivedStyle = false }: SpecListItemPr
                 <span className="text-sm font-medium text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate transition-colors">
                     {spec.name}
                 </span>
+                {spec.source_spec_id && (
+                    <span className="text-slate-400 dark:text-slate-500 flex-shrink-0" title="Linked Spec">
+                        <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                    </span>
+                )}
                 {spec.file_name && (
                     <span className="text-xs font-mono text-slate-400 dark:text-slate-500 truncate mt-0.5">
                         {spec.file_name}
