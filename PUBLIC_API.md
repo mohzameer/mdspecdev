@@ -82,6 +82,11 @@ Get a list of all specifications visible to the authenticated user.
 - **Method**: `GET`
 - **Headers**: `Authorization: Bearer <token>`
 
+#### Query Parameters
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `project_slug` | string | No | Filter specs by a specific project's slug |
+
 #### Response (200 OK)
 ```json
 {

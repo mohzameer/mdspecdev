@@ -12,8 +12,11 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get all specs visible to user
-    const { data: specs, error } = await supabase
+    // Parse URL for query parameters
+    const url = new URL(request.url);
+    const projectSlug = url.searchParams.get('project_slug');
+
+    let query = supabase
         .from('specs')
         .select(`
             id,
@@ -22,6 +25,7 @@ export async function GET(request: Request) {
             slug,
             updated_at,
             project_id,
+            projects!inner(slug),
             owner_id,
             revisions (
                 id,
@@ -31,6 +35,14 @@ export async function GET(request: Request) {
             )
         `)
         .order('updated_at', { ascending: false });
+
+    // Filter by project_slug if provided
+    if (projectSlug) {
+        query = query.eq('projects.slug', projectSlug);
+    }
+
+    // Get all specs visible to user
+    const { data: specs, error } = await query;
 
     if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
