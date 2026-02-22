@@ -1,4 +1,16 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MDSpec
+
+MDSpec is an open-source project to manage, review, and collaborate on markdown-based specifications. It features a robust Next.js Web UI, seamless integrations, and a VS Code extension for developers.
+
+**Hosted Version:** [https://mdspec.dev](https://mdspec.dev)
+
+## Features
+
+- **Document Management**: Create, view, and organize your specifications in projects.
+- **Collaboration**: Comment and resolve feedback directly in your markdown specifications.
+- **[VS Code Extension](https://github.com/mohzameer/mdspecvscode)**: Connect your editor to your specs for a native developer experience.
+- **[CLI Tool](https://github.com/mohzameer/mdspecdevcli)**: Command-line interface for integrating specifications with your local development workflows.
+- **Authentication & Security**: Robust role-based access control and user management.
 
 ## Getting Started
 
@@ -16,21 +28,24 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Roadmap
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+We have exciting plans for the future of MDSpec! Our current roadmap includes:
 
-## Learn More
+- **CLI Testing**: Implementing comprehensive CLI testing tools to ensure robustness across all operations.
+- **Deep & Intuitive UX for VS Code Forks**: Enhancing the user experience for our VS Code forks, making interactions smoother and more powerful for developers.
+- **Advanced Web UI Features**: Adding more advanced features on the Web UI for deeper specification management, viewing, and interaction.
 
-To learn more about Next.js, take a look at the following resources:
+## Contributing
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+We welcome contributions from the community! Whether it's adding a new feature, fixing a bug, or improving the documentation, please feel free to help out. 
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Please read our [Contributing Guidelines](CONTRIBUTING.md) for details on our code of conduct, and the process for submitting pull requests to us.
 
-## Deploy on Vercel
+## Code of Conduct
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+This project has adopted the Contributor Covenant Code of Conduct. For participation in our community, read the full [Code of Conduct](CODE_OF_CONDUCT.md).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+
+MIT
