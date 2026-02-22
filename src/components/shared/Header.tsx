@@ -172,15 +172,26 @@ export function Header() {
                                 )}
                             </>
                         ) : (
-                            <Link
-                                href="/guide"
-                                className={`text-sm font-medium transition-colors hover:text-slate-900 dark:hover:text-white ${pathname === '/guide'
-                                    ? 'text-slate-900 dark:text-white'
-                                    : 'text-slate-500 dark:text-slate-400'
-                                    }`}
-                            >
-                                Guide
-                            </Link>
+                            <>
+                                <Link
+                                    href="/guide"
+                                    className={`text-sm font-medium transition-colors hover:text-slate-900 dark:hover:text-white ${pathname?.startsWith('/guide')
+                                        ? 'text-slate-900 dark:text-white'
+                                        : 'text-slate-500 dark:text-slate-400'
+                                        }`}
+                                >
+                                    Guide
+                                </Link>
+                                <Link
+                                    href="/contact"
+                                    className={`text-sm font-medium transition-colors hover:text-slate-900 dark:hover:text-white ${pathname === '/contact'
+                                        ? 'text-slate-900 dark:text-white'
+                                        : 'text-slate-500 dark:text-slate-400'
+                                        }`}
+                                >
+                                    Contact
+                                </Link>
+                            </>
                         )}
                     </nav>
                 </div>
