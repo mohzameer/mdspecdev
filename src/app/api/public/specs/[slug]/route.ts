@@ -94,23 +94,46 @@ export async function DELETE(
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const url = new URL(request.url);
+    const projectSlug = url.searchParams.get('project_slug');
+    const projectId = url.searchParams.get('project_id');
+
     const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slug);
 
     let query = supabase
         .from('specs')
-        .select('id, source_spec_id');
+        .select('id, source_spec_id, projects!inner(slug)');
 
     if (isUUID) {
-        query = query.or(`id.eq.${slug},slug.eq.${slug}`);
+        // Now supports unlinking by providing either the proxy id, proxy slug, or the original source_spec_id
+        query = query.or(`id.eq.${slug},slug.eq.${slug},source_spec_id.eq.${slug}`);
     } else {
         query = query.eq('slug', slug);
     }
 
-    const { data: spec, error } = await query.single();
+    if (projectId) {
+        query = query.eq('project_id', projectId);
+    } else if (projectSlug) {
+        query = query.eq('projects.slug', projectSlug);
+    }
 
-    if (error || !spec) {
+    const { data: specs, error } = await query;
+
+    if (error) {
+        return NextResponse.json({ error: 'Failed to lookup specification' }, { status: 500 });
+    }
+
+    if (!specs || specs.length === 0) {
         return NextResponse.json({ error: 'Spec not found' }, { status: 404 });
     }
+
+    if (specs.length > 1) {
+        return NextResponse.json({
+            error: 'Multiple linked specifications found for this ID. Please append ?project_slug=<your_project> or ?project_id=<id> to the URL to specify which one to remove.'
+        }, { status: 400 });
+    }
+
+    const spec = specs[0];
 
     if (!spec.source_spec_id) {
         return NextResponse.json({ error: 'Cannot unlink a non-linked specification' }, { status: 400 });

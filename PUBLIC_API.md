@@ -112,15 +112,28 @@ Get a list of all specifications visible to the authenticated user.
 ### 4. Remove Linked Spec
 Remove a linked specification proxy from a project. This does not affect the original source specification.
 
-- **URL**: `/api/public/specs/[slug_or_id]`
+- **URL**: `/api/public/specs/[slug_or_id_or_source_id]`
 - **Method**: `DELETE`
 - **Headers**: `Authorization: Bearer <token>`
+
+#### Query Parameters
+| Parameter | Type | Required | Description |
+|---|---|---|---|
+| `project_slug` | string | No | The slug of the project the linked spec is in. Required if the provided ID is a `source_spec_id` that is linked in multiple projects by the same owner. |
+| `project_id` | string | No | The UUID of the project. If provided, takes precedence over `project_slug`. |
 
 **Response (Success)**
 ```json
 {
   "success": true,
   "message": "Linked specification removed successfully"
+}
+```
+
+**Response (Error - Multiple Links Found)**
+```json
+{
+  "error": "Multiple linked specifications found for this ID. Please append ?project_slug=<your_project> or ?project_id=<id> to the URL to specify which one to remove."
 }
 ```
 
