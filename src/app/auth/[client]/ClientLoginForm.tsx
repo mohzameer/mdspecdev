@@ -3,7 +3,11 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 
-export function VscodeLoginForm() {
+interface ClientLoginFormProps {
+    clientType: 'vscode' | 'cli';
+}
+
+export function ClientLoginForm({ clientType }: ClientLoginFormProps) {
     const searchParams = useSearchParams();
     const port = searchParams.get('port');
 
@@ -13,9 +17,10 @@ export function VscodeLoginForm() {
     const [loading, setLoading] = useState(false);
     const [done, setDone] = useState(false);
 
+    const isVscode = clientType === 'vscode';
+    const clientName = isVscode ? 'VSCode' : 'CLI';
+
     // Guard: port must be in the IANA ephemeral range (49152–65535).
-    // This prevents the page from being pointed at common developer services
-    // (e.g. 3000, 8080, 5432) by a malicious link.
     const portNumber = port ? parseInt(port, 10) : NaN;
     const isValidPort = !isNaN(portNumber) && portNumber >= 49152 && portNumber <= 65535;
 
@@ -39,8 +44,7 @@ export function VscodeLoginForm() {
                 throw new Error(loginData.error || 'Login failed. Please check your credentials.');
             }
 
-            // 2. Send token to the extension's local callback server
-            //    The extension listens on 127.0.0.1:<port>/callback
+            // 2. Send token to the client's local callback server
             const callbackRes = await fetch(`http://127.0.0.1:${portNumber}/callback`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -52,7 +56,7 @@ export function VscodeLoginForm() {
             });
 
             if (!callbackRes.ok) {
-                throw new Error('Could not connect to VSCode. Make sure the extension is running and try again.');
+                throw new Error(`Could not connect to ${clientName}. Make sure the client is running and try again.`);
             }
 
             setDone(true);
@@ -73,8 +77,7 @@ export function VscodeLoginForm() {
                     <div className="text-5xl">⚠️</div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Invalid link</h1>
                     <p className="text-slate-500 dark:text-slate-400">
-                        This page must be opened from the <strong>mdspec VSCode extension</strong>.
-                        <br />Run the <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-sm">mdspec: Sign In</code> command in VSCode.
+                        This page must be opened directly from the <strong>mdspec {clientName}</strong>.
                     </p>
                     <p className="text-xs text-slate-400 dark:text-slate-600">
                         (Port must be in the ephemeral range 49152–65535)
@@ -96,7 +99,7 @@ export function VscodeLoginForm() {
                     </div>
                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white">You&apos;re connected!</h1>
                     <p className="text-slate-500 dark:text-slate-400">
-                        Return to VSCode — you&apos;re now signed in to mdspec.
+                        Return to {clientName} — you&apos;re now signed in to mdspec.
                     </p>
                     <p className="text-xs text-slate-400 dark:text-slate-600">
                         You can close this browser tab.
@@ -114,26 +117,29 @@ export function VscodeLoginForm() {
                 {/* Header */}
                 <div className="text-center">
                     <div className="inline-flex items-center gap-2 mb-6">
-                        {/* VSCode icon */}
-                        <svg className="w-8 h-8 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 19.86V4.14a1.5 1.5 0 0 0-.85-1.553zm-5.146 14.861L10.826 12l7.178-5.448v10.896z" />
-                        </svg>
+                        {isVscode ? (
+                            <svg className="w-8 h-8 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M23.15 2.587L18.21.21a1.494 1.494 0 0 0-1.705.29l-9.46 8.63-4.12-3.128a.999.999 0 0 0-1.276.057L.327 7.261A1 1 0 0 0 .326 8.74L3.899 12 .326 15.26a1 1 0 0 0 .001 1.479L1.65 17.94a.999.999 0 0 0 1.276.057l4.12-3.128 9.46 8.63a1.492 1.492 0 0 0 1.704.29l4.942-2.377A1.5 1.5 0 0 0 24 19.86V4.14a1.5 1.5 0 0 0-.85-1.553zm-5.146 14.861L10.826 12l7.178-5.448v10.896z" />
+                            </svg>
+                        ) : (
+                            <svg className="w-8 h-8 text-slate-700 dark:text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                        )}
                         <span className="text-slate-400 dark:text-slate-500">×</span>
                         <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">mdspec</span>
                     </div>
                     <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-                        Connect to VSCode
+                        Connect to {clientName}
                     </h1>
                     <p className="mt-2 text-slate-500 dark:text-slate-400">
-                        Sign in to link your mdspec account with the extension
+                        Sign in to link your mdspec account
                     </p>
                 </div>
 
                 {/* Card */}
                 <div className="bg-white dark:bg-slate-800/50 backdrop-blur-xl rounded-2xl border border-slate-200 dark:border-slate-700 shadow-xl p-8">
                     <form onSubmit={handleSubmit} className="space-y-5">
-
-                        {/* Error banner */}
                         {error && (
                             <div className="p-4 rounded-lg bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 text-sm">
                                 {error}
@@ -188,7 +194,7 @@ export function VscodeLoginForm() {
                                     Connecting…
                                 </span>
                             ) : (
-                                'Sign in to VSCode'
+                                `Sign in to ${clientName}`
                             )}
                         </button>
                     </form>
@@ -196,7 +202,7 @@ export function VscodeLoginForm() {
 
                 {/* Footer note */}
                 <p className="text-center text-xs text-slate-400 dark:text-slate-600">
-                    Your credentials are sent securely to mdspec and never stored by the extension.
+                    Your credentials are sent securely to mdspec and never stored by the {clientName.toLowerCase()}.
                 </p>
             </div>
         </div>
