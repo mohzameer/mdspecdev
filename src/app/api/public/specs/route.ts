@@ -93,6 +93,7 @@ export async function GET(request: Request) {
             updated_at: spec.updated_at,
             project_id: spec.project_id,
             source_spec_id: spec.source_spec_id,
+            is_linked: !!spec.source_spec_id,
             project_name: (spec.projects as any)?.name,
             latest_revision: latestRevision ? {
                 revision_number: latestRevision.revision_number,

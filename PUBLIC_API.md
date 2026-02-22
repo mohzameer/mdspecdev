@@ -76,7 +76,7 @@ Get a new access token using a refresh token.
 ---
 
 ### 3. List Specs
-Get a list of all specifications visible to the authenticated user.
+Get a list of all specifications visible to the authenticated user. This includes natively owned specs as well as linked proxy specs. For linked proxy specs, `source_spec_id` will be populated, and the `latest_revision` metadata is dynamically resolved from the original source spec.
 
 - **URL**: `/api/public/specs`
 - **Method**: `GET`
@@ -99,6 +99,7 @@ Get a list of all specifications visible to the authenticated user.
       "project_id": "uuid",
       "project_name": "Project Name",
       "source_spec_id": null,
+      "is_linked": false,
       "latest_revision": {
         "revision_number": 2,
         "content_hash": "sha256_hash_string",
