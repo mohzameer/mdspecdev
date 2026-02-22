@@ -50,8 +50,10 @@ export default async function HomePage() {
           </div>
 
           <div className="flex flex-col items-center w-full sm:w-auto">
-            <Link
-              href="/cli"
+            <a
+              href="https://www.npmjs.com/package/mdspec-cli"
+              target="_blank"
+              rel="noopener noreferrer"
               className="px-8 py-4 w-full sm:w-auto min-w-[200px] inline-flex items-center justify-center gap-3 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white font-medium rounded-xl transition-all duration-200 border border-slate-200 dark:border-slate-700 text-lg shadow-sm"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -59,7 +61,7 @@ export default async function HomePage() {
                 <line x1="12" x2="20" y1="19" y2="19" />
               </svg>
               <span>Get CLI</span>
-            </Link>
+            </a>
           </div>
         </div>
 
