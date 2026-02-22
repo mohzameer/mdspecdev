@@ -1,6 +1,7 @@
 # MDSpec
 
 MDSpec is an open-source project to manage, review, and collaborate on markdown-based specifications. It features a robust Next.js Web UI, seamless integrations, and a VS Code extension for developers.
+Note that MDSpec tracks specifications in parallel to Git—it does not integrate directly with or replace your git repository.
 
 **Hosted Version:** [https://mdspec.dev](https://mdspec.dev)
 
@@ -32,6 +33,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 We have exciting plans for the future of MDSpec! Our current roadmap includes:
 
+- **Moved File Tracking**: Enhancing our tracking system to gracefully handle specification files that are moved or renamed across directories.
 - **CLI Testing**: Implementing comprehensive CLI testing tools to ensure robustness across all operations.
 - **Deep & Intuitive UX for VS Code Forks**: Enhancing the user experience for our VS Code forks, making interactions smoother and more powerful for developers.
 - **Advanced Web UI Features**: Adding more advanced features on the Web UI for deeper specification management, viewing, and interaction.

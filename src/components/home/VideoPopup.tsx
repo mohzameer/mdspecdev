@@ -20,7 +20,7 @@ export function VideoPopup() {
         <>
             <button
                 onClick={toggleModal}
-                className="px-8 py-4 w-full sm:w-auto min-w-[200px] inline-flex items-center justify-center gap-3 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white font-medium rounded-xl transition-all duration-200 border border-slate-200 dark:border-slate-700 text-lg shadow-sm group"
+                className="px-6 py-4 w-full lg:w-auto min-w-[200px] inline-flex items-center justify-center gap-3 bg-white dark:bg-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white font-medium rounded-xl transition-all duration-200 border border-slate-200 dark:border-slate-700 text-lg shadow-sm group"
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"

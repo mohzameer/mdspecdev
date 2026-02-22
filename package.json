@@ -27,6 +27,8 @@
     "openai": "^6.18.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "resend": "^6.9.1",
     "tailwind-merge": "^3.4.0",
     "textarea-caret": "^3.1.0"
