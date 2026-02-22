@@ -49,11 +49,41 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
+    // Collect all source spec IDs for linked specs to fetch their actual revisions
+    const sourceSpecIds = specs.filter(s => s.source_spec_id).map(s => s.source_spec_id);
+
+    let sourceRevisions: Record<string, any> = {};
+    if (sourceSpecIds.length > 0) {
+        // Fetch the latest revision for each source spec
+        const { data: revData } = await supabase
+            .from('revisions')
+            .select('spec_id, revision_number, content_hash, created_at')
+            .in('spec_id', sourceSpecIds)
+            // Note: Postgrest doesn't easily support LIMIT 1 per group, 
+            // so we fetch all and group them in memory.
+            .order('revision_number', { ascending: false });
+
+        if (revData) {
+            revData.forEach(rev => {
+                if (!sourceRevisions[rev.spec_id]) {
+                    sourceRevisions[rev.spec_id] = rev;
+                }
+            });
+        }
+    }
+
     // Process specs to include only the latest revision info
     const processedSpecs = specs.map(spec => {
-        // Sort revisions by number desc to get latest
-        const sortedRevisions = spec.revisions?.sort((a: any, b: any) => b.revision_number - a.revision_number);
-        const latestRevision = sortedRevisions?.[0];
+        let latestRevision = null;
+
+        if (spec.source_spec_id) {
+            // It's a linked spec: grab the latest revision from our auxiliary fetch
+            latestRevision = sourceRevisions[spec.source_spec_id];
+        } else {
+            // It's a standard spec: use its own revisions
+            const sortedRevisions = spec.revisions?.sort((a: any, b: any) => b.revision_number - a.revision_number);
+            latestRevision = sortedRevisions?.[0];
+        }
 
         return {
             id: spec.id,
