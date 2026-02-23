@@ -33,8 +33,12 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 We have exciting plans for the future of MDSpec! Our current roadmap includes:
 
+
 - **Moved File Tracking**: Enhancing our tracking system to gracefully handle specification files that are moved or renamed across directories.
+- **Identifying Integration Potentials**: Expanding the ecosystem by continuously identifying new, high-leverage integration opportunities.
+- **Project Management Tools Integrations**: Integrate directly with popular project management tools (e.g. Jira, Linear, ClickUp).
 - **CLI Testing**: Implementing comprehensive CLI testing tools to ensure robustness across all operations.
+- **GitHub Integrations**: Connect seamlessly with GitHub for streamlined workflows.
 - **Deep & Intuitive UX for VS Code Forks**: Enhancing the user experience for our VS Code forks, making interactions smoother and more powerful for developers.
 - **Advanced Web UI Features**: Adding more advanced features on the Web UI for deeper specification management, viewing, and interaction.
 
