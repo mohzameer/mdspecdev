@@ -119,7 +119,7 @@ export default async function HomePage() {
             </h3>
             <p className="text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
               Share specifications securely outside of version control platforms. Ideal for cross-team communication and aligning with agentic development workflows.
-              <span className="block mt-1.5 font-medium italic text-slate-700 dark:text-slate-300">e.g., Compliance, Security Modelling, and Marketing</span>
+              <span className="block mt-1.5 font-medium text-slate-700 dark:text-slate-300">e.g., Compliance, Security Modelling, and Marketing</span>
             </p>
           </div>
           <div className="p-3 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
@@ -129,7 +129,7 @@ export default async function HomePage() {
             </h3>
             <p className="text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
               Keep specifications perfectly synced across independent repositories without monorepos or manual copy-pasting.
-              <span className="block mt-1.5 font-medium italic text-slate-700 dark:text-slate-300">e.g., Connect Backend API documentation seamlessly with Frontend specifications.</span>
+              <span className="block mt-1.5 font-medium text-slate-700 dark:text-slate-300">e.g., Connect Backend API documentation seamlessly with Frontend specifications.</span>
             </p>
           </div>
           <div className="p-3 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
@@ -142,7 +142,7 @@ export default async function HomePage() {
             </h3>
             <p className="text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
               Position MDSpec as your specification central. An agentic template layer transforms and integrates documents into any external tool.
-              <span className="block mt-1.5 font-medium italic text-slate-700 dark:text-slate-300">e.g., Task templates for ClickUp, Analysis on a spec posted to another tool.</span>
+              <span className="block mt-1.5 font-medium text-slate-700 dark:text-slate-300">e.g., Task templates for ClickUp, Analysis on a spec posted to another tool.</span>
             </p>
           </div>
         </div>
