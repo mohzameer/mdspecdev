@@ -119,7 +119,7 @@ export default async function HomePage() {
             </h3>
             <p className="text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
               Share specifications securely outside of version control platforms. Ideal for cross-team communication and aligning with agentic development workflows.
-              <span className="block mt-1.5 font-medium italic text-slate-700 dark:text-slate-300">e.g., Compliance and Security Modelling</span>
+              <span className="block mt-1.5 font-medium italic text-slate-700 dark:text-slate-300">e.g., Compliance, Security Modelling, and Marketing</span>
             </p>
           </div>
           <div className="p-3 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
