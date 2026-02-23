@@ -82,6 +82,7 @@ export default async function HomePage() {
         </div>
 
         <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+          {/* 
           <div className="p-6 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
             <div className="text-2xl mb-3">📝</div>
             <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
@@ -107,6 +108,35 @@ export default async function HomePage() {
             </h3>
             <p className="text-slate-600 dark:text-slate-400 text-sm">
               Anchor discussions to specific sections. Threaded comments, @mentions, and resolution tracking.
+            </p>
+          </div>
+          */}
+
+          <div className="p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <div className="text-2xl mb-2">🤝</div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+              Secure Sharing
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">
+              Share specifications securely outside of version control platforms. Ideal for cross-team communication and aligning with agentic development workflows.
+            </p>
+          </div>
+          <div className="p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <div className="text-2xl mb-2">🔗</div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+              Linked Specs
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">
+              Keep specifications perfectly synced across independent repositories. Connect Backend API docs with Frontend requirements seamlessly without monorepos or manual copy-pasting.
+            </p>
+          </div>
+          <div className="p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <div className="text-2xl mb-2">🛠️</div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+              Easier Tooling
+            </h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm">
+              Leverage a powerful suite of tools including native Markdown support, comprehensive revision and diff tracking, threaded discussions, and intelligent AI summaries.
             </p>
           </div>
         </div>
