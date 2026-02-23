@@ -119,6 +119,7 @@ export default async function HomePage() {
             </h3>
             <p className="text-slate-600 dark:text-slate-400 text-sm">
               Share specifications securely outside of version control platforms. Ideal for cross-team communication and aligning with agentic development workflows.
+              <span className="block mt-2 font-medium italic">e.g., Compliance and Security Modelling</span>
             </p>
           </div>
           <div className="p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
@@ -127,16 +128,21 @@ export default async function HomePage() {
               Linked Specs
             </h3>
             <p className="text-slate-600 dark:text-slate-400 text-sm">
-              Keep specifications perfectly synced across independent repositories. Connect Backend API docs with Frontend requirements seamlessly without monorepos or manual copy-pasting.
+              Keep specifications perfectly synced across independent repositories without monorepos or manual copy-pasting.
+              <span className="block mt-2 font-medium italic">e.g., Connect Backend API documentation seamlessly with Frontend specifications.</span>
             </p>
           </div>
-          <div className="p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div className="text-2xl mb-2">🛠️</div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
-              Easier Tooling
+          <div className="p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
+            <div className="text-2xl mb-2">🧩</div>
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2 flex-wrap">
+              Cohesive Integrations
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 uppercase tracking-wider">
+                Under Development
+              </span>
             </h3>
             <p className="text-slate-600 dark:text-slate-400 text-sm">
-              Leverage a powerful suite of tools including native Markdown support, comprehensive revision and diff tracking, threaded discussions, and intelligent AI summaries.
+              Position MDSpec as your specification central. An agentic template layer transforms and integrates documents into any external tool using prompt-based generation.
+              <span className="block mt-2 font-medium italic">e.g., Task templates for ClickUp, or analysis documents tailored for another GitHub repository.</span>
             </p>
           </div>
         </div>
