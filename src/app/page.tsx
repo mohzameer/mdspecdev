@@ -81,7 +81,7 @@ export default async function HomePage() {
           </div>
         </div>
 
-        <div className="mt-10 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
           {/* 
           <div className="p-6 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
             <div className="text-2xl mb-3">📝</div>
@@ -112,37 +112,37 @@ export default async function HomePage() {
           </div>
           */}
 
-          <div className="p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div className="text-2xl mb-2">🤝</div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+          <div className="p-3 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+              <span className="text-xl">🤝</span>
               Secure Sharing
             </h3>
-            <p className="text-slate-600 dark:text-slate-400 text-sm">
+            <p className="text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
               Share specifications securely outside of version control platforms. Ideal for cross-team communication and aligning with agentic development workflows.
-              <span className="block mt-2 font-medium italic">e.g., Compliance and Security Modelling</span>
+              <span className="block mt-1.5 font-medium italic text-slate-700 dark:text-slate-300">e.g., Compliance and Security Modelling</span>
             </p>
           </div>
-          <div className="p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-            <div className="text-2xl mb-2">🔗</div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1">
+          <div className="p-3 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+              <span className="text-xl">🔗</span>
               Linked Specs
             </h3>
-            <p className="text-slate-600 dark:text-slate-400 text-sm">
+            <p className="text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
               Keep specifications perfectly synced across independent repositories without monorepos or manual copy-pasting.
-              <span className="block mt-2 font-medium italic">e.g., Connect Backend API documentation seamlessly with Frontend specifications.</span>
+              <span className="block mt-1.5 font-medium italic text-slate-700 dark:text-slate-300">e.g., Connect Backend API documentation seamlessly with Frontend specifications.</span>
             </p>
           </div>
-          <div className="p-4 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
-            <div className="text-2xl mb-2">🧩</div>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2 flex-wrap">
+          <div className="p-3 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2 flex-wrap">
+              <span className="text-xl">🧩</span>
               Cohesive Integrations
               <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 uppercase tracking-wider">
                 Under Development
               </span>
             </h3>
-            <p className="text-slate-600 dark:text-slate-400 text-sm">
-              Position MDSpec as your specification central. An agentic template layer transforms and integrates documents into any external tool using prompt-based generation.
-              <span className="block mt-2 font-medium italic">e.g., Task templates for ClickUp, or analysis documents tailored for another GitHub repository.</span>
+            <p className="text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
+              Position MDSpec as your specification central. An agentic template layer transforms and integrates documents into any external tool.
+              <span className="block mt-1.5 font-medium italic text-slate-700 dark:text-slate-300">e.g., Task templates for ClickUp, Analysis on a spec posted to another tool.</span>
             </p>
           </div>
         </div>
