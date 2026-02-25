@@ -16,7 +16,7 @@ import { formatRelativeTime, formatDate } from '@/lib/utils';
 import { useComments } from '@/hooks/useComments';
 import { Profile, Status, Maturity } from '@/lib/types';
 import { generatePdf } from '@/actions/pdf';
-import { unlinkSpec } from '@/app/actions/spec';
+import { unlinkSpec, deleteSpec } from '@/app/actions/spec';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { CopySpecModal } from '@/components/spec/CopySpecModal';
@@ -76,6 +76,7 @@ export function SpecViewer({
     const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
     const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
     const [isUnlinking, setIsUnlinking] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
     const [isOverflowMenuOpen, setIsOverflowMenuOpen] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
@@ -237,6 +238,32 @@ export function SpecViewer({
             console.error('Failed to unlink:', error);
             alert('Failed to remove link. Please try again.');
             setIsUnlinking(false);
+            setIsOverflowMenuOpen(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!confirm('Are you absolutely sure you want to delete this specification?\n\nThis action cannot be undone. All content, revisions, and comments will be permanently lost.')) {
+            return;
+        }
+
+        try {
+            setIsDeleting(true);
+            const result = await deleteSpec(spec.id, org.slug, project.slug);
+
+            if (result?.error) {
+                console.error(result.error);
+                alert(result.error);
+                setIsDeleting(false);
+                setIsOverflowMenuOpen(false);
+            } else {
+                router.push(`/${org.slug}/${project.slug}`);
+                router.refresh();
+            }
+        } catch (error) {
+            console.error('Failed to delete:', error);
+            alert('Failed to delete specification. Please try again.');
+            setIsDeleting(false);
             setIsOverflowMenuOpen(false);
         }
     };
@@ -494,6 +521,26 @@ export function SpecViewer({
                                                     </svg>
                                                 )}
                                                 Remove Link
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* Delete - Only for owners and non-linked specs */}
+                                    {isOwner && !isLinked && !isPublicView && (
+                                        <div className="border-t border-slate-100 dark:border-slate-700/50 my-1">
+                                            <button
+                                                onClick={handleDelete}
+                                                disabled={isDeleting}
+                                                className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 flex items-center gap-2"
+                                            >
+                                                {isDeleting ? (
+                                                    <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                                ) : (
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                )}
+                                                Delete Specification
                                             </button>
                                         </div>
                                     )}

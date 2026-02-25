@@ -434,3 +434,71 @@ export async function createLinkedSpec(formData: FormData) {
 
     return { success: true, path: `/${targetOrgSlug}/${targetProjectSlug}/${newSpec.slug}` };
 }
+
+export async function deleteSpec(specId: string, orgSlug: string, projectSlug: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+        return { error: 'You must be logged in' };
+    }
+
+    const { data: spec, error: fetchError } = await supabase
+        .from('specs')
+        .select('owner_id')
+        .eq('id', specId)
+        .single();
+
+    if (fetchError || !spec) {
+        return { error: 'Specification not found' };
+    }
+
+    if (spec.owner_id !== user.id) {
+        return { error: 'Only the owner can delete this specification' };
+    }
+
+    const { data: linkedSpecs, error: linkedError } = await supabase
+        .from('specs')
+        .select('id')
+        .eq('source_spec_id', specId)
+        .limit(1);
+
+    if (linkedError) {
+        return { error: 'Failed to verify specification links' };
+    }
+
+    if (linkedSpecs && linkedSpecs.length > 0) {
+        return { error: 'Cannot delete: Other projects have linked to this specification. Please remove those links first.' };
+    }
+
+    const { data: revisions } = await supabase
+        .from('revisions')
+        .select('content_key')
+        .eq('spec_id', specId);
+
+    if (revisions && revisions.length > 0) {
+        const paths = revisions.map(r => r.content_key);
+        const serviceClient = createServiceRoleClient();
+        const { error: storageError } = await serviceClient.storage
+            .from('spec-content')
+            .remove(paths);
+
+        if (storageError) {
+            console.error('Failed to delete storage files:', storageError);
+        }
+    }
+
+    const { error: deleteError } = await supabase
+        .from('specs')
+        .delete()
+        .eq('id', specId);
+
+    if (deleteError) {
+        return { error: deleteError.message };
+    }
+
+    revalidatePath(`/${orgSlug}/${projectSlug}`);
+    revalidatePath(`/dashboard`);
+
+    return { success: true };
+}
