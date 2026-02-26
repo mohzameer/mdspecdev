@@ -6,6 +6,7 @@ import { StatusBadge, TagsList } from '@/components/spec/StatusBadge';
 import { SpecListItem } from '@/components/dashboard/SpecListItem';
 import { ProjectBadge } from '@/components/dashboard/ProjectBadge';
 import { formatRelativeTime } from '@/lib/utils';
+import { RefreshButton } from '@/components/dashboard/RefreshButton';
 
 // Define types for our data
 type Project = {
@@ -173,6 +174,7 @@ export default async function DashboardPage(props: { searchParams: Promise<{ arc
                     </div>
                     {hasOrgs && (
                         <div className="flex items-center gap-4">
+                            <RefreshButton />
                             <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
                                 <Link
                                     href="/dashboard"
