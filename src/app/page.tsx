@@ -26,7 +26,7 @@ export default async function HomePage() {
         </h1>
 
         <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
-          An opensource lightweight specification governance platform for technical teams.
+          An opensource lightweight specification management platform for technical teams.
         </p>
 
         <div className="flex flex-col lg:flex-row flex-wrap items-start justify-center gap-3 lg:gap-4 w-full">

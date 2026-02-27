@@ -5,7 +5,7 @@ export default function PrivacyPolicyPage() {
                 Privacy Policy
             </h1>
             <div className="prose prose-slate dark:prose-invert max-w-none bg-white dark:bg-slate-800 p-8 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
-                <p>At MDSpec, your privacy is a priority. This document outlines the types of information we collect and how we use it to provide our specification governance platform.</p>
+                <p>At MDSpec, your privacy is a priority. This document outlines the types of information we collect and how we use it to provide our specification management platform.</p>
 
                 <h2>1. Information We Collect</h2>
                 <p>We collect information you provide directly to us when creating an account, such as your name, email address, and profile details. We also securely store the specification documents, comments, and project metadata you create on the platform.</p>

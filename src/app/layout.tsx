@@ -9,9 +9,9 @@ import { StickyHeaderProvider } from '@/components/providers/StickyHeaderProvide
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'mdspec - Specification Governance Platform',
+  title: 'mdspec - Specification Management Platform',
   description:
-    'A lightweight specification governance platform for technical teams. Create, track, and collaborate on technical specifications.',
+    'A lightweight specification management platform for technical teams. Create, track, and collaborate on technical specifications.',
   icons: {
     icon: '/icon.svg',
   },
