@@ -60,7 +60,7 @@ export function VideoPopup() {
                             <iframe
                                 width="100%"
                                 height="100%"
-                                src="https://www.youtube.com/embed/wDchsz8nmbo?autoplay=1&mute=1"
+                                src="https://www.youtube.com/embed/iptD6RvGNnk?autoplay=1&mute=1"
                                 title="How it works video"
                                 frameBorder="0"
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
