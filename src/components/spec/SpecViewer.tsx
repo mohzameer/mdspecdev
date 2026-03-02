@@ -80,10 +80,12 @@ export function SpecViewer({
     const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
     const [isOverflowMenuOpen, setIsOverflowMenuOpen] = useState(false);
     const [isCopied, setIsCopied] = useState(false);
+    const [isInfoOpen, setIsInfoOpen] = useState(false);
     const router = useRouter();
     const markdownContainerRef = useRef<React.RefObject<HTMLElement | null> | null>(null);
     const shareMenuRef = useRef<HTMLDivElement>(null);
     const overflowMenuRef = useRef<HTMLDivElement>(null);
+    const infoRef = useRef<HTMLDivElement>(null);
     const headerCardRef = useRef<HTMLDivElement>(null);
     const { setTitle, setIsVisible } = useStickyHeader();
 
@@ -117,7 +119,7 @@ export function SpecViewer({
         };
     }, [spec.name, setTitle, setIsVisible]);
 
-    // Close share menu and overflow menu when clicking outside
+    // Close share menu, overflow menu, and info popover when clicking outside
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (shareMenuRef.current && !shareMenuRef.current.contains(event.target as Node)) {
@@ -126,16 +128,19 @@ export function SpecViewer({
             if (overflowMenuRef.current && !overflowMenuRef.current.contains(event.target as Node)) {
                 setIsOverflowMenuOpen(false);
             }
+            if (infoRef.current && !infoRef.current.contains(event.target as Node)) {
+                setIsInfoOpen(false);
+            }
         }
 
-        if (isShareMenuOpen || isOverflowMenuOpen) {
+        if (isShareMenuOpen || isOverflowMenuOpen || isInfoOpen) {
             document.addEventListener('mousedown', handleClickOutside);
         }
 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [isShareMenuOpen, isOverflowMenuOpen]);
+    }, [isShareMenuOpen, isOverflowMenuOpen, isInfoOpen]);
 
     // Fetch threads for highlight rendering
     const { threads } = useComments(spec.id);
@@ -368,6 +373,56 @@ export function SpecViewer({
                             <StatusBadge status={spec.status} />
                             <MaturityBadge maturity={spec.maturity} />
                             <TagsList tags={spec.tags} max={5} />
+
+                            {/* Frontmatter Info Popover */}
+                            <div className="relative flex items-center" ref={infoRef}>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsInfoOpen(!isInfoOpen);
+                                    }}
+                                    className="p-1 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-full transition-colors"
+                                    title="View supported frontmatter"
+                                    aria-label="Supported frontmatter formatting"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </button>
+
+                                {isInfoOpen && (
+                                    <div
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="absolute top-full left-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-slate-200 dark:border-slate-700 z-50 overflow-hidden transform origin-top-left animate-in fade-in slide-in-from-top-2 text-left"
+                                    >
+                                        <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/80">
+                                            <h4 className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                                                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                                                </svg>
+                                                Supported Frontmatter
+                                            </h4>
+                                        </div>
+                                        <div className="p-4 bg-slate-50/50 dark:bg-transparent">
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3 leading-relaxed">
+                                                When updating via the API or editing content, you can use YAML frontmatter to automatically update this document's metadata.
+                                                If you use frontmatter to define a field, it will overwrite the metadata configured in the UI interface.
+                                            </p>
+                                            <div className="rounded-md overflow-hidden border border-slate-200 dark:border-slate-700 bg-slate-900 shadow-inner">
+                                                <pre className="text-xs font-mono text-emerald-400 p-3 overflow-x-auto whitespace-pre">
+                                                    <span className="text-slate-500">---</span>{'\n'}
+                                                    <span className="text-blue-300">status:</span> planned | in-progress |{'\n'}        completed{'\n'}
+                                                    <span className="text-blue-300">maturity:</span> draft | review |{'\n'}          stable | deprecated{'\n'}
+                                                    <span className="text-blue-300">progress:</span> 0-100{'\n'}
+                                                    <span className="text-blue-300">tags:</span> ["api", "backend"]{'\n'}
+                                                    <span className="text-slate-500">---</span>
+                                                </pre>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
                             {(showUnresolved || showTotal) && (
                                 <button
                                     onClick={(e) => {

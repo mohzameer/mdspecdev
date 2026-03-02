@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { extractHeadings, getSectionContent, generateHeadingId } from '@/lib/markdown/headings';
 
 import { SupabaseClient } from '@supabase/supabase-js';
@@ -11,7 +11,7 @@ export async function indexSpecContent(
     content: string,
     client?: SupabaseClient
 ): Promise<void> {
-    const supabase = client || await createClient();
+    const supabase = client || createServiceRoleClient();
 
     // 1. Parse markdown headings
     const headings = extractHeadings(content);

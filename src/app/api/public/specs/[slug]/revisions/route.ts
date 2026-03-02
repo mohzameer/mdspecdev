@@ -93,11 +93,53 @@ export async function POST(
             return NextResponse.json({ error: revError.message }, { status: 500 });
         }
 
-        // 5. Update Spec Timestamp
-        await supabase
+        // 5. Parse Frontmatter and Update Spec Metadata + Timestamp
+        let parsedMetadata: any = {};
+        if (content) {
+            try {
+                const matter = require('gray-matter');
+                const { data } = matter(content);
+                if (data) {
+                    parsedMetadata = data;
+                }
+            } catch (err) {
+                console.error('Failed to parse frontmatter:', err);
+            }
+        }
+
+        const updatePayload: any = { updated_at: new Date().toISOString() };
+
+        // Only update if frontmatter or body provides it
+        if (body.status || parsedMetadata.status) updatePayload.status = body.status || parsedMetadata.status;
+        if (body.maturity || parsedMetadata.maturity) updatePayload.maturity = body.maturity || parsedMetadata.maturity;
+        if (body.progress !== undefined || parsedMetadata.progress !== undefined) {
+            const rawProgress = body.progress !== undefined ? body.progress : parsedMetadata.progress;
+            updatePayload.progress = Math.min(99.9, Math.max(0, Number(rawProgress) || 0));
+        }
+
+        let tags = body.tags || parsedMetadata.tags || null;
+        if (tags) {
+            if (typeof tags === 'string') {
+                try {
+                    tags = JSON.parse(tags);
+                } catch (e) {
+                    tags = [tags];
+                }
+            } else if (!Array.isArray(tags)) {
+                tags = [tags.toString()];
+            }
+            updatePayload.tags = tags;
+        }
+
+        const { error: specUpdateError } = await supabase
             .from('specs')
-            .update({ updated_at: new Date().toISOString() })
+            .update(updatePayload)
             .eq('id', spec.id);
+
+        if (specUpdateError) {
+            console.error('[Revisions API] Spec metadata update error:', specUpdateError);
+            // Non-fatal, but we should know
+        }
 
         // 6. Async Tasks
         if (revision?.id) {
@@ -105,7 +147,7 @@ export async function POST(
                 console.error('[AI Summary] Background generation failed:', err)
             );
         }
-        indexSpecContent(spec.id, content, supabase).catch(err =>
+        await indexSpecContent(spec.id, content).catch(err =>
             console.error('[Search Indexer] Failed to index spec content:', err)
         );
 

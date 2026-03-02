@@ -164,7 +164,7 @@ export async function createSpec(formData: FormData) {
     // 2. Upload Content
     // Use service role client for storage: upsert RLS is unreliable from server actions.
     const serviceClient = createServiceRoleClient();
-    const fullContent = `${frontmatter}\n\n${content}`;
+    const fullContent = frontmatter ? `${frontmatter}\n\n${content}` : content;
     const contentPath = `specs/${spec.id}/1.md`;
 
     const { error: uploadError } = await serviceClient.storage

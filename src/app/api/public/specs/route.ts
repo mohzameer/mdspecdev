@@ -183,19 +183,55 @@ export async function POST(request: Request) {
             }
         }
 
-        // 2. Generate Slug
+        // 2. Parse Frontmatter if content exists
+        let parsedMetadata: any = {};
+        if (content) {
+            try {
+                const matter = require('gray-matter');
+                const { data } = matter(content);
+                if (data) {
+                    parsedMetadata = data;
+                }
+            } catch (err) {
+                console.error('Failed to parse frontmatter:', err);
+                // Continue even if frontmatter parsing fails
+            }
+        }
+
+        // Merge body metadata with frontmatter (body takes precedence if explicitly provided, 
+        // otherwise frontmatter takes precedence, otherwise hardcoded defaults)
+        const status = body.status || parsedMetadata.status || 'planned';
+        const maturity = body.maturity || parsedMetadata.maturity || 'draft';
+        const rawProgress = body.progress !== undefined ? body.progress : (parsedMetadata.progress !== undefined ? parsedMetadata.progress : 0);
+        const progress = Math.min(99.9, Math.max(0, Number(rawProgress) || 0));
+
+        let tags = body.tags || parsedMetadata.tags || null;
+        if (typeof tags === 'string') {
+            try {
+                tags = JSON.parse(tags);
+            } catch (e) {
+                // If parsing fails, create an array with a single string
+                tags = [tags];
+            }
+        } else if (tags && !Array.isArray(tags)) {
+            // Ensure tags is an array if it's not null and not a string
+            tags = [tags.toString()];
+        }
+
+        // 3. Generate Slug
         let slug = providedSlug || slugify(name);
 
-        // 3. Create Spec
+        // 4. Create Spec
         const specPayload: any = {
             name,
             slug,
             file_name,
             project_id: targetProjectId,
             owner_id: user.id,
-            status: 'planned',
-            maturity: 'draft',
-            progress: 0
+            status,
+            maturity,
+            progress,
+            tags
         };
 
         if (source_spec_id) {
@@ -260,7 +296,7 @@ export async function POST(request: Request) {
                     console.error('[AI Summary] Background generation failed:', err)
                 );
             }
-            indexSpecContent(spec.id, content, supabase).catch(err =>
+            await indexSpecContent(spec.id, content).catch(err =>
                 console.error('[Search Indexer] Failed to index new spec content:', err)
             );
 

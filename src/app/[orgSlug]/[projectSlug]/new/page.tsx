@@ -47,6 +47,7 @@ export default function NewSpecPage() {
     const [maturity, setMaturity] = useState<Maturity>('draft');
     const [progress, setProgress] = useState(0);
     const [tagsInput, setTagsInput] = useState('');
+    const [includeFrontmatter, setIncludeFrontmatter] = useState(true);
 
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -77,7 +78,7 @@ tags: ${tagsStr}
     // Resolve org and project by slug
     useEffect(() => {
         async function resolveProject() {
-            // Resolve org
+            // ... (rest of resolution logic remains the same)
             let orgId = null;
             const { data: orgBySlug } = await supabase
                 .from('organizations')
@@ -151,7 +152,9 @@ tags: ${tagsStr}
             formData.append('name', name);
             formData.append('slug', specSlug);
             formData.append('content', content);
-            formData.append('frontmatter', frontmatter);
+            if (includeFrontmatter) {
+                formData.append('frontmatter', frontmatter);
+            }
             formData.append('orgSlug', orgSlug);
             formData.append('projectSlug', projectSlug);
 
@@ -267,22 +270,37 @@ tags: ${tagsStr}
                     />
 
                     {/* Content Section with Merged Preview */}
-                    <div className="space-y-2">
-                        <label htmlFor="content" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                            Spec Content
-                        </label>
+                    <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                            <label htmlFor="content" className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                                Spec Content
+                            </label>
+
+                            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer hover:text-slate-900 dark:hover:text-slate-200 transition-colors">
+                                <input
+                                    type="checkbox"
+                                    checked={includeFrontmatter}
+                                    onChange={(e) => setIncludeFrontmatter(e.target.checked)}
+                                    className="rounded border-slate-300 dark:border-slate-600 text-blue-600 focus:ring-blue-500 dark:bg-slate-800"
+                                />
+                                Generate Frontmatter
+                            </label>
+                        </div>
+
                         <div className="border border-slate-300 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-800/50 shadow-sm">
                             {/* Read-only Frontmatter Preview */}
-                            <div className="bg-slate-50 dark:bg-black/20 border-b border-slate-200 dark:border-white/5 p-4 select-none">
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                                        Frontmatter (Auto-generated)
-                                    </span>
+                            {includeFrontmatter && (
+                                <div className="bg-slate-50 dark:bg-black/20 border-b border-slate-200 dark:border-white/5 p-4 select-none transition-all">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                            Frontmatter (Auto-generated)
+                                        </span>
+                                    </div>
+                                    <pre className="font-mono text-sm text-slate-500 dark:text-slate-400 whitespace-pre-wrap">
+                                        {frontmatter}
+                                    </pre>
                                 </div>
-                                <pre className="font-mono text-sm text-slate-500 dark:text-slate-400 whitespace-pre-wrap">
-                                    {frontmatter}
-                                </pre>
-                            </div>
+                            )}
 
                             {/* Main Editor */}
                             <textarea
@@ -295,6 +313,9 @@ tags: ${tagsStr}
                                 placeholder="Write your markdown content here..."
                             />
                         </div>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                            If enabled, the metadata above will be injected as YAML frontmatter at the top of your markdown document. You can safely disable this if your content already contains frontmatter.
+                        </p>
                     </div>
 
                     <div className="flex gap-4 pt-4 border-t border-slate-200 dark:border-slate-700">
