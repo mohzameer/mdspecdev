@@ -258,16 +258,18 @@ tags: ${tagsStr}
                     </div>
 
                     {/* Metadata Section */}
-                    <SpecMetadataEditor
-                        status={status}
-                        setStatus={setStatus}
-                        maturity={maturity}
-                        setMaturity={setMaturity}
-                        progress={progress}
-                        setProgress={setProgress}
-                        tagsInput={tagsInput}
-                        setTagsInput={setTagsInput}
-                    />
+                    {includeFrontmatter && (
+                        <SpecMetadataEditor
+                            status={status}
+                            setStatus={setStatus}
+                            maturity={maturity}
+                            setMaturity={setMaturity}
+                            progress={progress}
+                            setProgress={setProgress}
+                            tagsInput={tagsInput}
+                            setTagsInput={setTagsInput}
+                        />
+                    )}
 
                     {/* Content Section with Merged Preview */}
                     <div className="space-y-4">
