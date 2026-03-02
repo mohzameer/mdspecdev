@@ -9,9 +9,19 @@ import { StickyHeaderProvider } from '@/components/providers/StickyHeaderProvide
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'mdspec - Specification Management Platform',
+  title: 'mdspec - Open-Source Specification Management Platform',
   description:
-    'A lightweight specification management platform for technical teams. Create, track, and collaborate on technical specifications.',
+    'A lightweight open-source specification management platform for technical teams. Create, track, and collaborate on technical specifications.',
+  openGraph: {
+    title: 'mdspec - Open-Source Specification Management Platform',
+    description: 'A lightweight open-source specification management platform for technical teams.',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'mdspec - Open-Source Specification Management Platform',
+    description: 'A lightweight open-source specification management platform for technical teams.',
+  },
   icons: {
     icon: '/icon.svg',
   },
