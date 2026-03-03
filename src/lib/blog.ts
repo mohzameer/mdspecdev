@@ -33,7 +33,6 @@ export function getBlogPosts(): BlogPostMetadata[] {
             description: data.description || '',
             date: data.date || '',
             slug: filename.replace('.md', ''),
-            ...(data as Omit<BlogPostMetadata, 'slug'>),
         };
     });
 
