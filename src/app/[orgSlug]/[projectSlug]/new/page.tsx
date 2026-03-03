@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { slugify } from '@/lib/utils';
 import { Status, Maturity } from '@/lib/types';
 import { SpecMetadataEditor } from '@/components/spec/SpecMetadataEditor';
+import { generateFrontmatter } from '@/lib/markdown/parser';
 
 const INITIAL_CONTENT = `# Specification Title
 
@@ -48,6 +49,7 @@ export default function NewSpecPage() {
     const [progress, setProgress] = useState(0);
     const [tagsInput, setTagsInput] = useState('');
     const [includeFrontmatter, setIncludeFrontmatter] = useState(true);
+    const [showFrontmatter, setShowFrontmatter] = useState(false);
 
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -59,14 +61,12 @@ export default function NewSpecPage() {
     // Generate Frontmatter for Preview and Submission
     const frontmatter = useMemo(() => {
         const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
-        const tagsStr = tags.length > 0 ? `[${tags.map(t => `"${t}"`).join(', ')}]` : '[]';
-
-        return `---
-progress: ${progress}
-status: ${status}
-maturity: ${maturity}
-tags: ${tagsStr}
----`;
+        return generateFrontmatter({
+            progress,
+            status,
+            maturity,
+            tags: tags.length > 0 ? tags : undefined
+        });
     }, [progress, status, maturity, tagsInput]);
 
     useEffect(() => {
@@ -293,14 +293,27 @@ tags: ${tagsStr}
                             {/* Read-only Frontmatter Preview */}
                             {includeFrontmatter && (
                                 <div className="bg-slate-50 dark:bg-black/20 border-b border-slate-200 dark:border-white/5 p-4 select-none transition-all">
-                                    <div className="flex items-center justify-between mb-2">
-                                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                                    <div
+                                        className="flex items-center justify-between cursor-pointer"
+                                        onClick={() => setShowFrontmatter(!showFrontmatter)}
+                                    >
+                                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
                                             Frontmatter (Auto-generated)
+                                            <svg
+                                                className={`w-4 h-4 transition-transform duration-200 ${showFrontmatter ? 'rotate-180' : ''}`}
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                            </svg>
                                         </span>
                                     </div>
-                                    <pre className="font-mono text-sm text-slate-500 dark:text-slate-400 whitespace-pre-wrap">
-                                        {frontmatter}
-                                    </pre>
+                                    {showFrontmatter && (
+                                        <pre className="mt-3 p-3 bg-white/50 dark:bg-black/40 rounded-md border border-slate-200 dark:border-slate-700 font-mono text-sm text-slate-500 dark:text-slate-400 whitespace-pre-wrap overflow-x-auto">
+                                            {frontmatter}
+                                        </pre>
+                                    )}
                                 </div>
                             )}
 

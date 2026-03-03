@@ -14,6 +14,7 @@ interface MarkdownRendererProps {
   threads?: CommentThread[];
   disableHeadingIds?: boolean;
   containerRefCallback?: (ref: React.RefObject<HTMLDivElement | null>) => void;
+  frontmatter?: string;
 }
 
 interface Section {
@@ -33,9 +34,11 @@ export function MarkdownRenderer({
   threads,
   disableHeadingIds = false,
   containerRefCallback,
+  frontmatter,
 }: MarkdownRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [sections, setSections] = useState<Section[]>([]);
+  const [showFrontmatter, setShowFrontmatter] = useState(false);
 
   // Expose containerRef to parent
   useEffect(() => {
@@ -403,6 +406,31 @@ export function MarkdownRenderer({
 
   return (
     <div ref={containerRef} className={`prose prose-slate dark:prose-invert max-w-none ${className}`}>
+      {frontmatter && (
+        <div className="mb-8 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-slate-50 dark:bg-black/20">
+          <div
+            className="flex items-center justify-between p-3 cursor-pointer select-none"
+            onClick={() => setShowFrontmatter(!showFrontmatter)}
+          >
+            <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+              Frontmatter Metadata
+              <svg
+                className={`w-4 h-4 transition-transform duration-200 ${showFrontmatter ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+          </div>
+          {showFrontmatter && (
+            <pre className="p-4 bg-white/50 dark:bg-black/40 border-t border-slate-200 dark:border-slate-700 font-mono text-sm text-slate-600 dark:text-slate-300 whitespace-pre-wrap overflow-x-auto">
+              {frontmatter}
+            </pre>
+          )}
+        </div>
+      )}
       {highlightedSections.map((section, index) => {
         const HeadingTag = (`h${section.level || 1}`) as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 

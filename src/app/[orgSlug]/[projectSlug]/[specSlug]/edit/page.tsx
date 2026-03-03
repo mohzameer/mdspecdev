@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { createRevision, indexSpecAction } from '@/app/actions/spec';
 import { Status, Maturity } from '@/lib/types';
 import { SpecMetadataEditor } from '@/components/spec/SpecMetadataEditor';
+import { parseSpec, generateFrontmatter } from '@/lib/markdown/parser';
 
 export default function EditSpecPage() {
     const params = useParams();
@@ -29,6 +30,8 @@ export default function EditSpecPage() {
     const [maturity, setMaturity] = useState<Maturity>('draft');
     const [progress, setProgress] = useState(0);
     const [tagsInput, setTagsInput] = useState('');
+    const [customFrontmatter, setCustomFrontmatter] = useState<Record<string, any>>({});
+    const [showFrontmatter, setShowFrontmatter] = useState(false);
 
     const router = useRouter();
     const supabase = createClient();
@@ -36,14 +39,14 @@ export default function EditSpecPage() {
     // Live frontmatter preview — updates as metadata changes
     const frontmatter = useMemo(() => {
         const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
-        const tagsStr = tags.length > 0 ? `[${tags.map(t => `"${t}"`).join(', ')}]` : '[]';
-        return `---
-progress: ${progress}
-status: ${status}
-maturity: ${maturity}
-tags: ${tagsStr}
----`;
-    }, [progress, status, maturity, tagsInput]);
+        return generateFrontmatter({
+            progress,
+            status,
+            maturity,
+            tags: tags.length > 0 ? tags : undefined,
+            custom: customFrontmatter
+        });
+    }, [progress, status, maturity, tagsInput, customFrontmatter]);
 
     useEffect(() => {
         async function loadSpec() {
@@ -154,14 +157,12 @@ tags: ${tagsStr}
 
                     if (data) {
                         const fullText = await data.text();
-                        // Strip frontmatter from content for the editor. Some older revisions might have multiple stacked frontmatters.
-                        const frontmatterRegex = /^\s*---\r?\n[\s\S]*?\r?\n---\r?\n+/;
-                        let contentBody = fullText;
-                        while (frontmatterRegex.test(contentBody)) {
-                            contentBody = contentBody.replace(frontmatterRegex, '').trimStart();
-                        }
+                        const parsed = parseSpec(fullText);
 
-                        setContent(contentBody);
+                        setContent(parsed.content);
+                        if (parsed.metadata.custom) {
+                            setCustomFrontmatter(parsed.metadata.custom);
+                        }
                     }
                 }
 
@@ -184,16 +185,15 @@ tags: ${tagsStr}
         try {
             // Generate Frontmatter
             const tags = tagsInput.split(',').map(t => t.trim()).filter(Boolean);
-            const tagsStr = tags.length > 0 ? `[${tags.map(t => `"${t}"`).join(', ')}]` : '[]';
+            const frontmatterStr = generateFrontmatter({
+                progress,
+                status,
+                maturity,
+                tags: tags.length > 0 ? tags : undefined,
+                custom: customFrontmatter
+            });
 
-            const frontmatter = `---
-progress: ${progress}
-status: ${status}
-maturity: ${maturity}
-tags: ${tagsStr}
----`;
-
-            const fullContent = `${frontmatter}\n\n${content}`;
+            const fullContent = `${frontmatterStr}\n\n${content}`;
 
             const formData = new FormData();
             formData.append('specId', specId);
@@ -321,14 +321,27 @@ tags: ${tagsStr}
                         <div className="border border-slate-300 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-800/50 shadow-sm">
                             {/* Read-only Frontmatter Preview */}
                             <div className="bg-slate-50 dark:bg-black/20 border-b border-slate-200 dark:border-white/5 p-4 select-none">
-                                <div className="flex items-center justify-between mb-2">
-                                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                                <div
+                                    className="flex items-center justify-between cursor-pointer"
+                                    onClick={() => setShowFrontmatter(!showFrontmatter)}
+                                >
+                                    <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
                                         Frontmatter (Auto-generated)
+                                        <svg
+                                            className={`w-4 h-4 transition-transform duration-200 ${showFrontmatter ? 'rotate-180' : ''}`}
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
                                     </span>
                                 </div>
-                                <pre className="font-mono text-sm text-slate-500 dark:text-slate-400 whitespace-pre-wrap">
-                                    {frontmatter}
-                                </pre>
+                                {showFrontmatter && (
+                                    <pre className="mt-3 p-3 bg-white/50 dark:bg-black/40 rounded-md border border-slate-200 dark:border-slate-700 font-mono text-sm text-slate-500 dark:text-slate-400 whitespace-pre-wrap overflow-x-auto">
+                                        {frontmatter}
+                                    </pre>
+                                )}
                             </div>
 
                             {/* Main Editor */}

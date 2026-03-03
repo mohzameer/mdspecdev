@@ -17,7 +17,15 @@ export function parseSpec(markdown: string): {
     const { data, content } = matter(markdown);
 
     // Validate and sanitize metadata
-    const metadata: SpecMetadata = {};
+    const metadata: SpecMetadata = { custom: {} };
+
+    // Capture unknown custom fields
+    const knownKeys = ['progress', 'status', 'maturity', 'owner', 'tags', 'target_date', 'last_reviewed', 'reviewers', 'blockers', 'depends_on'];
+    Object.keys(data).forEach(key => {
+        if (!knownKeys.includes(key)) {
+            metadata.custom![key] = data[key];
+        }
+    });
 
     // Progress: must be 0-10
     if (typeof data.progress === 'number') {
@@ -79,44 +87,17 @@ export function parseSpec(markdown: string): {
  * Generate frontmatter YAML from metadata
  */
 export function generateFrontmatter(metadata: SpecMetadata): string {
-    const lines: string[] = ['---'];
+    const { custom, ...core } = metadata;
+    const data: Record<string, any> = { ...core, ...custom };
 
-    if (metadata.progress !== undefined) {
-        lines.push(`progress: ${metadata.progress}`);
-    }
-    if (metadata.status) {
-        lines.push(`status: ${metadata.status}`);
-    }
-    if (metadata.maturity) {
-        lines.push(`maturity: ${metadata.maturity}`);
-    }
-    if (metadata.owner) {
-        lines.push(`owner: ${metadata.owner}`);
-    }
-    if (metadata.tags && metadata.tags.length > 0) {
-        lines.push(`tags: [${metadata.tags.join(', ')}]`);
-    }
-    if (metadata.target_date) {
-        lines.push(`target_date: ${metadata.target_date}`);
-    }
-    if (metadata.last_reviewed) {
-        lines.push(`last_reviewed: ${metadata.last_reviewed}`);
-    }
-    if (metadata.reviewers && metadata.reviewers.length > 0) {
-        lines.push('reviewers:');
-        metadata.reviewers.forEach((r) => lines.push(`  - ${r}`));
-    }
-    if (metadata.blockers && metadata.blockers.length > 0) {
-        lines.push('blockers:');
-        metadata.blockers.forEach((b) => lines.push(`  - "${b}"`));
-    }
-    if (metadata.depends_on && metadata.depends_on.length > 0) {
-        lines.push('depends_on:');
-        metadata.depends_on.forEach((d) => lines.push(`  - ${d}`));
-    }
+    // Remove undefined values
+    Object.keys(data).forEach(key => {
+        if (data[key] === undefined) {
+            delete data[key];
+        }
+    });
 
-    lines.push('---');
-    return lines.join('\n');
+    return matter.stringify('', data).trim();
 }
 
 /**

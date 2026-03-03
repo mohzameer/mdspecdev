@@ -80,8 +80,16 @@ export default async function SpecDetailPage({ params }: Props) {
     }
 
     // Use robust frontmatter stripping handling various newlines and spacing (handles stacked frontmatters)
-    const frontmatterRegex = /^\s*---\r?\n[\s\S]*?\r?\n---\r?\n+/;
+    const frontmatterRegex = /^\s*---\r?\n([\s\S]*?)\r?\n---\r?\n+/;
     let contentWithoutFrontmatter = content;
+    let extractedFrontmatter = '';
+
+    const match = contentWithoutFrontmatter.match(frontmatterRegex);
+    if (match) {
+        // We only want the first frontmatter block, and we'll keep the --- delimiters for display
+        extractedFrontmatter = match[0].trim();
+    }
+
     while (frontmatterRegex.test(contentWithoutFrontmatter)) {
         contentWithoutFrontmatter = contentWithoutFrontmatter.replace(frontmatterRegex, '').trimStart();
     }
@@ -144,6 +152,7 @@ export default async function SpecDetailPage({ params }: Props) {
                     latestRevisionNumber={latestRevision?.revision_number || 1}
                     isPublicView={isPublicView}
                     canResolve={canResolve}
+                    frontmatter={extractedFrontmatter || undefined}
                 />
             </div>
         </div>

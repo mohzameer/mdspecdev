@@ -137,6 +137,7 @@ export interface SpecMetadata {
   reviewers?: string[];
   blockers?: string[];
   depends_on?: string[];
+  custom?: Record<string, any>;
 }
 
 // ============================================

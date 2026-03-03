@@ -130,8 +130,16 @@ export default async function RevisionDetailPage({ params }: Props) {
     }
 
     // Use robust frontmatter stripping handling various newlines and spacing (handles stacked frontmatters)
-    const frontmatterRegex = /^\s*---\r?\n[\s\S]*?\r?\n---\r?\n+/;
+    const frontmatterRegex = /^\s*---\r?\n([\s\S]*?)\r?\n---\r?\n+/;
     let contentWithoutFrontmatter = content;
+    let extractedFrontmatter = '';
+
+    const match = contentWithoutFrontmatter.match(frontmatterRegex);
+    if (match) {
+        // We only want the first frontmatter block, and we'll keep the --- delimiters for display
+        extractedFrontmatter = match[0].trim();
+    }
+
     while (frontmatterRegex.test(contentWithoutFrontmatter)) {
         contentWithoutFrontmatter = contentWithoutFrontmatter.replace(frontmatterRegex, '').trimStart();
     }
@@ -201,7 +209,10 @@ export default async function RevisionDetailPage({ params }: Props) {
 
                 {/* Content */}
                 <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
-                    <MarkdownRenderer content={contentWithoutFrontmatter} />
+                    <MarkdownRenderer
+                        content={contentWithoutFrontmatter}
+                        frontmatter={extractedFrontmatter || undefined}
+                    />
                 </div>
             </div>
         </div>
