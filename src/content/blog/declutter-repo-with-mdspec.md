@@ -40,6 +40,16 @@ You can configure mdspec to push or request integrations with any project manage
 - **Confluence / Notion:** Seamlessly publish the isolated `.md` specs into internal wikis.
 - **Custom Tools:** Using mdspec integrations, raw Markdown (including YAML frontmatter metadata) can route directly into whatever specialized compliance or task-tracking tool you prefer.
 
+## Organizing Specs with Folders
+
+As your centralized mdspec workspace grows, organizing specs becomes just as important as storing them. mdspec lets you create **folders** to group related documents together — by team, product area, release cycle, or any structure that fits your workflow.
+
+To create and manage folders, simply navigate to your project:
+- **From the Dashboard:** Click on the project name to open the project view, where you can create and manage folders directly.
+- **From the Organization Page:** Go to your organization, find the project, and open it to access the same folder management interface.
+
+This means your extracted specs don't just land in a flat list — they stay neatly organized, making it easy for any team member (or external stakeholder) to find exactly what they need without rummaging through hundreds of loose files.
+
 ## Conclusion
 
 Managing the sheer mass of Markdown specifications doesn't have to ruin your code repository experience. Use your core repo as the sandbox, and use **mdspec** as your ultimate source of truth, archive, and dispatcher. Clean your codebases, protect your context, and power your project management all at once.

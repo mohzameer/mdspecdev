@@ -111,6 +111,17 @@ export default async function SpecDetailPage({ params }: Props) {
         currentUserProfile = profile;
     }
 
+    // Fetch folders for the project (for Move to Folder in SpecViewer)
+    let folders: any[] = [];
+    if (!isPublicView && spec.project_id) {
+        const { data: projectFolders } = await supabase
+            .from('spec_folders')
+            .select('id, project_id, parent_folder_id, name, slug, created_at, updated_at')
+            .eq('project_id', spec.project_id)
+            .order('name', { ascending: true });
+        folders = projectFolders ?? [];
+    }
+
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
             <div className="container mx-auto px-4 py-8">
@@ -153,6 +164,7 @@ export default async function SpecDetailPage({ params }: Props) {
                     isPublicView={isPublicView}
                     canResolve={canResolve}
                     frontmatter={extractedFrontmatter || undefined}
+                    folders={folders}
                 />
             </div>
         </div>

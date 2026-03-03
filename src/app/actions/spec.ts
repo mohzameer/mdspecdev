@@ -133,6 +133,8 @@ export async function createSpec(formData: FormData) {
     const maturity = formData.get('maturity') as string;
     const tagsStr = formData.get('tags') as string;
     const tags = tagsStr ? JSON.parse(tagsStr) : null;
+    const folderIdRaw = formData.get('folderId') as string | null;
+    const folder_id = folderIdRaw && folderIdRaw.trim() ? folderIdRaw.trim() : null;
 
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -153,6 +155,7 @@ export async function createSpec(formData: FormData) {
             status,
             maturity,
             tags: tags,
+            folder_id,
         })
         .select()
         .single();

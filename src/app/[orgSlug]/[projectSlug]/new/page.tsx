@@ -5,7 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { slugify } from '@/lib/utils';
-import { Status, Maturity } from '@/lib/types';
+import { Status, Maturity, SpecFolder } from '@/lib/types';
 import { SpecMetadataEditor } from '@/components/spec/SpecMetadataEditor';
 import { generateFrontmatter } from '@/lib/markdown/parser';
 
@@ -33,6 +33,21 @@ Describe the detailed design here.
 - Question 1?
 `;
 
+// Build a flat indented list of folder options for a <select>
+function buildFolderOptions(
+    folders: SpecFolder[],
+    parentId: string | null = null,
+    depth = 0
+): { id: string; label: string }[] {
+    const result: { id: string; label: string }[] = [];
+    const children = folders.filter((f) => f.parent_folder_id === parentId);
+    for (const f of children) {
+        result.push({ id: f.id, label: `${'\u00a0\u00a0\u00a0\u00a0'.repeat(depth)}📁 ${f.name}` });
+        result.push(...buildFolderOptions(folders, f.id, depth + 1));
+    }
+    return result;
+}
+
 export default function NewSpecPage() {
     const params = useParams();
     const orgSlug = params.orgSlug as string;
@@ -50,6 +65,10 @@ export default function NewSpecPage() {
     const [tagsInput, setTagsInput] = useState('');
     const [includeFrontmatter, setIncludeFrontmatter] = useState(true);
     const [showFrontmatter, setShowFrontmatter] = useState(false);
+
+    // Folder
+    const [folders, setFolders] = useState<SpecFolder[]>([]);
+    const [folderId, setFolderId] = useState<string>('');
 
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
@@ -78,7 +97,6 @@ export default function NewSpecPage() {
     // Resolve org and project by slug
     useEffect(() => {
         async function resolveProject() {
-            // ... (rest of resolution logic remains the same)
             let orgId = null;
             const { data: orgBySlug } = await supabase
                 .from('organizations')
@@ -114,6 +132,13 @@ export default function NewSpecPage() {
 
             if (projectBySlug) {
                 setProjectId(projectBySlug.id);
+                // Fetch folders for this project
+                const { data: projectFolders } = await supabase
+                    .from('spec_folders')
+                    .select('id, project_id, parent_folder_id, name, slug, created_at, updated_at')
+                    .eq('project_id', projectBySlug.id)
+                    .order('name', { ascending: true });
+                setFolders((projectFolders as SpecFolder[]) ?? []);
             } else {
                 const { data: projectById } = await supabase
                     .from('projects')
@@ -157,6 +182,7 @@ export default function NewSpecPage() {
             }
             formData.append('orgSlug', orgSlug);
             formData.append('projectSlug', projectSlug);
+            if (folderId) formData.append('folderId', folderId);
 
             formData.append('progress', progress.toString());
             formData.append('status', status);
@@ -255,6 +281,26 @@ export default function NewSpecPage() {
                                 />
                             </div>
                         </div>
+
+                        {/* Folder selector — only shown when folders exist */}
+                        {folders.length > 0 && (
+                            <div>
+                                <label htmlFor="folder" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+                                    Folder <span className="text-slate-400 font-normal">(optional)</span>
+                                </label>
+                                <select
+                                    id="folder"
+                                    value={folderId}
+                                    onChange={(e) => setFolderId(e.target.value)}
+                                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800/50 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                >
+                                    <option value="">No folder (root level)</option>
+                                    {buildFolderOptions(folders).map(({ id, label }) => (
+                                        <option key={id} value={id}>{label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
 
                     {/* Metadata Section */}

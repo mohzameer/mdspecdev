@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useTransition } from 'react';
 import Link from 'next/link';
 import { MarkdownRenderer } from '@/components/spec/MarkdownRenderer';
 import { TableOfContents } from '@/components/spec/TableOfContents';
@@ -17,9 +17,11 @@ import { useComments } from '@/hooks/useComments';
 import { Profile, Status, Maturity } from '@/lib/types';
 import { generatePdf } from '@/actions/pdf';
 import { unlinkSpec, deleteSpec } from '@/app/actions/spec';
+import { moveSpecsToFolder } from '@/app/actions/folders';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { CopySpecModal } from '@/components/spec/CopySpecModal';
+import { FolderPickerModal } from '@/components/spec/FolderPickerModal';
 import { useStickyHeader } from '@/components/providers/StickyHeaderProvider';
 
 export interface SpecInfo {
@@ -27,6 +29,7 @@ export interface SpecInfo {
     name: string;
     slug: string;
     file_name?: string | null;
+    folder_id?: string | null;
     progress: number | null;
     status: Status | null;
     maturity: Maturity | null;
@@ -52,6 +55,7 @@ interface SpecViewerProps {
     isPublicView?: boolean;
     canResolve?: boolean;
     frontmatter?: string;
+    folders?: import('@/lib/types').SpecFolder[];
 }
 
 export function SpecViewer({
@@ -67,6 +71,7 @@ export function SpecViewer({
     isPublicView = false,
     canResolve = !isPublicView,
     frontmatter,
+    folders = [],
 }: SpecViewerProps) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isTocOpen, setIsTocOpen] = useState(true);
@@ -77,6 +82,7 @@ export function SpecViewer({
     const [isSharing, setIsSharing] = useState(false);
     const [isShareMenuOpen, setIsShareMenuOpen] = useState(false);
     const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+    const [isMoveToFolderOpen, setIsMoveToFolderOpen] = useState(false);
     const [isUnlinking, setIsUnlinking] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isHeaderExpanded, setIsHeaderExpanded] = useState(false);
@@ -84,6 +90,7 @@ export function SpecViewer({
     const [isCopied, setIsCopied] = useState(false);
     const [isInfoOpen, setIsInfoOpen] = useState(false);
     const [showFrontmatter, setShowFrontmatter] = useState(false);
+    const [, startMoveTransition] = useTransition();
     const router = useRouter();
     const markdownContainerRef = useRef<React.RefObject<HTMLElement | null> | null>(null);
     const shareMenuRef = useRef<HTMLDivElement>(null);
@@ -511,6 +518,20 @@ export function SpecViewer({
                                         </div>
                                     )}
 
+                                    {/* Move to Folder — non-public, non-linked */}
+                                    {!isPublicView && !isLinked && folders.length >= 0 && (
+                                        <button
+                                            onClick={() => {
+                                                setIsMoveToFolderOpen(true);
+                                                setIsOverflowMenuOpen(false);
+                                            }}
+                                            className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center gap-2"
+                                        >
+                                            <span>📁</span>
+                                            Move to Folder…
+                                        </button>
+                                    )}
+
                                     {/* Duplicate — non-public view only */}
                                     {!isPublicView && (
                                         <button
@@ -798,6 +819,22 @@ export function SpecViewer({
                     specId={spec.id}
                     specName={spec.name}
                     onClose={() => setIsCopyModalOpen(false)}
+                />
+            )}
+
+            {isMoveToFolderOpen && (
+                <FolderPickerModal
+                    folders={folders}
+                    currentFolderId={spec.folder_id ?? null}
+                    onConfirm={(folderId) => {
+                        startMoveTransition(async () => {
+                            await moveSpecsToFolder([spec.id], folderId, org.slug, project.slug);
+                            setIsMoveToFolderOpen(false);
+                            router.refresh();
+                        });
+                    }}
+                    onClose={() => setIsMoveToFolderOpen(false)}
+                    title="Move Spec to Folder…"
                 />
             )}
         </div>

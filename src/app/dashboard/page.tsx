@@ -242,9 +242,12 @@ export default async function DashboardPage(props: { searchParams: Promise<{ arc
                             <section key={project.id}>
                                 {/* Project header */}
                                 <div className="flex items-center gap-3 mb-1 pb-2 border-b border-slate-200 dark:border-slate-800">
-                                    <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
+                                    <Link
+                                        href={`/${project.organization.slug}/${project.slug}`}
+                                        className="text-sm font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wide hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                    >
                                         {project.name}
-                                    </h2>
+                                    </Link>
                                     <ProjectBadge orgSlug={project.organization.slug} projectSlug={project.slug} />
                                 </div>
 

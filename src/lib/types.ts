@@ -48,9 +48,23 @@ export interface Project {
   organization?: Organization;
 }
 
+export interface SpecFolder {
+  id: string;
+  project_id: string;
+  parent_folder_id: string | null;
+  name: string;
+  slug: string;
+  created_at: string;
+  updated_at: string;
+  // Joined data
+  children?: SpecFolder[];
+  specs?: Spec[];
+}
+
 export interface Spec {
   id: string;
   project_id: string;
+  folder_id: string | null;
   name: string;
   slug: string;
   owner_id: string;
