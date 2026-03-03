@@ -41,7 +41,7 @@ export default function ExtensionPage() {
                             Download the <strong>.vsix</strong> file and install it manually from the Extensions view in your editor using the "Install from VSIX..." command.
                         </p>
                         <a
-                            href="/mdspec-0.0.4.vsix"
+                            href="/mdspec-0.0.7.vsix"
                             download
                             className="px-8 py-4 w-full sm:w-auto min-w-[280px] inline-flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-2xl transition-all duration-200 shadow-lg shadow-blue-500/25 text-lg hover:-translate-y-0.5"
                         >
@@ -50,7 +50,7 @@ export default function ExtensionPage() {
                                 <polyline points="7 10 12 15 17 10" />
                                 <line x1="12" x2="12" y1="15" y2="3" />
                             </svg>
-                            <span>Download mdspec-0.0.4.vsix</span>
+                            <span>Download mdspec-0.0.7.vsix</span>
                         </a>
                     </div>
                 </div>
