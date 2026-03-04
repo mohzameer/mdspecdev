@@ -1,7 +1,7 @@
 ---
 title: "Spec-Driven Development: The Future of AI-Assisted Engineering"
 description: "Explore Spec-Driven Development (SDD), how tools like Kiro are leading the charge, and why mdspec is the missing piece for cross-repo specification management."
-date: "2025-03-05"
+date: "2026-03-05"
 ---
 
 # Spec-Driven Development: The Future of AI-Assisted Engineering
