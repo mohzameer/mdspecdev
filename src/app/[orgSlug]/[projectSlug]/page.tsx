@@ -6,10 +6,14 @@ import { ProjectSpecList } from './ProjectSpecList';
 
 interface Props {
     params: Promise<{ orgSlug: string; projectSlug: string }>;
+    searchParams: Promise<{ archived?: string }>;
 }
 
-export default async function ProjectDetailPage({ params }: Props) {
+export default async function ProjectDetailPage({ params, searchParams }: Props) {
     const { orgSlug, projectSlug } = await params;
+    const { archived } = await searchParams;
+    const showArchived = archived === 'true';
+
     const supabase = await createClient();
     const {
         data: { user },
@@ -69,8 +73,9 @@ export default async function ProjectDetailPage({ params }: Props) {
         }
     }
 
-    // Fetch specs
-    const { data: specs } = await supabase
+    // Fetch specs — active or archived depending on filter
+    // NOTE: filters must be applied before .order() on the Supabase builder
+    let specsQuery = supabase
         .from('specs')
         .select(
             `
@@ -90,9 +95,16 @@ export default async function ProjectDetailPage({ params }: Props) {
       revisions(id)
     `
         )
-        .eq('project_id', project.id)
-        .is('archived_at', null)
-        .order('updated_at', { ascending: false });
+        .eq('project_id', project.id);
+
+    if (showArchived) {
+        specsQuery = specsQuery.filter('archived_at', 'not.is', null);
+    } else {
+        specsQuery = specsQuery.is('archived_at', null);
+    }
+
+    const { data: specs } = await specsQuery.order('updated_at', { ascending: false });
+
 
     // Fetch all folders for this project (flat list; tree is built client-side)
     const { data: folders } = await supabase
@@ -100,6 +112,9 @@ export default async function ProjectDetailPage({ params }: Props) {
         .select('id, project_id, parent_folder_id, name, slug, created_at, updated_at')
         .eq('project_id', project.id)
         .order('name', { ascending: true });
+
+    const baseUrl = `/${org.slug}/${project.slug}`;
+
 
     return (
         <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -124,11 +139,34 @@ export default async function ProjectDetailPage({ params }: Props) {
                             </p>
                         )}
                     </div>
-                    <ProjectHeaderActions
-                        orgSlug={org.slug}
-                        projectSlug={project.slug}
-                        projectId={project.id}
-                    />
+                    <div className="flex items-center gap-3 flex-wrap">
+                        {/* Active / Archived toggle */}
+                        <div className="flex items-center gap-1 bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
+                            <Link
+                                href={baseUrl}
+                                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${!showArchived
+                                    ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white'
+                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                            >
+                                Active
+                            </Link>
+                            <Link
+                                href={`${baseUrl}?archived=true`}
+                                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${showArchived
+                                    ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white'
+                                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                            >
+                                Archived
+                            </Link>
+                        </div>
+                        <ProjectHeaderActions
+                            orgSlug={org.slug}
+                            projectSlug={project.slug}
+                            projectId={project.id}
+                        />
+                    </div>
                 </div>
 
                 <ProjectSpecList
@@ -137,6 +175,7 @@ export default async function ProjectDetailPage({ params }: Props) {
                     orgSlug={org.slug}
                     projectSlug={project.slug}
                     projectId={project.id}
+                    showArchived={showArchived}
                 />
             </div>
         </div>

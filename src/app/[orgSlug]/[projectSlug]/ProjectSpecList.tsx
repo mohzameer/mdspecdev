@@ -5,6 +5,7 @@ import { SpecFolder } from '@/lib/types';
 import { SpecFolderTree, SpecCard } from '@/components/spec/SpecFolderTree';
 import { FolderPickerModal } from '@/components/spec/FolderPickerModal';
 import { moveSpecsToFolder } from '@/app/actions/folders';
+import { archiveSpecs, unarchiveSpecs } from '@/app/actions/spec';
 
 interface SpecCardData {
     id: string;
@@ -29,6 +30,7 @@ interface ProjectSpecListProps {
     orgSlug: string;
     projectSlug: string;
     projectId: string;
+    showArchived?: boolean;
 }
 
 /** Root-level folder IDs (parent_folder_id === null) */
@@ -42,6 +44,7 @@ export function ProjectSpecList({
     orgSlug,
     projectSlug,
     projectId,
+    showArchived = false,
 }: ProjectSpecListProps) {
     const [selected, setSelected] = useState<Set<string>>(new Set());
     const [showBulkPicker, setShowBulkPicker] = useState(false);
@@ -82,6 +85,21 @@ export function ProjectSpecList({
         });
     }
 
+    function handleBulkArchive() {
+        setBulkError(null);
+        startTransition(async () => {
+            const ids = Array.from(selected);
+            const result = showArchived
+                ? await unarchiveSpecs(ids, orgSlug, projectSlug)
+                : await archiveSpecs(ids, orgSlug, projectSlug);
+            if (result.error) {
+                setBulkError(result.error);
+            } else {
+                clearSelection();
+            }
+        });
+    }
+
     const hasSpecs = specs.length > 0;
     const hasFolders = folders.length > 0;
 
@@ -94,11 +112,20 @@ export function ProjectSpecList({
                         {selected.size} spec{selected.size > 1 ? 's' : ''} selected
                     </span>
                     <div className="flex-1" />
+                    {!showArchived && (
+                        <button
+                            onClick={() => setShowBulkPicker(true)}
+                            className="px-3 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors flex items-center gap-1.5"
+                        >
+                            <span>📁</span> Move to…
+                        </button>
+                    )}
                     <button
-                        onClick={() => setShowBulkPicker(true)}
-                        className="px-3 py-1.5 text-sm font-medium bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors flex items-center gap-1.5"
+                        onClick={handleBulkArchive}
+                        disabled={isPending}
+                        className="px-3 py-1.5 text-sm font-medium bg-amber-600 hover:bg-amber-500 disabled:opacity-50 text-white rounded-lg transition-colors flex items-center gap-1.5"
                     >
-                        <span>📁</span> Move to…
+                        {showArchived ? '↩ Unarchive' : '🗄 Archive'}
                     </button>
                     <button
                         onClick={clearSelection}

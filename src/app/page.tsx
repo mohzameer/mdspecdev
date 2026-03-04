@@ -132,19 +132,24 @@ export default async function HomePage() {
               <span className="block mt-1.5 font-medium text-slate-700 dark:text-slate-300">e.g., Connect Backend API documentation seamlessly with Frontend specifications.</span>
             </p>
           </div>
-          <div className="p-3 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden">
+          <a
+            href="https://docs.google.com/forms/d/e/1FAIpQLScSB_JcCZZ-wi97XqawQBvnb24I7Yceyna5LHM4Gr9gsm_P7Q/viewform?usp=publish-editor"
+            target="_blank"
+            rel="noreferrer"
+            className="p-3 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm relative overflow-hidden hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-md transition-all duration-200 block"
+          >
             <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2 flex-wrap">
               <span className="text-xl">🧩</span>
               Cohesive Integrations
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 uppercase tracking-wider">
-                Under Development
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 uppercase tracking-wider">
+                ON REQUEST
               </span>
             </h3>
             <p className="text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
               Position MDSpec as your specification central. An agentic template layer transforms and integrates documents into any external tool.
               <span className="block mt-1.5 font-medium text-slate-700 dark:text-slate-300">e.g., Task templates for ClickUp, Analysis on a spec posted to another tool.</span>
             </p>
-          </div>
+          </a>
         </div>
       </div>
     </div>

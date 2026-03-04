@@ -51,7 +51,7 @@ export default async function OrgDetailPage({ params, searchParams }: Props) {
         redirect('/dashboard');
     }
 
-    // Fetch all projects with their specs
+    // Fetch all projects with their specs (active only for accurate metrics)
     const { data: projects } = await supabase
         .from('projects')
         .select(`
@@ -69,30 +69,39 @@ export default async function OrgDetailPage({ params, searchParams }: Props) {
                 maturity,
                 tags,
                 updated_at,
+                archived_at,
                 owner_id,
                 owner:profiles!specs_owner_id_fkey(id, full_name, avatar_url),
-                comment_threads(id, resolved),
+                comment_threads(id, resolved, comments(id, deleted)),
                 revisions(id)
             )
         `)
         .eq('org_id', org.id)
         .order('name');
 
+    // Keep only non-archived specs for metrics
+    const projectsWithActiveSpecs = (projects ?? []).map(p => ({
+        ...p,
+        specs: (p.specs as any[]).filter((s: any) => !s.archived_at),
+    }));
+
     // Flatten all specs for filtering and metrics
-    const allSpecs = projects?.flatMap(p =>
+    const allSpecs = projectsWithActiveSpecs.flatMap(p =>
         (p.specs as any[] || []).map((s: any) => ({
             ...s,
             projectId: p.id,
             projectName: p.name,
             projectSlug: p.slug
         }))
-    ) || [];
+    );
 
     // Calculate metrics
     const totalSpecs = allSpecs.length;
     const totalProjects = projects?.length || 0;
     const unresolvedComments = allSpecs.reduce((sum, s) =>
-        sum + (s.comment_threads?.filter((t: any) => !t.resolved)?.length || 0), 0
+        sum + (s.comment_threads?.filter((t: any) =>
+            !t.resolved && t.comments?.some((c: any) => !c.deleted)
+        )?.length || 0), 0
     );
     const completedSpecs = allSpecs.filter(s => s.status === 'completed').length;
     const inProgressSpecs = allSpecs.filter(s => s.status === 'in-progress').length;

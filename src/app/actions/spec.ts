@@ -505,3 +505,39 @@ export async function deleteSpec(specId: string, orgSlug: string, projectSlug: s
 
     return { success: true };
 }
+
+export async function archiveSpecs(specIds: string[], orgSlug: string, projectSlug: string) {
+    'use server';
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'You must be logged in' };
+
+    const { error } = await supabase
+        .from('specs')
+        .update({ archived_at: new Date().toISOString() })
+        .in('id', specIds);
+
+    if (error) return { error: error.message };
+
+    revalidatePath(`/${orgSlug}/${projectSlug}`);
+    revalidatePath('/dashboard');
+    return { success: true };
+}
+
+export async function unarchiveSpecs(specIds: string[], orgSlug: string, projectSlug: string) {
+    'use server';
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'You must be logged in' };
+
+    const { error } = await supabase
+        .from('specs')
+        .update({ archived_at: null })
+        .in('id', specIds);
+
+    if (error) return { error: error.message };
+
+    revalidatePath(`/${orgSlug}/${projectSlug}`);
+    revalidatePath('/dashboard');
+    return { success: true };
+}

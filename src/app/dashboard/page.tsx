@@ -38,8 +38,7 @@ type SpecWithRelations = {
     revisions: { id: string }[];
 };
 
-export default async function DashboardPage(props: { searchParams: Promise<{ archived?: string }> }) {
-    const searchParams = await props.searchParams;
+export default async function DashboardPage() {
     const supabase = await createClient();
     const {
         data: { user },
@@ -61,9 +60,6 @@ export default async function DashboardPage(props: { searchParams: Promise<{ arc
 
     const hasOrgs = memberships && memberships.length > 0;
     const orgIds = memberships?.map((m) => m.org_id) || [];
-
-    // Filter handling
-    const showArchived = searchParams?.archived === 'true';
 
     // 1. Fetch all projects for the user's organizations
     let projects: Project[] = [];
@@ -104,13 +100,8 @@ export default async function DashboardPage(props: { searchParams: Promise<{ arc
                 comment_threads(id, resolved, comments(id, deleted)),
                 revisions(id)
             `)
-            .in('project_id', projects.map(p => p.id));
-
-        if (showArchived) {
-            query = query.not('archived_at', 'is', null);
-        } else {
-            query = query.is('archived_at', null);
-        }
+            .in('project_id', projects.map(p => p.id))
+            .is('archived_at', null);
 
         const { data } = await query.order('updated_at', { ascending: false });
         if (data) specs = data as unknown as SpecWithRelations[];
@@ -123,6 +114,8 @@ export default async function DashboardPage(props: { searchParams: Promise<{ arc
         ).length;
 
     // 3. Combine projects and specs, sorting specs within each project
+    const SPECS_PER_PROJECT = 5;
+
     const projectsWithSpecs = projects.map(project => {
         const projectSpecs = specs
             .filter(spec => spec.project_id === project.id)
@@ -135,7 +128,8 @@ export default async function DashboardPage(props: { searchParams: Promise<{ arc
             });
         return {
             ...project,
-            specs: projectSpecs
+            totalSpecCount: projectSpecs.length,
+            specs: projectSpecs.slice(0, SPECS_PER_PROJECT),
         };
     });
 
@@ -175,20 +169,6 @@ export default async function DashboardPage(props: { searchParams: Promise<{ arc
                     {hasOrgs && (
                         <div className="flex items-center gap-4">
                             <RefreshButton />
-                            <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-200 dark:border-slate-700">
-                                <Link
-                                    href="/dashboard"
-                                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${!showArchived ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-                                >
-                                    Active
-                                </Link>
-                                <Link
-                                    href="/dashboard?archived=true"
-                                    className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${showArchived ? 'bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}
-                                >
-                                    Archived
-                                </Link>
-                            </div>
                             <Link
                                 href="/new-spec"
                                 className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
@@ -267,16 +247,22 @@ export default async function DashboardPage(props: { searchParams: Promise<{ arc
                                                             organization: project.organization,
                                                         },
                                                     }}
-                                                    showArchivedStyle={showArchived}
+                                                    showArchivedStyle={false}
                                                 />
                                             ))}
                                         </div>
+                                        {project.totalSpecCount > project.specs.length && (
+                                            <Link
+                                                href={`/${project.organization.slug}/${project.slug}`}
+                                                className="inline-flex items-center gap-1 mt-2 px-3 py-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                            >
+                                                View all {project.totalSpecCount} specs →
+                                            </Link>
+                                        )}
                                     </div>
                                 ) : (
                                     <div className="px-3 py-5 text-sm text-slate-400 dark:text-slate-600 italic">
-                                        {showArchived
-                                            ? 'No archived specifications in this project'
-                                            : 'No specifications have been created in this project'}
+                                        No specifications have been created in this project
                                     </div>
                                 )}
                             </section>
