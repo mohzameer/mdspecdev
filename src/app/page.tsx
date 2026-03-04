@@ -115,21 +115,21 @@ export default async function HomePage() {
           <div className="p-3 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
             <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
               <span className="text-xl">🤝</span>
-              Secure Sharing
+              Sharing &amp; Linking
             </h3>
             <p className="text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
-              Share specifications securely outside of version control platforms. Ideal for cross-team communication and aligning with agentic development workflows.
-              <span className="block mt-1.5 font-medium text-slate-700 dark:text-slate-300">e.g., Compliance, Security Modelling, and Marketing</span>
+              Share and link specifications across independent repositories — no monorepos, no copy-pasting. Ideal for cross-team communication and agentic development workflows.
+              <span className="block mt-1.5 font-medium text-slate-700 dark:text-slate-300">e.g., Compliance, Security Modelling, Marketing, and syncing API docs across Frontend &amp; Backend repos.</span>
             </p>
           </div>
           <div className="p-3 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
             <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
-              <span className="text-xl">🔗</span>
-              Linked Specs
+              <span className="text-xl">☁️</span>
+              Cloud-Stored Specs
             </h3>
             <p className="text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
-              Keep specifications perfectly synced across independent repositories without monorepos or manual copy-pasting.
-              <span className="block mt-1.5 font-medium text-slate-700 dark:text-slate-300">e.g., Connect Backend API documentation seamlessly with Frontend specifications.</span>
+              Keep your repository lean — store specifications in mdspec instead of the repo. As docs grow, download only what you need, when you need it.
+              <span className="block mt-1.5 font-medium text-slate-700 dark:text-slate-300">e.g., Pull the latest API spec directly from mdspec when needed and remove it from repo when you are done — no markdown files cluttering your repository.</span>
             </p>
           </div>
           <a
