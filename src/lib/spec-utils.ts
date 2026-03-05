@@ -230,21 +230,25 @@ export function applyHighlightsToSections(
             }
         }
 
-        // Handle body tokens diff
-        processTokenDiffs(updatedSection.tokens);
+        let contentHtml = updatedSection.contentHtml || '';
 
-        // BUBBLE UP: Set the section-level class if any block inside is changed
-        if (sectionHasModification) {
-            updatedSection.diffClass = 'diff-line-modified';
-        } else if (sectionHasAddition && !updatedSection.diffClass) {
-            updatedSection.diffClass = 'diff-line-added';
+        if (updatedSection.tokens) {
+            // Handle body tokens diff
+            processTokenDiffs(updatedSection.tokens);
+
+            // BUBBLE UP: Set the section-level class if any block inside is changed
+            if (sectionHasModification) {
+                updatedSection.diffClass = 'diff-line-modified';
+            } else if (sectionHasAddition && !updatedSection.diffClass) {
+                updatedSection.diffClass = 'diff-line-added';
+            }
+
+            // 2. Re-render contentHtml from modified tokens
+            const rawHtml = marked.parser(updatedSection.tokens) as string;
+            contentHtml = DOMPurify.sanitize(rawHtml, {
+                ADD_ATTR: ['id', 'class', 'data-code'],
+            });
         }
-
-        // 2. Re-render contentHtml from modified tokens
-        const rawHtml = marked.parser(updatedSection.tokens) as string;
-        let contentHtml = DOMPurify.sanitize(rawHtml, {
-            ADD_ATTR: ['id', 'class', 'data-code'],
-        });
 
         // 3. Quoted text threads (legacy regex approach)
         if (threads.length > 0) {

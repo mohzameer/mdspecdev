@@ -11,7 +11,7 @@ import {
 } from '@/lib/spec-utils';
 
 interface MarkdownRendererProps {
-  content: string;
+  content?: string;
   className?: string;
   onCommentClick?: (headingId: string) => void;
   onTextSelect?: (selectedText: string, nearestHeadingId: string) => void;
@@ -20,10 +20,11 @@ interface MarkdownRendererProps {
   disableHeadingIds?: boolean;
   containerRefCallback?: (ref: React.RefObject<HTMLDivElement | null>) => void;
   frontmatter?: string;
+  precomputedSections?: Section[];
 }
 
 export function MarkdownRenderer({
-  content,
+  content = '',
   className = '',
   onCommentClick,
   onTextSelect,
@@ -32,6 +33,7 @@ export function MarkdownRenderer({
   disableHeadingIds = false,
   containerRefCallback,
   frontmatter,
+  precomputedSections,
 }: MarkdownRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [sections, setSections] = useState<Section[]>([]);
@@ -50,11 +52,15 @@ export function MarkdownRenderer({
     });
   }, []);
 
-  // 2. Parse Markdown into raw sections
+  // 2. Parse Markdown into raw sections or use precomputed
   useEffect(() => {
-    const rawSections = parseMarkdownToSections(content, disableHeadingIds);
-    setSections(rawSections);
-  }, [content, disableHeadingIds]);
+    if (precomputedSections) {
+      setSections(precomputedSections);
+    } else {
+      const rawSections = parseMarkdownToSections(content, disableHeadingIds);
+      setSections(rawSections);
+    }
+  }, [content, precomputedSections, disableHeadingIds]);
 
   // 3. Apply highlights (Comments only now)
   const processedSections = useMemo(() => {

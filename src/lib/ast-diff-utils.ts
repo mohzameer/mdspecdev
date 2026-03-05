@@ -86,3 +86,74 @@ export async function computeAstDiffHtml(oldMarkdown: string, newMarkdown: strin
 
     return String(file);
 }
+
+export interface AstSection {
+    id: string;
+    level: number;
+    titleHtml: string;
+    contentHtml: string;
+}
+
+/**
+ * Utility to process markdown into diff-highlighted AstSections.
+ * This mirrors the section splitting used in standard MarkdownRenderer so we get sticky headers!
+ */
+export async function computeAstDiffSections(oldMarkdown: string, newMarkdown: string): Promise<AstSection[]> {
+    const oldTree = unified().use(remarkParse).use(remarkGfm).parse(oldMarkdown);
+    const processor = unified()
+        .use(remarkParse)
+        .use(remarkGfm)
+        .use(remarkAstDiff, { oldMarkdown });
+
+    // Parse and run plugins to get the decorated MDAST
+    const parsed = processor.parse(newMarkdown);
+    const mdast = await processor.run(parsed);
+
+    const sections: AstSection[] = [];
+    let currentChunk: any[] = [];
+    let currentHeading: any = null;
+
+    const renderMdastToHtml = (mdastRoot: any) => {
+        const hast = unified().use(remarkRehype, { allowDangerousHtml: true }).runSync(mdastRoot);
+        return unified().use(rehypeStringify, { allowDangerousHtml: true }).stringify(hast);
+    };
+
+    const pushSection = () => {
+        if (currentHeading || currentChunk.length > 0) {
+            let id = 'intro';
+            let level = 0;
+            let titleHtml = '';
+
+            if (currentHeading) {
+                level = currentHeading.depth;
+                const headingText = getNodeText(currentHeading);
+                id = headingText.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+
+                // Render just the heading content
+                titleHtml = renderMdastToHtml({ type: 'root', children: currentHeading.children });
+            }
+
+            const contentHtml = renderMdastToHtml({ type: 'root', children: currentChunk });
+
+            sections.push({
+                id,
+                level,
+                titleHtml,
+                contentHtml
+            });
+        }
+    };
+
+    for (const node of (mdast as any).children) {
+        if (node.type === 'heading') {
+            pushSection();
+            currentHeading = node;
+            currentChunk = [];
+        } else {
+            currentChunk.push(node);
+        }
+    }
+    pushSection();
+
+    return sections;
+}
