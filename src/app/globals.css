@@ -285,3 +285,32 @@ a[href^="mention:"]:hover {
 .prose a[href^="mention:"]:hover {
   text-decoration: none !important;
 }
+
+/* Diff line highlighting — green for added lines, yellow for modified */
+p.diff-line-added,
+li.diff-line-added {
+  background-color: rgba(134, 239, 172, 0.25);
+  box-shadow: inset 3px 0 0 #4ade80;
+  border-radius: 2px;
+  padding-left: 4px;
+}
+
+.dark p.diff-line-added,
+.dark li.diff-line-added {
+  background-color: rgba(74, 222, 128, 0.15);
+  box-shadow: inset 3px 0 0 #4ade80;
+}
+
+p.diff-line-modified,
+li.diff-line-modified {
+  background-color: rgba(253, 224, 71, 0.25);
+  box-shadow: inset 3px 0 0 #facc15;
+  border-radius: 2px;
+  padding-left: 4px;
+}
+
+.dark p.diff-line-modified,
+.dark li.diff-line-modified {
+  background-color: rgba(250, 204, 21, 0.15);
+  box-shadow: inset 3px 0 0 #facc15;
+}

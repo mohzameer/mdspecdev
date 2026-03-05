@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useRef, useCallback, useEffect, useTransition } from 'react';
+import { useState, useRef, useCallback, useEffect, useTransition, useMemo } from 'react';
+import { computePositionalDiffs } from '@/lib/diff-utils';
 import Link from 'next/link';
 import { MarkdownRenderer } from '@/components/spec/MarkdownRenderer';
 import { TableOfContents } from '@/components/spec/TableOfContents';
@@ -42,8 +43,15 @@ export interface SpecInfo {
     owner: { id: string; full_name?: string | null } | null;
 }
 
+export interface DiffHighlight {
+    type: 'added' | 'modified';
+    /** Text fragments that were added (op=1 from diff_match_patch). Used for inline marks. */
+    addedTexts: string[];
+}
+
 interface SpecViewerProps {
     content: string;
+    previousContent?: string;
     spec: SpecInfo;
     org: { slug: string; name: string };
     project: { slug: string; name: string };
@@ -58,8 +66,11 @@ interface SpecViewerProps {
     folders?: import('@/lib/types').SpecFolder[];
 }
 
+
+
 export function SpecViewer({
     content,
+    previousContent,
     spec,
     org,
     project,
@@ -73,6 +84,21 @@ export function SpecViewer({
     frontmatter,
     folders = [],
 }: SpecViewerProps) {
+    // Line-level diff: find which lines in the new content were added (green) or modified (yellow).
+    // Inserted line identical to a deleted line = context re-insert, skip.
+    // Inserted line with >80% word overlap to a deleted line = modified (yellow).
+    // Inserted with no similar deleted counterpart = added (green).
+    const { addedLines, modifiedLines } = useMemo(() => {
+        if (!previousContent) return { addedLines: new Set<string>(), modifiedLines: new Set<string>() };
+        return computePositionalDiffs(previousContent, content);
+    }, [content, previousContent]);
+
+
+
+    const hasDiffHighlights = addedLines.size > 0 || modifiedLines.size > 0;
+
+
+
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isTocOpen, setIsTocOpen] = useState(true);
     const [isSummaryOpen, setIsSummaryOpen] = useState(false);
@@ -756,6 +782,8 @@ export function SpecViewer({
                             onHighlightClick={handleHighlightClick}
                             threads={threads}
                             containerRefCallback={handleContainerRef}
+                            addedLines={addedLines}
+                            modifiedLines={modifiedLines}
                         />
                     </div>
 

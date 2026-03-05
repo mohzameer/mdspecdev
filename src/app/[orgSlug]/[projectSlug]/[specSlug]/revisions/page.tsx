@@ -163,7 +163,7 @@ export default async function RevisionsPage({ params }: Props) {
                                         >
                                             View
                                         </Link>
-                                        {index > 0 && (
+                                        {revision.revision_number > 1 && (
                                             <Link
                                                 href={`/${org.slug}/${project.slug}/${specSlug}/revisions/${revision.revision_number}/diff`}
                                                 className="px-3 py-1.5 text-sm bg-slate-100 dark:bg-slate-800/50 hover:bg-slate-200 dark:hover:bg-slate-700/50 text-slate-700 dark:text-white rounded-lg transition-colors"

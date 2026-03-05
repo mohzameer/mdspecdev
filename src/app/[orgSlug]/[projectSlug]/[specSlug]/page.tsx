@@ -65,22 +65,39 @@ export default async function SpecDetailPage({ params }: Props) {
         userRole ? ['owner', 'admin', 'member'].includes(userRole) : true
     );
 
-    const latestRevision = spec.revisions?.sort(
+    const sortedRevisions = spec.revisions?.sort(
         (a, b) => b.revision_number - a.revision_number
-    )[0];
+    ) ?? [];
+    const latestRevision = sortedRevisions[0];
+    const previousRevision = sortedRevisions[1] ?? null;
 
-    let content = '';
-    if (latestRevision?.content_key) {
+    const downloadContent = async (contentKey: string): Promise<string> => {
         const { data } = await supabase.storage
             .from('spec-content')
-            .download(latestRevision.content_key);
-        if (data) {
-            content = await data.text();
-        }
+            .download(contentKey);
+        return data ? await data.text() : '';
+    };
+
+    let content = '';
+    let previousRawContent = '';
+    if (latestRevision?.content_key) {
+        content = await downloadContent(latestRevision.content_key);
+    }
+    if (previousRevision?.content_key) {
+        previousRawContent = await downloadContent(previousRevision.content_key);
     }
 
     // Use robust frontmatter stripping handling various newlines and spacing (handles stacked frontmatters)
     const frontmatterRegex = /^\s*---\r?\n([\s\S]*?)\r?\n---\r?\n+/;
+
+    const stripFrontmatter = (raw: string) => {
+        let stripped = raw;
+        while (frontmatterRegex.test(stripped)) {
+            stripped = stripped.replace(frontmatterRegex, '').trimStart();
+        }
+        return stripped;
+    };
+
     let contentWithoutFrontmatter = content;
     let extractedFrontmatter = '';
 
@@ -90,9 +107,8 @@ export default async function SpecDetailPage({ params }: Props) {
         extractedFrontmatter = match[0].trim();
     }
 
-    while (frontmatterRegex.test(contentWithoutFrontmatter)) {
-        contentWithoutFrontmatter = contentWithoutFrontmatter.replace(frontmatterRegex, '').trimStart();
-    }
+    contentWithoutFrontmatter = stripFrontmatter(content);
+    const previousContent = previousRawContent ? stripFrontmatter(previousRawContent) : undefined;
 
     const unresolvedCount =
         spec.comment_threads?.filter((t) =>
@@ -153,6 +169,7 @@ export default async function SpecDetailPage({ params }: Props) {
 
                 <SpecViewer
                     content={contentWithoutFrontmatter}
+                    previousContent={previousContent}
                     spec={spec}
                     org={org}
                     project={project}
