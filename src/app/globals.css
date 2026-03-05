@@ -288,29 +288,60 @@ a[href^="mention:"]:hover {
 
 /* Diff line highlighting — green for added lines, yellow for modified */
 p.diff-line-added,
-li.diff-line-added {
+li.diff-line-added,
+.section-container.diff-line-added,
+div.diff-line-added {
   background-color: rgba(134, 239, 172, 0.25);
   box-shadow: inset 3px 0 0 #4ade80;
   border-radius: 2px;
-  padding-left: 4px;
 }
 
 .dark p.diff-line-added,
-.dark li.diff-line-added {
+.dark li.diff-line-added,
+.dark .section-container.diff-line-added,
+.dark div.diff-line-added {
   background-color: rgba(74, 222, 128, 0.15);
   box-shadow: inset 3px 0 0 #4ade80;
 }
 
 p.diff-line-modified,
-li.diff-line-modified {
+li.diff-line-modified,
+.section-container.diff-line-modified,
+div.diff-line-modified {
   background-color: rgba(253, 224, 71, 0.25);
   box-shadow: inset 3px 0 0 #facc15;
   border-radius: 2px;
-  padding-left: 4px;
 }
 
 .dark p.diff-line-modified,
-.dark li.diff-line-modified {
+.dark li.diff-line-modified,
+.dark .section-container.diff-line-modified,
+.dark div.diff-line-modified {
   background-color: rgba(250, 204, 21, 0.15);
   box-shadow: inset 3px 0 0 #facc15;
+}
+
+/* Specific adjustments for section containers to look premium */
+.section-container.diff-line-added,
+.section-container.diff-line-modified {
+  padding-left: 0;
+  box-shadow: none;
+  border-left: 4px solid transparent;
+}
+
+.section-container.diff-line-added {
+  border-left-color: #4ade80;
+}
+
+.section-container.diff-line-modified {
+  border-left-color: #facc15;
+}
+
+/* Ensure sticky headers in highlighted sections also catch the color if needed */
+.sticky.diff-line-added {
+  background-color: rgba(134, 239, 172, 0.1) !important;
+}
+
+.sticky.diff-line-modified {
+  background-color: rgba(253, 224, 71, 0.1) !important;
 }

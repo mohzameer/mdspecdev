@@ -88,14 +88,9 @@ export function SpecViewer({
     // Inserted line identical to a deleted line = context re-insert, skip.
     // Inserted line with >80% word overlap to a deleted line = modified (yellow).
     // Inserted with no similar deleted counterpart = added (green).
-    const { addedLines, modifiedLines } = useMemo(() => {
-        if (!previousContent) return { addedLines: new Set<string>(), modifiedLines: new Set<string>() };
-        return computePositionalDiffs(previousContent, content);
-    }, [content, previousContent]);
 
 
 
-    const hasDiffHighlights = addedLines.size > 0 || modifiedLines.size > 0;
 
 
 
@@ -782,8 +777,6 @@ export function SpecViewer({
                             onHighlightClick={handleHighlightClick}
                             threads={threads}
                             containerRefCallback={handleContainerRef}
-                            addedLines={addedLines}
-                            modifiedLines={modifiedLines}
                         />
                     </div>
 
