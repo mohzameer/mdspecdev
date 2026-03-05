@@ -39,7 +39,7 @@ export function CommentItem({
     }
 
     return (
-        <div className="flex gap-3 py-3 group">
+        <div className="flex gap-2 py-1.5 group">
             <div className="flex-shrink-0">
                 {authorAvatar ? (
                     <img
@@ -55,7 +55,7 @@ export function CommentItem({
             </div>
 
             <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
+                <div className="flex items-center gap-2 mb-0.5">
                     <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                         {authorName}
                     </span>
@@ -109,7 +109,7 @@ export function CommentItem({
                                 }
                                 return processedBody;
                             })()}
-                            className="[&>p]:mb-2 [&>p:last-child]:mb-0 text-sm"
+                            className="[&_.section-container]:mb-0 [&_.section-content]:p-0 [&>p]:mb-1 [&>p:last-child]:mb-0 text-sm"
                             disableHeadingIds={true}
                         />
                     </div>
@@ -117,7 +117,7 @@ export function CommentItem({
 
                 {/* Actions */}
                 {!isEditing && isOwner && (
-                    <div className="flex gap-3 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="flex gap-3 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                             onClick={() => setIsEditing(true)}
                             className="text-xs text-slate-500 hover:text-blue-600 dark:hover:text-blue-400 font-medium"

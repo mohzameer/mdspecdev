@@ -257,14 +257,27 @@ export function applyHighlightsToSections(
                 const htmlEncode = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
                 const markTag = (threadId: string, content: string) => `<mark class="quoted-highlight bg-amber-100 dark:bg-amber-900/40 rounded-sm cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors px-0.5" data-thread-id="${threadId}">${content}</mark>`;
 
+                let titleHtml = updatedSection.titleHtml || '';
+
                 for (const thread of quotedThreads) {
                     const encodedSearch = htmlEncode(thread.quoted_text!);
+
+                    // Try contentHtml first
                     const idx = contentHtml.indexOf(encodedSearch);
                     if (idx !== -1) {
                         const matched = contentHtml.substring(idx, idx + encodedSearch.length);
                         contentHtml = contentHtml.substring(0, idx) + markTag(thread.id, matched) + contentHtml.substring(idx + encodedSearch.length);
                     }
+
+                    // Also try titleHtml for heading-level selections
+                    const titleIdx = titleHtml.indexOf(encodedSearch);
+                    if (titleIdx !== -1) {
+                        const matched = titleHtml.substring(titleIdx, titleIdx + encodedSearch.length);
+                        titleHtml = titleHtml.substring(0, titleIdx) + markTag(thread.id, matched) + titleHtml.substring(titleIdx + encodedSearch.length);
+                    }
                 }
+
+                updatedSection.titleHtml = titleHtml;
             }
         }
 

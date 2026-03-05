@@ -39,9 +39,9 @@ export function CommentThread({
     const showResolveButton = !isReadOnly && (canResolve || isThreadAuthor);
 
     return (
-        <div className={`border rounded-lg mb-4 bg-white dark:bg-slate-900 shadow-sm ${isResolved ? 'border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/10' : 'border-slate-200 dark:border-slate-700'}`}>
+        <div className={`border rounded-lg mb-3 bg-white dark:bg-slate-900 ${isResolved ? 'border-green-200 dark:border-green-900 bg-green-50 dark:bg-green-900/10' : 'border-slate-200 dark:border-slate-700'}`}>
             <div className="flex flex-col border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 rounded-t-lg">
-                <div className="flex items-center justify-between px-4 py-2">
+                <div className="flex items-center justify-between px-3 py-1.5">
                     <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         {isResolved ? 'Resolved' : 'Active Thread'}
                     </span>
@@ -57,7 +57,7 @@ export function CommentThread({
                     )}
                 </div>
                 {quotedText && (
-                    <div className="px-4 pb-2">
+                    <div className="px-3 pb-2">
                         <blockquote className="text-xs text-slate-600 dark:text-slate-400 border-l-2 border-amber-400 pl-2 py-0.5 italic line-clamp-3 bg-white dark:bg-slate-900/50 rounded-r">
                             &ldquo;{quotedText}&rdquo;
                         </blockquote>
@@ -65,7 +65,7 @@ export function CommentThread({
                 )}
             </div>
 
-            <div className="p-4 space-y-4">
+            <div className="p-3 space-y-2">
                 {comments.length === 0 ? (
                     <p className="text-sm text-slate-400 italic">No comments yet.</p>
                 ) : (
@@ -83,7 +83,7 @@ export function CommentThread({
 
                 {!isReadOnly && (
                     isReplying ? (
-                        <div className="mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <div className="mt-2 pt-2 border-t border-slate-100 dark:border-slate-800">
                             <CommentInput
                                 onSubmit={async (content, mentions) => {
                                     await onAddReply(thread.id, content, mentions);

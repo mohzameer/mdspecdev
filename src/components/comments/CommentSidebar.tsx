@@ -68,12 +68,12 @@ export function CommentSidebar({
             <div
                 ref={sidebarRef}
                 className={`
-                    fixed inset-y-0 right-0 z-50 w-[90vw] sm:w-96 h-screen bg-white dark:bg-slate-900 flex flex-col shadow-2xl rounded-l-2xl border-l border-slate-200 dark:border-slate-800
-                    lg:static lg:h-[calc(100vh-8rem)] lg:rounded-l-none lg:rounded-r-xl lg:sticky lg:top-24 lg:shadow-sm lg:ml-4
+                    fixed inset-y-0 right-0 z-50 w-[90vw] sm:w-96 h-screen bg-white dark:bg-slate-900 flex flex-col rounded-l-2xl border-l border-slate-200 dark:border-slate-800
+                    lg:static lg:h-[calc(100vh-8rem)] lg:rounded-2xl lg:border lg:border-slate-200 lg:dark:border-slate-800 lg:sticky lg:top-24 lg:ml-4
                     transition-transform duration-300 ease-in-out transform ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
                 `}
             >
-                <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800">
                     <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Comments</h2>
                     <button
                         onClick={onClose}
@@ -85,9 +85,9 @@ export function CommentSidebar({
                     </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div className="flex-1 overflow-y-auto p-3 space-y-3">
                     {showNewCommentInput && (
-                        <div className="mb-6">
+                        <div className="mb-3">
                             {activeQuotedText ? (
                                 <div className="mb-3">
                                     <p className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1 uppercase tracking-wide">

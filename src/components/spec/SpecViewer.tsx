@@ -473,11 +473,18 @@ export function SpecViewer({
 
                     {/* Content Section */}
                     {isShowingDiff && previousContent ? (
-                        <div className="prose prose-slate dark:prose-invert max-w-none text-lg leading-relaxed">
-                            <RenderedAstDiff oldContent={previousContent} newContent={content} />
+                        <div className="prose prose-slate dark:prose-invert max-w-none text-base leading-relaxed">
+                            <RenderedAstDiff
+                                oldContent={previousContent}
+                                newContent={content}
+                                onCommentClick={handleCommentClick}
+                                onHighlightClick={handleHighlightClick}
+                                threads={threads}
+                                containerRefCallback={handleContainerRef}
+                            />
                         </div>
                     ) : (
-                        <div className="prose prose-slate dark:prose-invert max-w-none text-lg leading-relaxed bg-transparent border-0">
+                        <div className="prose prose-slate dark:prose-invert max-w-none text-base leading-relaxed bg-transparent border-0">
                             <MarkdownRenderer
                                 content={content}
                                 onCommentClick={handleCommentClick}
@@ -489,7 +496,7 @@ export function SpecViewer({
                     )}
 
                     {/* Selection Popover - rendered relative to the content area */}
-                    {markdownContainerRef.current && !isShowingDiff && (
+                    {markdownContainerRef.current && (
                         <SelectionPopover
                             containerRef={markdownContainerRef.current as React.RefObject<HTMLElement | null>}
                             onComment={handleTextSelect}

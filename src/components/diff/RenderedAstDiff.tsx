@@ -2,13 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { MarkdownRenderer } from '@/components/spec/MarkdownRenderer';
+import type { CommentThread } from '@/lib/types';
 
 interface RenderedAstDiffProps {
     oldContent: string;
     newContent: string;
+    onCommentClick?: (headingId: string) => void;
+    onHighlightClick?: (threadId: string) => void;
+    threads?: CommentThread[];
+    containerRefCallback?: (ref: React.RefObject<HTMLDivElement | null>) => void;
 }
 
-export function RenderedAstDiff({ oldContent, newContent }: RenderedAstDiffProps) {
+export function RenderedAstDiff({ oldContent, newContent, onCommentClick, onHighlightClick, threads, containerRefCallback }: RenderedAstDiffProps) {
     const [astSections, setAstSections] = useState<any[] | null>(null);
 
     useEffect(() => {
@@ -33,5 +38,14 @@ export function RenderedAstDiff({ oldContent, newContent }: RenderedAstDiffProps
         );
     }
 
-    return <MarkdownRenderer precomputedSections={astSections} disableHeadingIds={true} />;
+    return (
+        <MarkdownRenderer
+            precomputedSections={astSections}
+            disableHeadingIds={true}
+            onCommentClick={onCommentClick}
+            onHighlightClick={onHighlightClick}
+            threads={threads}
+            containerRefCallback={containerRefCallback}
+        />
+    );
 }

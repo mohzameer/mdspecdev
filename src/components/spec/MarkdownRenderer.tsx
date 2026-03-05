@@ -121,24 +121,16 @@ export function MarkdownRenderer({
         const HeadingTag = (`h${section.level || 1}`) as 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
 
         return (
-          <div key={`${section.id}-${index}`} className="section-container mb-8 rounded-lg transition-colors">
+          <div key={`${section.id}-${index}`} className="section-container mb-2 rounded-lg transition-colors">
             {section.level > 0 && (
-              <div className="sticky top-16 z-10 py-4 bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-md flex items-center group [mask-image:linear-gradient(to_bottom,black_70%,transparent_100%)]">
+              <div className="sticky top-16 z-10 pt-4 pb-2 bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-md flex items-center group [mask-image:linear-gradient(to_bottom,black_70%,transparent_100%)]">
                 <HeadingTag id={section.id} className="!m-0 scroll-mt-20">
                   <span dangerouslySetInnerHTML={{ __html: section.titleHtml }} />
                 </HeadingTag>
                 <a href={`#${section.id}`} className="ml-2 opacity-0 group-hover:opacity-100 text-slate-300 transition-opacity">#</a>
-                {!disableHeadingIds && onCommentClick && (
-                  <button
-                    className="comment-trigger opacity-0 group-hover:opacity-100 ml-2 text-slate-400 hover:text-blue-500 transition-colors"
-                    data-heading-id={section.id}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path></svg>
-                  </button>
-                )}
               </div>
             )}
-            <div className="section-content pt-4 pb-4 px-2" dangerouslySetInnerHTML={{ __html: section.contentHtml }} />
+            <div className="section-content pt-2 pb-4 px-2" dangerouslySetInnerHTML={{ __html: section.contentHtml }} />
           </div>
         );
       })}
