@@ -28,6 +28,32 @@ interface RPCResult {
     project: { name: string; slug: string };
 }
 
+import { Metadata } from 'next';
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+    const { orgSlug, projectSlug, specSlug } = await params;
+    const supabase = await createClient();
+
+    const { data: result } = await supabase.rpc('get_spec_by_slugs', {
+        p_org_slug: orgSlug,
+        p_project_slug: projectSlug,
+        p_spec_slug: specSlug,
+    });
+
+    if (!result) {
+        return {
+            title: 'Not Found | mdspec',
+        };
+    }
+
+    const { spec } = result as unknown as RPCResult;
+    const title = spec.file_name ? `${spec.name} - ${spec.file_name}` : spec.name;
+
+    return {
+        title: title,
+    };
+}
+
 export default async function SpecDetailPage({ params }: Props) {
     const { orgSlug, projectSlug, specSlug } = await params;
     const supabase = await createClient();
