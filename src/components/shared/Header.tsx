@@ -207,7 +207,7 @@ export function Header() {
 
                 {/* Centered Sticky Title */}
                 <div
-                    className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-w-[40%] flex items-center gap-2 justify-center transition-all duration-300 ease-in-out z-0 pointer-events-none ${isStickyTitleVisible ? 'opacity-100 translate-y-[-50%]' : 'opacity-0 translate-y-[0%]'
+                    className={`hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-w-[40%] items-center gap-2 justify-center transition-all duration-300 ease-in-out z-0 pointer-events-none ${isStickyTitleVisible ? 'opacity-100 translate-y-[-50%]' : 'opacity-0 translate-y-[0%]'
                         }`}
                 >
                     <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">

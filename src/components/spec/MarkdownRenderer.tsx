@@ -110,7 +110,7 @@ export function MarkdownRenderer({
   }, [handleClick]);
 
   return (
-    <div ref={containerRef} className={`prose prose-slate dark:prose-invert max-w-none ${className}`}>
+    <div ref={containerRef} className={`prose prose-slate dark:prose-invert max-w-none prose-h1:text-3xl md:prose-h1:text-4xl prose-h2:text-2xl md:prose-h2:text-3xl ${className}`}>
       {frontmatter && (
         <div className="mb-8 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-slate-50 dark:bg-black/20 p-3">
           <span className="text-xs font-semibold text-slate-500 uppercase font-sans">Frontmatter Metadata</span>

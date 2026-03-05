@@ -357,7 +357,7 @@ export function SpecViewer({
             )}
 
             {/* Minimal Top Bar */}
-            <div ref={headerCardRef} className="flex items-center justify-between mb-4 md:mb-8 pb-4 border-b border-slate-200 dark:border-slate-800">
+            <div ref={headerCardRef} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-0 mb-4 md:mb-8 pb-4 border-b border-slate-200 dark:border-slate-800">
                 <div className="flex-1 min-w-0 pr-3">
                     <h1 className="text-xl md:text-3xl font-bold text-slate-900 dark:text-white truncate">
                         {spec.name}
@@ -371,7 +371,7 @@ export function SpecViewer({
                         </div>
                     )}
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex flex-wrap items-center gap-2 flex-shrink-0">
                     {aiSummary && (
                         <button
                             onClick={() => setIsSummaryOpen(!isSummaryOpen)}
@@ -442,7 +442,7 @@ export function SpecViewer({
             </div>
 
             <div className={`flex items-start transition-all duration-300 relative justify-center ${isSidebarOpen && !isTocOpen ? 'lg:gap-2' : 'lg:gap-6'}`}>
-                <div className="flex-1 min-w-0 relative w-full max-w-3xl lg:max-w-4xl mx-auto px-4 md:px-8 py-6 md:py-8 mb-12 bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl min-h-screen">
+                <div className="flex-1 min-w-0 relative w-full max-w-3xl lg:max-w-4xl mx-auto px-3 sm:px-4 md:px-8 py-4 sm:py-6 md:py-8 mb-12 bg-white dark:bg-slate-900/50 border-x sm:border border-slate-200 dark:border-slate-800 rounded-none sm:rounded-2xl min-h-screen">
                     {/* Summary Section - shown only when toggled on */}
                     {aiSummary && isSummaryOpen && (
                         <div className="mb-8 p-6 bg-slate-50 dark:bg-slate-800/20 border border-slate-200 dark:border-slate-800 rounded-xl">
