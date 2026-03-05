@@ -132,15 +132,11 @@ export function CommentSidebar({
                                 t.comments && t.comments.some(c => !c.deleted)
                             ) || [];
 
-                            // Sort threads to bring active thread to top
-                            const sortedThreads = [...visibleThreads];
-                            if (activeHeadingId && sortedThreads.length > 0) {
-                                const activeIndex = sortedThreads.findIndex(t => t.anchor_heading_id === activeHeadingId);
-                                if (activeIndex > 0) {
-                                    const [activeThread] = sortedThreads.splice(activeIndex, 1);
-                                    sortedThreads.unshift(activeThread);
-                                }
-                            }
+                            // Sort: unresolved first (oldest first), then resolved (oldest first)
+                            const sortedThreads = [...visibleThreads].sort((a, b) => {
+                                if (a.resolved !== b.resolved) return a.resolved ? 1 : -1;
+                                return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+                            });
                             return sortedThreads;
                         })()?.map(thread => (
                             <div key={thread.id} id={`thread-${thread.anchor_heading_id}`}>

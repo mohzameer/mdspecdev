@@ -6,6 +6,32 @@ import rehypeStringify from 'rehype-stringify';
 import { visit } from 'unist-util-visit';
 import { diff_match_patch } from 'diff-match-patch';
 
+/**
+ * Post-processes HTML to replace plain <pre><code> blocks with the styled
+ * code block wrapper (language label + copy/visualise buttons) matching getSpecRenderer.
+ */
+function enhanceCodeBlocks(html: string): string {
+    return html.replace(
+        /<pre><code(?:\s+class="language-([^"]*)")?>([\s\S]*?)<\/code><\/pre>/g,
+        (_, lang, escapedCode) => {
+            const language = lang || 'text';
+            const isMermaid = language === 'mermaid';
+
+            if (isMermaid) {
+                const decodedCode = escapedCode
+                    .replace(/&amp;/g, '&')
+                    .replace(/&lt;/g, '<')
+                    .replace(/&gt;/g, '>')
+                    .replace(/&quot;/g, '"');
+                const encodedCode = encodeURIComponent(decodedCode);
+                return `<div class="code-block-wrapper group relative my-4"><div class="code-block-header flex items-center justify-between px-4 py-2 bg-slate-100 dark:bg-slate-800 border border-b-0 border-slate-200 dark:border-slate-700 rounded-t-lg"><span class="text-xs font-medium text-slate-500 dark:text-slate-400">mermaid</span><div class="flex gap-2"><button type="button" class="visualise-btn px-2 py-1 text-xs bg-slate-200 dark:bg-slate-700 !text-slate-600 dark:!text-slate-300 !no-underline rounded hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors" data-code="${encodedCode}">Visualise</button><button type="button" class="copy-btn px-2 py-1 text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors" data-code="${escapedCode}">Copy</button></div></div><pre class="!mt-0 !rounded-t-none border border-t-0 border-slate-200 dark:border-slate-700"><code class="language-mermaid">${escapedCode}</code></pre></div>`;
+            }
+
+            return `<div class="code-block-wrapper group relative my-4"><div class="code-block-header flex items-center justify-between px-4 py-2 bg-slate-100 dark:bg-slate-800 border border-b-0 border-slate-200 dark:border-slate-700 rounded-t-lg"><span class="text-xs font-medium text-slate-500 dark:text-slate-400">${language}</span><div class="flex gap-2"><button type="button" class="copy-btn px-2 py-1 text-xs bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors" data-code="${escapedCode}">Copy</button></div></div><pre class="!mt-0 !rounded-t-none border border-t-0 border-slate-200 dark:border-slate-700"><code class="language-${language}">${escapedCode}</code></pre></div>`;
+        }
+    );
+}
+
 function getNodeText(node: any): string {
     if (node.value) return node.value;
     if (node.children) return node.children.map(getNodeText).join('');
@@ -133,7 +159,9 @@ export async function computeAstDiffSections(oldMarkdown: string, newMarkdown: s
                 titleHtml = renderMdastToHtml({ type: 'root', children: currentHeading.children });
             }
 
-            const contentHtml = renderMdastToHtml({ type: 'root', children: currentChunk });
+            const contentHtml = enhanceCodeBlocks(
+                renderMdastToHtml({ type: 'root', children: currentChunk })
+            );
 
             sections.push({
                 id,

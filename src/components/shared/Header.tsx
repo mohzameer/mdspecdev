@@ -23,7 +23,7 @@ export function Header() {
     const [loading, setLoading] = useState(true);
     const pathname = usePathname();
     const supabase = createClient();
-    const { title: stickyTitle, isVisible: isStickyTitleVisible } = useStickyHeader();
+    const { title: stickyTitle, subtitle: stickySubtitle, isVisible: isStickyTitleVisible } = useStickyHeader();
 
     const [currentOrgSlug, setCurrentOrgSlug] = useState<string | null>(null);
     const [orgName, setOrgName] = useState<string | null>(null);
@@ -207,12 +207,20 @@ export function Header() {
 
                 {/* Centered Sticky Title */}
                 <div
-                    className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-w-[40%] flex justify-center transition-all duration-300 ease-in-out z-0 pointer-events-none ${isStickyTitleVisible ? 'opacity-100 translate-y-[-50%]' : 'opacity-0 translate-y-[0%]'
+                    className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 max-w-[40%] flex items-center gap-2 justify-center transition-all duration-300 ease-in-out z-0 pointer-events-none ${isStickyTitleVisible ? 'opacity-100 translate-y-[-50%]' : 'opacity-0 translate-y-[0%]'
                         }`}
                 >
-                    <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate px-4">
+                    <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200 truncate">
                         {stickyTitle}
                     </h2>
+                    {stickySubtitle && (
+                        <>
+                            <span className="text-slate-300 dark:text-slate-600 text-sm">·</span>
+                            <span className="text-xs text-slate-500 dark:text-slate-400 font-mono truncate">
+                                {stickySubtitle}
+                            </span>
+                        </>
+                    )}
                 </div>
 
                 <div className="flex items-center gap-4 z-10">

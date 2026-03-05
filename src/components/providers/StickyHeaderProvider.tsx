@@ -4,8 +4,10 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface StickyHeaderContextType {
     title: string | null;
+    subtitle: string | null;
     isVisible: boolean;
     setTitle: (title: string | null) => void;
+    setSubtitle: (subtitle: string | null) => void;
     setIsVisible: (isVisible: boolean) => void;
 }
 
@@ -13,10 +15,11 @@ const StickyHeaderContext = createContext<StickyHeaderContextType | undefined>(u
 
 export function StickyHeaderProvider({ children }: { children: ReactNode }) {
     const [title, setTitle] = useState<string | null>(null);
+    const [subtitle, setSubtitle] = useState<string | null>(null);
     const [isVisible, setIsVisible] = useState(false);
 
     return (
-        <StickyHeaderContext.Provider value={{ title, isVisible, setTitle, setIsVisible }}>
+        <StickyHeaderContext.Provider value={{ title, subtitle, isVisible, setTitle, setSubtitle, setIsVisible }}>
             {children}
         </StickyHeaderContext.Provider>
     );
