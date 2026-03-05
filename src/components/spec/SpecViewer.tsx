@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect, useTransition, useMemo } from 'react';
-import { computePositionalDiffs } from '@/lib/diff-utils';
+
 import Link from 'next/link';
 import { MarkdownRenderer } from '@/components/spec/MarkdownRenderer';
 import { TableOfContents } from '@/components/spec/TableOfContents';
@@ -24,6 +24,7 @@ import { useRouter } from 'next/navigation';
 import { CopySpecModal } from '@/components/spec/CopySpecModal';
 import { FolderPickerModal } from '@/components/spec/FolderPickerModal';
 import { useStickyHeader } from '@/components/providers/StickyHeaderProvider';
+import { RenderedAstDiff } from '@/components/diff/RenderedAstDiff';
 
 export interface SpecInfo {
     id: string;
@@ -97,6 +98,7 @@ export function SpecViewer({
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isTocOpen, setIsTocOpen] = useState(true);
     const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+    const [isShowingDiff, setIsShowingDiff] = useState(!!(previousContent && previousContent !== content));
     const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
     const [activeQuotedText, setActiveQuotedText] = useState<string | null>(null);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -645,6 +647,30 @@ export function SpecViewer({
                                         </div>
                                     )}
 
+                                    {/* View Diff toggle if previousContent exists */}
+                                    {previousContent && previousContent !== content && (
+                                        <div className="border-t border-slate-100 dark:border-slate-700/50 my-1">
+                                            <button
+                                                onClick={() => {
+                                                    setIsShowingDiff(!isShowingDiff);
+                                                    setIsOverflowMenuOpen(false);
+                                                }}
+                                                className="w-full text-left px-4 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700/50 flex items-center justify-between gap-2"
+                                            >
+                                                <div className="flex items-center gap-2">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                                    </svg>
+                                                    {isShowingDiff ? 'Hide Differences' : 'Show Differences'}
+                                                </div>
+                                                {isShowingDiff && (
+                                                    <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                                )}
+                                            </button>
+                                        </div>
+                                    )}
+
                                     {/* History */}
                                     <Link
                                         href={`/${org.slug}/${project.slug}/${spec.slug}/revisions`}
@@ -659,6 +685,8 @@ export function SpecViewer({
                                 </div>
                             )}
                         </div>
+
+
 
                         {/* Edit — always visible */}
                         {canEdit && (
@@ -754,7 +782,7 @@ export function SpecViewer({
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                                 </svg>
-                                Show Difference
+                                Compare with v{latestRevisionNumber - 1}
                             </Link>
                         )}
                     </div>
@@ -770,18 +798,24 @@ export function SpecViewer({
             <div className={`flex items-start transition-all duration-300 relative ${isSidebarOpen && !isTocOpen ? 'lg:gap-2' : 'lg:gap-6'}`}>
                 <div className="flex-1 min-w-0 relative w-full lg:w-auto">
                     {/* Content Section */}
-                    <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
-                        <MarkdownRenderer
-                            content={content}
-                            onCommentClick={handleCommentClick}
-                            onHighlightClick={handleHighlightClick}
-                            threads={threads}
-                            containerRefCallback={handleContainerRef}
-                        />
-                    </div>
+                    {isShowingDiff && previousContent ? (
+                        <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 lg:p-8">
+                            <RenderedAstDiff oldContent={previousContent} newContent={content} />
+                        </div>
+                    ) : (
+                        <div className="bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 p-8 shadow-sm">
+                            <MarkdownRenderer
+                                content={content}
+                                onCommentClick={handleCommentClick}
+                                onHighlightClick={handleHighlightClick}
+                                threads={threads}
+                                containerRefCallback={handleContainerRef}
+                            />
+                        </div>
+                    )}
 
                     {/* Selection Popover - rendered relative to the content area */}
-                    {markdownContainerRef.current && (
+                    {markdownContainerRef.current && !isShowingDiff && (
                         <SelectionPopover
                             containerRef={markdownContainerRef.current as React.RefObject<HTMLElement | null>}
                             onComment={handleTextSelect}

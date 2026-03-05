@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo, useState, useRef, useCallback } from 'react';
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react';
 import { diff_match_patch, Diff } from 'diff-match-patch';
 import { MarkdownRenderer } from '../spec/MarkdownRenderer';
 import { slugify } from '@/lib/utils';
+import { RenderedAstDiff } from './RenderedAstDiff';
 
 interface Comment {
     id: string;
@@ -310,7 +311,7 @@ export function DiffViewer({ oldContent, newContent, comments = [], hideSummaryP
                 <div className="p-4 overflow-x-auto">
                     {viewMode === 'unified' && <UnifiedDiff diffs={diffs} />}
                     {viewMode === 'split' && <SplitDiff oldContent={oldContent} newContent={newContent} />}
-                    {viewMode === 'rendered' && <RenderedDiff oldContent={oldContent} newContent={newContent} />}
+                    {viewMode === 'rendered' && <RenderedAstDiff oldContent={oldContent} newContent={newContent} />}
                 </div>
             </div>
         </div>
@@ -428,34 +429,4 @@ function SplitDiff({
     );
 }
 
-function RenderedDiff({
-    oldContent,
-    newContent,
-}: {
-    oldContent: string;
-    newContent: string;
-}) {
-    return (
-        <div className="grid grid-cols-2 gap-4">
-            {/* Old side - Rendered */}
-            <div className="bg-red-50/50 dark:bg-red-500/5 rounded-lg overflow-hidden border border-red-200 dark:border-red-500/20">
-                <div className="px-4 py-2 border-b border-red-200 dark:border-red-500/20 text-sm text-red-600 dark:text-red-400 font-medium bg-red-50 dark:bg-red-500/10">
-                    Previous Version
-                </div>
-                <div className="p-4">
-                    <MarkdownRenderer content={oldContent} disableHeadingIds={true} />
-                </div>
-            </div>
-
-            {/* New side - Rendered */}
-            <div className="bg-green-50/50 dark:bg-green-500/5 rounded-lg overflow-hidden border border-green-200 dark:border-green-500/20">
-                <div className="px-4 py-2 border-b border-green-200 dark:border-green-500/20 text-sm text-green-600 dark:text-green-400 font-medium bg-green-50 dark:bg-green-500/10">
-                    Current Version
-                </div>
-                <div className="p-4">
-                    <MarkdownRenderer content={newContent} disableHeadingIds={true} />
-                </div>
-            </div>
-        </div>
-    );
-}
+// The component RenderedAstDiff is now imported and RenderedDiff has been removed
