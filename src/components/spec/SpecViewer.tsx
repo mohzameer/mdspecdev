@@ -98,7 +98,7 @@ export function SpecViewer({
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isTocOpen, setIsTocOpen] = useState(true);
     const [isSummaryOpen, setIsSummaryOpen] = useState(false);
-    const [isShowingDiff, setIsShowingDiff] = useState(!!(previousContent && previousContent !== content));
+    const [isShowingDiff, setIsShowingDiff] = useState(false);
     const [activeHeadingId, setActiveHeadingId] = useState<string | null>(null);
     const [activeQuotedText, setActiveQuotedText] = useState<string | null>(null);
     const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
