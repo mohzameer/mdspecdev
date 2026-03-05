@@ -88,15 +88,6 @@ body {
   padding-bottom: 0.5rem;
 }
 
-.prose h1,
-.prose h2 {
-  @apply border-b border-slate-200;
-}
-
-.dark .prose h1,
-.dark .prose h2 {
-  @apply border-b border-white/10;
-}
 
 .prose h2 {
   font-size: 1.75rem;

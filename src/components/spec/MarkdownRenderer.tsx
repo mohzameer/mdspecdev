@@ -117,7 +117,7 @@ export function MarkdownRenderer({
         return (
           <div key={`${section.id}-${index}`} className="section-container mb-8 rounded-lg transition-colors">
             {section.level > 0 && (
-              <div className="sticky top-16 z-10 py-1 bg-white dark:bg-[#0B1120] border-b border-slate-100 dark:border-slate-800 flex items-center group">
+              <div className="sticky top-16 z-10 py-4 bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-md flex items-center group [mask-image:linear-gradient(to_bottom,black_70%,transparent_100%)]">
                 <HeadingTag id={section.id} className="!m-0 scroll-mt-20">
                   <span dangerouslySetInnerHTML={{ __html: section.titleHtml }} />
                 </HeadingTag>
