@@ -21,6 +21,7 @@ interface UserInfo {
 export function Header() {
     const [user, setUser] = useState<UserInfo | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pathname = usePathname();
     const supabase = createClient();
     const { title: stickyTitle, subtitle: stickySubtitle, isVisible: isStickyTitleVisible } = useStickyHeader();
@@ -235,6 +236,20 @@ export function Header() {
 
                     {user && <NotificationBell />}
 
+                    <button
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        className="md:hidden p-2 -ml-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors"
+                        aria-label="Toggle mobile menu"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {isMobileMenuOpen ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            ) : (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                            )}
+                        </svg>
+                    </button>
+
                     {loading ? (
                         <div className="h-9 w-9 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
                     ) : user ? (
@@ -249,6 +264,73 @@ export function Header() {
                     )}
                 </div>
             </div>
+
+            {/* Mobile Navigation Dropdown */}
+            {isMobileMenuOpen && (
+                <div className="md:hidden absolute top-16 left-0 right-0 border-b border-slate-200 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-lg z-50">
+                    <nav className="flex flex-col px-4 py-4 space-y-4">
+                        {user ? (
+                            <>
+                                <Link
+                                    href="/dashboard"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className={`text-base font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${pathname === '/dashboard'
+                                        ? 'text-blue-600 dark:text-blue-400'
+                                        : 'text-slate-700 dark:text-slate-300'
+                                        }`}
+                                >
+                                    Dashboard
+                                </Link>
+                                {orgName && (
+                                    <Link
+                                        href={`/${currentOrgSlug}`}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className={`text-base font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${pathname?.startsWith(`/${currentOrgSlug}`)
+                                            ? 'text-blue-600 dark:text-blue-400'
+                                            : 'text-slate-700 dark:text-slate-300'
+                                            }`}
+                                    >
+                                        {orgName}
+                                    </Link>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <Link
+                                    href="/blog"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className={`text-base font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${pathname?.startsWith('/blog')
+                                        ? 'text-blue-600 dark:text-blue-400'
+                                        : 'text-slate-700 dark:text-slate-300'
+                                        }`}
+                                >
+                                    Blog
+                                </Link>
+                                <Link
+                                    href="/guide"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className={`text-base font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${pathname?.startsWith('/guide')
+                                        ? 'text-blue-600 dark:text-blue-400'
+                                        : 'text-slate-700 dark:text-slate-300'
+                                        }`}
+                                >
+                                    Guide
+                                </Link>
+                                <Link
+                                    href="/contact"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className={`text-base font-medium transition-colors hover:text-blue-600 dark:hover:text-blue-400 ${pathname === '/contact'
+                                        ? 'text-blue-600 dark:text-blue-400'
+                                        : 'text-slate-700 dark:text-slate-300'
+                                        }`}
+                                >
+                                    Contact
+                                </Link>
+                            </>
+                        )}
+                    </nav>
+                </div>
+            )}
         </header>
     );
 }

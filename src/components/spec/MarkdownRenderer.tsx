@@ -123,11 +123,27 @@ export function MarkdownRenderer({
         return (
           <div key={`${section.id}-${index}`} className="section-container mb-2 rounded-lg transition-colors">
             {section.level > 0 && (
-              <div className="sticky top-16 z-10 pt-4 pb-2 bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-md flex items-center group [mask-image:linear-gradient(to_bottom,black_70%,transparent_100%)]">
+              <div className="sticky top-16 z-10 pt-4 pb-2 bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-md flex items-center justify-between group [mask-image:linear-gradient(to_bottom,black_70%,transparent_100%)] pr-2">
                 <HeadingTag id={section.id} className="!m-0 scroll-mt-20">
                   <span dangerouslySetInnerHTML={{ __html: section.titleHtml }} />
                 </HeadingTag>
-                <a href={`#${section.id}`} className="ml-2 opacity-0 group-hover:opacity-100 text-slate-300 transition-opacity">#</a>
+                <div className="flex flex-shrink-0 items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity bg-white/50 dark:bg-[#0B1120]/50 ml-4 rounded-lg">
+                  <button
+                    type="button"
+                    className="comment-trigger p-1.5 text-slate-400 hover:text-blue-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-all outline-none"
+                    data-heading-id={section.id}
+                    title="Comment on section"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </button>
+                  <a href={`#${section.id}`} className="p-1.5 text-slate-300 hover:text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-all outline-none" title="Link to section">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                    </svg>
+                  </a>
+                </div>
               </div>
             )}
             <div className="section-content pt-2 pb-4 px-2" dangerouslySetInnerHTML={{ __html: section.contentHtml }} />

@@ -14,6 +14,7 @@ export function SelectionPopover({ containerRef, onComment, isReadOnly = false }
     const [selectedText, setSelectedText] = useState('');
     const [nearestHeadingId, setNearestHeadingId] = useState('');
     const popoverRef = useRef<HTMLDivElement>(null);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
     const findNearestHeadingId = useCallback((node: Node): string => {
         let current: Node | null = node;
@@ -49,11 +50,14 @@ export function SelectionPopover({ containerRef, onComment, isReadOnly = false }
         return 'general';
     }, [containerRef]);
 
-    const handleMouseUp = useCallback(() => {
-        // Small delay to ensure selection is finalized
-        setTimeout(() => {
+    const handleSelectionChange = useCallback(() => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        timeoutRef.current = setTimeout(() => {
             const selection = window.getSelection();
             if (!selection || selection.isCollapsed || !selection.toString().trim()) {
+                // Do not auto-hide here if they just clicked inside the popover
+                // but we should hide if they clear selection elsewhere.
+                // The mousedown handler handles standard dismiss.
                 return;
             }
 
@@ -83,10 +87,10 @@ export function SelectionPopover({ containerRef, onComment, isReadOnly = false }
             setSelectedText(text);
             setNearestHeadingId(findNearestHeadingId(anchorNode));
             setIsVisible(true);
-        }, 10);
+        }, 300); // 300ms debounce allows handles to settle on mobile
     }, [containerRef, findNearestHeadingId]);
 
-    const handleMouseDown = useCallback((e: MouseEvent) => {
+    const handleMouseDown = useCallback((e: MouseEvent | TouchEvent | Event) => {
         // Don't dismiss if clicking the popover itself
         if (popoverRef.current && popoverRef.current.contains(e.target as Node)) {
             return;
@@ -104,16 +108,19 @@ export function SelectionPopover({ containerRef, onComment, isReadOnly = false }
         const container = containerRef.current;
         if (!container) return;
 
-        container.addEventListener('mouseup', handleMouseUp);
+        document.addEventListener('selectionchange', handleSelectionChange);
         document.addEventListener('mousedown', handleMouseDown);
+        document.addEventListener('touchstart', handleMouseDown, { passive: true });
         window.addEventListener('scroll', handleScroll, { passive: true });
 
         return () => {
-            container.removeEventListener('mouseup', handleMouseUp);
+            document.removeEventListener('selectionchange', handleSelectionChange);
             document.removeEventListener('mousedown', handleMouseDown);
+            document.removeEventListener('touchstart', handleMouseDown);
             window.removeEventListener('scroll', handleScroll);
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
         };
-    }, [containerRef, handleMouseUp, handleMouseDown, handleScroll, isReadOnly]);
+    }, [containerRef, handleSelectionChange, handleMouseDown, handleScroll, isReadOnly]);
 
     const handleCommentClick = () => {
         onComment(selectedText, nearestHeadingId);
