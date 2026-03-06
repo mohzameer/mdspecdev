@@ -81,7 +81,7 @@ export function SelectionPopover({ containerRef, onComment, isReadOnly = false }
 
             // Increase offset on mobile devices to prevent OS text selection menus from overlapping
             const isMobile = window.matchMedia('(max-width: 768px)').matches;
-            const yOffset = isMobile ? 75 : 44;
+            const yOffset = isMobile ? 82 : 44;
 
             setPosition({
                 top: rect.top - containerRect.top - yOffset,
