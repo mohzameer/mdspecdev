@@ -79,8 +79,12 @@ export function SelectionPopover({ containerRef, onComment, isReadOnly = false }
             const rect = range.getBoundingClientRect();
             const containerRect = container.getBoundingClientRect();
 
+            // Increase offset on mobile devices to prevent OS text selection menus from overlapping
+            const isMobile = window.matchMedia('(max-width: 768px)').matches;
+            const yOffset = isMobile ? 75 : 44;
+
             setPosition({
-                top: rect.top - containerRect.top - 44,
+                top: rect.top - containerRect.top - yOffset,
                 left: rect.left - containerRect.left + (rect.width / 2),
             });
 
