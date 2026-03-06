@@ -2,10 +2,12 @@
 
 import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { marked } from 'marked';
+import type { CommentThread } from '@/lib/types';
 
 interface TableOfContentsProps {
     content: string;
     className?: string;
+    threads?: CommentThread[];
 }
 
 interface TocItem {
@@ -16,7 +18,7 @@ interface TocItem {
     index: number;
 }
 
-export function TableOfContents({ content, className = '' }: TableOfContentsProps) {
+export function TableOfContents({ content, className = '', threads = [] }: TableOfContentsProps) {
     const [activeKey, setActiveKey] = useState<string>('');
     const headingElementsRef = useRef<Map<string, Element>>(new Map());
     const headingsRef = useRef<TocItem[]>([]);
@@ -168,20 +170,31 @@ export function TableOfContents({ content, className = '' }: TableOfContentsProp
                 On this page
             </h3>
             <ul className="space-y-2 border-l border-slate-200 dark:border-slate-800">
-                {headings.map((heading) => (
-                    <li key={heading.uniqueKey} className={`pl-4 ${heading.level > 2 ? 'pl-8' : ''}`}>
-                        <button
-                            onClick={() => scrollToHeading(heading.uniqueKey)}
-                            className={`text-sm text-left transition-colors duration-200 hover:text-blue-600 dark:hover:text-blue-400 block w-full truncate ${activeKey === heading.uniqueKey
-                                ? 'text-blue-600 dark:text-blue-400 font-medium -ml-[1px] pl-2 border-l-2 border-blue-600'
-                                : 'text-slate-500 dark:text-slate-400'
-                                }`}
-                            title={heading.text}
-                        >
-                            {heading.text}
-                        </button>
-                    </li>
-                ))}
+                {headings.map((heading) => {
+                    const hasActiveComment = threads.some(t =>
+                        t.anchor_heading_id === heading.id &&
+                        !t.resolved &&
+                        t.comments?.some(c => !c.deleted)
+                    );
+
+                    return (
+                        <li key={heading.uniqueKey} className={`pl-4 ${heading.level > 2 ? 'pl-8' : ''}`}>
+                            <button
+                                onClick={() => scrollToHeading(heading.uniqueKey)}
+                                className={`text-sm text-left transition-colors duration-200 hover:text-blue-600 dark:hover:text-blue-400 w-full truncate flex items-center gap-1.5 ${activeKey === heading.uniqueKey
+                                    ? 'text-blue-600 dark:text-blue-400 font-medium -ml-[1px] pl-2 border-l-2 border-blue-600'
+                                    : 'text-slate-500 dark:text-slate-400'
+                                    }`}
+                                title={heading.text}
+                            >
+                                <span className="truncate">{heading.text}</span>
+                                {hasActiveComment && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-yellow-400/90 dark:bg-yellow-500/90 flex-shrink-0" title="Has active comments" />
+                                )}
+                            </button>
+                        </li>
+                    );
+                })}
             </ul>
         </nav>
     );

@@ -510,7 +510,7 @@ export function SpecViewer({
                 <div className={`hidden xl:block flex-shrink-0 sticky top-24 self-start transition-all duration-300 ${isTocOpen ? 'w-64' : 'w-0 overflow-hidden'}`}>
                     <div className="relative">
                         <div className={`transition-opacity duration-300 pl-6 ${isTocOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                            <TableOfContents content={content} />
+                            <TableOfContents content={content} threads={threads} />
                         </div>
                     </div>
                 </div>

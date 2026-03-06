@@ -11,6 +11,8 @@ export interface Section {
     contentHtml: string;
     tokens: any[];
     diffClass?: string;
+    hasHeaderComment?: boolean;
+    hasHeaderDiff?: boolean;
 }
 
 /**
@@ -219,12 +221,8 @@ export function applyHighlightsToSections(
 
                 if (isAdded || isModified) {
                     console.log(`[RendererMatch] Header Match! "${updatedSection.rawTitle.substring(0, 30)}" | posId: ${posId} | added: ${isAdded}, modified: ${isModified}`);
-                    if (isAdded) {
-                        updatedSection.diffClass = 'diff-line-added';
-                        sectionHasAddition = true;
-                    } else if (isModified) {
-                        updatedSection.diffClass = 'diff-line-modified';
-                        sectionHasModification = true;
+                    if (isAdded || isModified) {
+                        updatedSection.hasHeaderDiff = true;
                     }
                 }
             }
@@ -236,13 +234,6 @@ export function applyHighlightsToSections(
             // Handle body tokens diff
             processTokenDiffs(updatedSection.tokens);
 
-            // BUBBLE UP: Set the section-level class if any block inside is changed
-            if (sectionHasModification) {
-                updatedSection.diffClass = 'diff-line-modified';
-            } else if (sectionHasAddition && !updatedSection.diffClass) {
-                updatedSection.diffClass = 'diff-line-added';
-            }
-
             // 2. Re-render contentHtml from modified tokens
             const rawHtml = marked.parser(updatedSection.tokens) as string;
             contentHtml = DOMPurify.sanitize(rawHtml, {
@@ -250,36 +241,49 @@ export function applyHighlightsToSections(
             });
         }
 
-        // 3. Quoted text threads (legacy regex approach)
+        let titleHtml = updatedSection.titleHtml || '';
+
+        // 3. Anchor-based Header Comments Highlighting
+        if (threads.length > 0) {
+            const activeHeaderThreads = threads.filter(t =>
+                t.anchor_heading_id === updatedSection.id &&
+                !t.resolved &&
+                t.comments?.some(c => !c.deleted)
+            );
+
+            if (activeHeaderThreads.length > 0) {
+                updatedSection.hasHeaderComment = true;
+                const threadId = activeHeaderThreads[0].id;
+                titleHtml = `<mark class="quoted-highlight bg-yellow-100/60 dark:bg-yellow-900/30 rounded-sm cursor-pointer hover:bg-yellow-200/70 dark:hover:bg-yellow-800/40 transition-colors px-0.5 text-inherit" data-thread-id="${threadId}">${titleHtml}</mark>`;
+            }
+        }
+
+        // Apply fallback header diff text styling
+        if (updatedSection.hasHeaderDiff && !updatedSection.hasHeaderComment) {
+            titleHtml = `<span class="bg-yellow-100/40 dark:bg-yellow-900/20 rounded-sm px-0.5">${titleHtml}</span>`;
+        }
+
+        // 4. Quoted text threads for Content (legacy regex approach)
         if (threads.length > 0) {
             const quotedThreads = threads.filter(t => t.quoted_text && !t.resolved && t.comments?.some(c => !c.deleted));
             if (quotedThreads.length > 0) {
                 const htmlEncode = (text: string) => text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
                 const markTag = (threadId: string, content: string) => `<mark class="quoted-highlight bg-amber-100 dark:bg-amber-900/40 rounded-sm cursor-pointer hover:bg-amber-200 dark:hover:bg-amber-800/50 transition-colors px-0.5" data-thread-id="${threadId}">${content}</mark>`;
 
-                let titleHtml = updatedSection.titleHtml || '';
-
                 for (const thread of quotedThreads) {
                     const encodedSearch = htmlEncode(thread.quoted_text!);
 
-                    // Try contentHtml first
+                    // Only search inside contentHtml, titleHtml is fully managed by anchor IDs above
                     const idx = contentHtml.indexOf(encodedSearch);
                     if (idx !== -1) {
                         const matched = contentHtml.substring(idx, idx + encodedSearch.length);
                         contentHtml = contentHtml.substring(0, idx) + markTag(thread.id, matched) + contentHtml.substring(idx + encodedSearch.length);
                     }
-
-                    // Also try titleHtml for heading-level selections
-                    const titleIdx = titleHtml.indexOf(encodedSearch);
-                    if (titleIdx !== -1) {
-                        const matched = titleHtml.substring(titleIdx, titleIdx + encodedSearch.length);
-                        titleHtml = titleHtml.substring(0, titleIdx) + markTag(thread.id, matched) + titleHtml.substring(titleIdx + encodedSearch.length);
-                    }
                 }
-
-                updatedSection.titleHtml = titleHtml;
             }
         }
+
+        updatedSection.titleHtml = titleHtml;
 
         updatedSection.contentHtml = contentHtml;
         return updatedSection;

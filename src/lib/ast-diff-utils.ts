@@ -118,6 +118,7 @@ export interface AstSection {
     level: number;
     titleHtml: string;
     contentHtml: string;
+    hasHeaderDiff?: boolean;
 }
 
 /**
@@ -149,11 +150,17 @@ export async function computeAstDiffSections(oldMarkdown: string, newMarkdown: s
             let id = 'intro';
             let level = 0;
             let titleHtml = '';
+            let hasHeaderDiff = false;
 
             if (currentHeading) {
                 level = currentHeading.depth;
                 const headingText = getNodeText(currentHeading);
                 id = headingText.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+
+                const hProps = currentHeading.data?.hProperties;
+                if (hProps && hProps.className && (hProps.className.includes('diff-line-modified') || hProps.className.includes('diff-line-added'))) {
+                    hasHeaderDiff = true;
+                }
 
                 // Render just the heading content
                 titleHtml = renderMdastToHtml({ type: 'root', children: currentHeading.children });
@@ -167,7 +174,8 @@ export async function computeAstDiffSections(oldMarkdown: string, newMarkdown: s
                 id,
                 level,
                 titleHtml,
-                contentHtml
+                contentHtml,
+                hasHeaderDiff
             });
         }
     };

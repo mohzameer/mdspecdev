@@ -123,8 +123,8 @@ export function MarkdownRenderer({
         return (
           <div key={`${section.id}-${index}`} className="section-container mb-2 rounded-lg transition-colors">
             {section.level > 0 && (
-              <div className="sticky top-16 z-10 pt-4 pb-2 bg-white/80 dark:bg-[#0B1120]/80 backdrop-blur-md flex items-center justify-between group [mask-image:linear-gradient(to_bottom,black_70%,transparent_100%)] pr-2">
-                <HeadingTag id={section.id} className="!m-0 scroll-mt-20">
+              <div className="sticky top-16 z-10 pt-4 pb-2 backdrop-blur-md flex items-center justify-between group [mask-image:linear-gradient(to_bottom,black_70%,transparent_100%)] pr-2 rounded-lg transition-colors bg-white/80 dark:bg-[#0B1120]/80">
+                <HeadingTag id={section.id} className="!m-0 scroll-mt-20 inline-block">
                   <span dangerouslySetInnerHTML={{ __html: section.titleHtml }} />
                 </HeadingTag>
                 <div className="flex flex-shrink-0 items-center gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity bg-white/50 dark:bg-[#0B1120]/50 ml-4 rounded-lg">
