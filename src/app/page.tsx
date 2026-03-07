@@ -26,7 +26,7 @@ export default async function HomePage() {
         </h1>
 
         <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 mb-8 leading-relaxed">
-          An opensource lightweight specification management platform for technical teams.
+          An opensource lightweight md files management platform for technical teams.
         </p>
 
         <div className="flex flex-col lg:flex-row flex-wrap items-start justify-center gap-3 lg:gap-4 w-full">
@@ -89,7 +89,7 @@ export default async function HomePage() {
               Markdown-Native
             </h3>
             <p className="text-slate-600 dark:text-slate-400 text-sm">
-              Write specs in markdown with YAML frontmatter for metadata. Portable and version-control friendly.
+              Write md files in markdown with YAML frontmatter for metadata. Portable and version-control friendly.
             </p>
           </div>
           <div className="p-6 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
@@ -118,18 +118,18 @@ export default async function HomePage() {
               Sharing &amp; Linking
             </h3>
             <p className="text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
-              Share and link specifications across independent repositories — no monorepos, no copy-pasting. Ideal for cross-team communication and agentic development workflows.
+              Share and link md files across independent repositories — no monorepos, no copy-pasting. Ideal for cross-team communication and agentic development workflows.
               <span className="block mt-1.5 font-medium text-slate-700 dark:text-slate-300">e.g., Compliance, Security Modelling, Marketing, and syncing API docs across Frontend &amp; Backend repos.</span>
             </p>
           </div>
           <div className="p-3 bg-white dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
             <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
               <span className="text-xl">☁️</span>
-              Cloud-Stored Specs
+              Cloud-Stored md files
             </h3>
             <p className="text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
-              Keep your repository lean — store specifications in mdspec instead of the repo. As docs grow, download only what you need, when you need it.
-              <span className="block mt-1.5 font-medium text-slate-700 dark:text-slate-300">e.g., Pull the latest API spec directly from mdspec when needed and remove it from repo when you are done — no markdown files cluttering your repository.</span>
+              Keep your repository lean — store md files in mdspec instead of the repo. As docs grow, download only what you need, when you need it.
+              <span className="block mt-1.5 font-medium text-slate-700 dark:text-slate-300">e.g., Pull the latest API md file directly from mdspec when needed and remove it from repo when you are done — no markdown files cluttering your repository.</span>
             </p>
           </div>
           <a
@@ -146,8 +146,8 @@ export default async function HomePage() {
               </span>
             </h3>
             <p className="text-[13px] leading-relaxed text-slate-600 dark:text-slate-400">
-              Position MDSpec as your specification central. An agentic template layer transforms and integrates documents into any external tool.
-              <span className="block mt-1.5 font-medium text-slate-700 dark:text-slate-300">e.g., Task templates for ClickUp, Analysis on a spec posted to another tool.</span>
+              Position MDSpec as your md files central. An agentic template layer transforms and integrates documents into any external tool.
+              <span className="block mt-1.5 font-medium text-slate-700 dark:text-slate-300">e.g., Task templates for ClickUp, Analysis on a md file posted to another tool.</span>
             </p>
           </a>
         </div>
